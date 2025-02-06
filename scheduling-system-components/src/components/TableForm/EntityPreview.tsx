@@ -2,6 +2,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { Attribute } from "../../interfaces/types";
 import { formatArrayToString } from "../../utils/utilstableform";
 import { toast } from "react-hot-toast";
+import { entityNameSchema } from '../../schemas/validationSchemas';
 
 // Props interface for EntityPreview component
 interface EntityPreviewProps {
@@ -11,6 +12,7 @@ interface EntityPreviewProps {
   handleSaveEntity: () => void;    // Function to save entity
   resetForm: () => void;           // Function to reset form
   setEditingIndex: React.Dispatch<React.SetStateAction<number | null>>;
+  entityName: string;
 }
 
 export default function EntityPreview({
@@ -19,7 +21,8 @@ export default function EntityPreview({
   setCurrentAttribute,
   handleSaveEntity,
   resetForm,
-  setEditingIndex
+  setEditingIndex,
+  entityName
 }: EntityPreviewProps) {
   // Handle editing of an existing attribute
   const handleEditAttribute = (index: number) => {
@@ -38,6 +41,36 @@ export default function EntityPreview({
       toast.error("Warning: Deleting the primary key attribute!");
     }
     setAttributes((prev: Attribute[]) => prev.filter((_, i) => i !== index));
+  };
+
+  // Add validation before saving
+  const handleSave = async () => {
+    try {
+      await entityNameSchema.validate(entityName);
+      
+      // Find duplicate attribute names
+      const duplicates = attributes
+        .map(attr => attr.name.toLowerCase())
+        .filter((name, index, arr) => arr.indexOf(name) !== index);
+      
+      if (duplicates.length > 0) {
+        toast.error(`Duplicate attribute names found: ${duplicates.join(', ')}`);
+        return;
+      }
+
+      // Check if there are any attributes
+      if (attributes.length === 0) {
+        toast.error("Please add at least one attribute");
+        return;
+      }
+
+      // If validation passes, proceed with save
+      handleSaveEntity();
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      }
+    }
   };
 
   return (
@@ -77,8 +110,8 @@ export default function EntityPreview({
                   </td>
                   <td className="border-b border-[#eee] px-4 py-3 dark:border-strokedark whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]">
                     {attr.dataType}
-                    {attr.size && `(${attr.size})`}
-                    {attr.precision && `(${attr.precision})`}
+                    {attr.size !== null && `(${attr.size})`}
+                    {attr.precision !== null && attr.precision !== undefined && `(${attr.precision})`}
                   </td>
                   <td className="border-b border-[#eee] px-4 py-3 dark:border-strokedark whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]">
                     {formatArrayToString(attr.constraints)}
@@ -102,7 +135,7 @@ export default function EntityPreview({
         {/* Action buttons */}
         <div className="mt-4.5 flex flex-wrap gap-3">
           <button 
-            onClick={handleSaveEntity}
+            onClick={handleSave}
             className="inline-flex items-center justify-center rounded bg-primary px-6 py-2 text-center font-medium text-white hover:bg-opacity-90"
           >
             Save Entity

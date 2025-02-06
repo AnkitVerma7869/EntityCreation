@@ -28,6 +28,8 @@ interface EntitySetupProps {
   setSelectedEntity: (entity: string) => void;
   editingIndex: number | null;
   setEditingIndex: React.Dispatch<React.SetStateAction<number | null>>;
+  handleSaveEntity: () => void;
+  resetForm: () => void;
 }
 
 export default function EntitySetup(props: EntitySetupProps) {
@@ -45,6 +47,8 @@ export default function EntitySetup(props: EntitySetupProps) {
     setSelectedEntity,
     editingIndex,
     setEditingIndex,
+    handleSaveEntity,
+    resetForm,
   } = props;
 
   const {
@@ -53,6 +57,7 @@ export default function EntitySetup(props: EntitySetupProps) {
     handleEntitySelect,
     handleEntityNameChange,
     handleAttributeNameChange,
+    handleDefaultValueChange,
     handleConstraintsChange,
     handleValidationsChange,
     handleAddAttribute
@@ -103,19 +108,25 @@ export default function EntitySetup(props: EntitySetupProps) {
       return;
     }
 
+    // Add validation for negative values
+    if (numberValue && numberValue <= 0) {
+      setErrors(prev => ({ ...prev, size: 'Size must be greater than 0' }));
+      return;
+    }
+
     if (currentAttribute.dataType) {
       const type = currentAttribute.dataType.toLowerCase();
       
       // Validate size limits
       if (type === 'char' || type === 'varchar') {
         const maxSize = maxSizes[type];
-        if (numberValue && numberValue > 0 && numberValue <= maxSize) {
-          setErrors(prev => ({ ...prev, size: undefined }));
-        } else if (numberValue && numberValue > maxSize) {
+        if (numberValue && numberValue > maxSize) {
           setErrors(prev => ({ 
             ...prev, 
             size: `Maximum size for ${type.toUpperCase()} is ${maxSize}` 
           }));
+        } else {
+          setErrors(prev => ({ ...prev, size: undefined }));
         }
       } else {
         await validateSize(numberValue, currentAttribute.dataType);
@@ -157,8 +168,17 @@ export default function EntitySetup(props: EntitySetupProps) {
       const type = currentAttribute.dataType.toLowerCase();
       const limits = precisionLimits[type];
       
-      // Validate precision limits
-      if (limits && numberValue !== null) {
+      // Special handling for decimal and numeric types
+      if (type === 'decimal' || type === 'numeric') {
+        if (numberValue !== null && numberValue >= 0 && numberValue <= limits.max) {
+          setErrors(prev => ({ ...prev, precision: undefined }));
+        } else {
+          setErrors(prev => ({ 
+            ...prev, 
+            precision: `Precision for ${type.toUpperCase()} must be between 0 and ${limits.max}` 
+          }));
+        }
+      } else if (limits && numberValue !== null) {
         if (numberValue >= limits.min && numberValue <= limits.max) {
           setErrors(prev => ({ ...prev, precision: undefined }));
         } else {
@@ -167,8 +187,6 @@ export default function EntitySetup(props: EntitySetupProps) {
             precision: `Precision for ${type.toUpperCase()} must be between ${limits.min} and ${limits.max}` 
           }));
         }
-      } else {
-        await validatePrecision(numberValue, currentAttribute.dataType);
       }
     }
   };
@@ -302,12 +320,13 @@ export default function EntitySetup(props: EntitySetupProps) {
               <div>
                 <label className="mb-1 block text-sm font-medium text-black dark:text-white">
                   Size 
-                  {['char', 'varchar'].includes(currentAttribute.dataType.toLowerCase()) && 
+                  {needsSizeValidation(currentAttribute.dataType) && 
                     <span className="text-meta-1">*</span>
                   }
                 </label>
                 <input
                   type="number"
+                  min="1"
                   value={currentAttribute.size || ''}
                   onChange={handleSizeChange}
                   disabled={!needsSizeValidation(currentAttribute.dataType)}
@@ -316,7 +335,7 @@ export default function EntitySetup(props: EntitySetupProps) {
                   } bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
                     !needsSizeValidation(currentAttribute.dataType) ? 'opacity-50' : ''
                   }`}
-                  placeholder={getNumericTypeCategory(currentAttribute.dataType) ? 'Optional size' : 'Size'}
+                  placeholder={needsSizeValidation(currentAttribute.dataType) ? 'Enter size' : 'Not applicable'}
                 />
                 {errors.size && (
                   <p className="text-meta-1 text-sm mt-1">{errors.size}</p>
@@ -333,7 +352,7 @@ export default function EntitySetup(props: EntitySetupProps) {
                 </label>
                 <input
                   type="number"
-                  value={currentAttribute.precision || ''}
+                  value={currentAttribute.precision ?? ''}
                   onChange={handlePrecisionChange}
                   disabled={!needsPrecision(currentAttribute.dataType)}
                   className={`w-full rounded border-[1.5px] ${
@@ -385,7 +404,7 @@ export default function EntitySetup(props: EntitySetupProps) {
               <input
                 type="text"
                 value={currentAttribute.defaultValue || ''}
-                onChange={(e) => setCurrentAttribute({...currentAttribute, defaultValue: e.target.value})}
+                onChange={handleDefaultValueChange}
                 className="w-full rounded border-[1.5px] border-stroke bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                 placeholder="Enter default value"
               />

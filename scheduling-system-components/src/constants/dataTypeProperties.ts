@@ -25,8 +25,6 @@ export const dataTypeProperties: Record<string, {
   real: { needsSize: false, needsPrecision: false },
   'double precision': { needsSize: false, needsPrecision: false },
   serial: { needsSize: false, needsPrecision: false },
-
-  // Other types
   boolean: { needsSize: false, needsPrecision: false },
   bytea: { needsSize: false, needsPrecision: false },
   enum: { needsSize: false, needsPrecision: false },
@@ -56,8 +54,8 @@ export const maxSizes: Record<string, number> = {
 };
 
 export const precisionLimits: Record<string, { min: number; max: number }> = {
-  decimal: { min: 1, max: 1000 },
-  numeric: { min: 1, max: 1000 },
+  decimal: { min: 0, max: 1000 },
+  numeric: { min: 0, max: 1000 },
   timestamp: { min: 0, max: 6 },
   time: { min: 0, max: 6 },
   interval: { min: 0, max: 6 }
