@@ -15,6 +15,11 @@ interface TableListProps {
   onCreateNew?: () => void;
 }
 
+/**
+ * TablesList Component
+ * Displays a data grid of database tables with their properties and configurations.
+ * Allows users to view, sort, filter and navigate to individual table details.
+ */
 export default function TablesList({ onCreateNew }: TableListProps) {
   const router = useRouter();
   const [tables, setTables] = useState<Table[]>([]);
@@ -25,18 +30,25 @@ export default function TablesList({ onCreateNew }: TableListProps) {
   });
   const [loading, setLoading] = useState(true);
 
+  /**
+   * Handles row click events by navigating to the detailed view of the selected table
+   */
   const handleRowClick = (params: GridRowParams) => {
     const tableName = params.row.tableName.toLowerCase();
     router.push(`/${tableName}`);
   };
 
   useEffect(() => {
+    /**
+     * Fetches table data from the API and formats it for display in the data grid
+     */
     const fetchTables = async () => {
       try {
         setLoading(true);
         const response = await fetch('/api/tables');
         const data = await response.json();
         
+        // Define columns for the data grid
         const dynamicColumns: GridColDef[] = [
           { 
             field: 'id', 
@@ -74,6 +86,7 @@ export default function TablesList({ onCreateNew }: TableListProps) {
         
         setColumns(dynamicColumns);
 
+        // Transform API data into the format expected by the data grid
         const formattedTables = data.tables.map((table: TableData, index: number) => ({
           id: index + 1,
           tableName: table.tableName,
@@ -109,7 +122,7 @@ export default function TablesList({ onCreateNew }: TableListProps) {
         </button>
       </div>
 
-      {/* Data Grid */}
+      {/* Data Grid section with MUI DataGrid component */}
       <Paper elevation={2} className="p-4">
         <Box sx={{ height: 400, width: '100%' }}>
           <DataGrid
