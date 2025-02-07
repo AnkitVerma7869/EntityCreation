@@ -4,11 +4,9 @@ import { initialAttributeState } from "../utils/utilstableform";
 import * as yup from "yup";
 import toast from 'react-hot-toast';
 import { entityNameSchema, attributeNameSchema } from '../schemas/validationSchemas';
+import { dataTypeProperties } from '../constants/dataTypeProperties';
+import { precisionLimits } from '../constants/dataTypeProperties';
 
-/**
- * Props interface for useEntitySetup hook
- * Contains all the state and setter functions needed for entity configuration
- */
 interface UseEntitySetupProps {
   configData: ConfigData;
   entityName: string;
@@ -23,10 +21,6 @@ interface UseEntitySetupProps {
   setEditingIndex: React.Dispatch<React.SetStateAction<number | null>>;
 }
 
-/**
- * Custom hook for managing entity setup and configuration
- * Handles validation, state management, and operations for entity and attribute creation
- */
 export const useEntitySetup = ({
   configData,
   entityName,
@@ -40,7 +34,6 @@ export const useEntitySetup = ({
   editingIndex,
   setEditingIndex,
 }: UseEntitySetupProps) => {
-  // State for tracking validation errors
   const [errors, setErrors] = useState<{
     entityName?: string;
     attributeName?: string;
@@ -49,11 +42,6 @@ export const useEntitySetup = ({
     precision?: string;
   }>({});
 
-  /**
-   * Validates the entity name using Yup schema
-   * @param name - The entity name to validate
-   * @returns boolean indicating if validation passed
-   */
   const validateEntityName = async (name: string) => {
     try {
       if (!name) return false;
@@ -68,11 +56,6 @@ export const useEntitySetup = ({
     }
   };
 
-  /**
-   * Validates the attribute name using Yup schema
-   * @param name - The attribute name to validate
-   * @returns boolean indicating if validation passed
-   */
   const validateAttributeName = async (name: string) => {
     try {
       if (!name) return false;
@@ -87,11 +70,6 @@ export const useEntitySetup = ({
     }
   };
 
-  /**
-   * Handles entity selection, either custom or predefined
-   * Updates related states based on selection
-   * @param selected - The selected entity name or "custom"
-   */
   const handleEntitySelect = (selected: string) => {
     setSelectedEntity(selected);
     
@@ -110,31 +88,23 @@ export const useEntitySetup = ({
     }
   };
 
-  /**
-   * Handles entity name input changes and validates the new value
-   * @param e - Change event from input field
-   */
   const handleEntityNameChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setEntityName(value);
     await validateEntityName(value);
   };
 
-  /**
-   * Handles attribute name input changes and validates the new value
-   * @param e - Change event from input field
-   */
   const handleAttributeNameChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setCurrentAttribute({ ...currentAttribute, name: value });
     await validateAttributeName(value);
   };
 
-  /**
-   * Handles changes to attribute constraints
-   * Includes validation for primary key constraints
-   * @param e - Change event from select field
-   */
+  const handleDefaultValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setCurrentAttribute({ ...currentAttribute, defaultValue: value });
+  };
+
   const handleConstraintsChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     
@@ -156,11 +126,6 @@ export const useEntitySetup = ({
     });
   };
 
-  /**
-   * Handles changes to attribute validations
-   * Currently supports required/optional validation
-   * @param e - Change event from select field
-   */
   const handleValidationsChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     setCurrentAttribute({ 
@@ -169,52 +134,116 @@ export const useEntitySetup = ({
     });
   };
 
-  /**
-   * Handles adding or updating attributes
-   * Validates attribute data before adding/updating
-   * Shows success/error messages via toast
-   */
   const handleAddAttribute = async () => {
-    setErrors({});
+    try {
+      // Check for duplicate attribute name
+      const duplicateAttr = attributes.find((attr, index) => 
+        attr.name.toLowerCase() === currentAttribute.name.toLowerCase() && 
+        index !== editingIndex
+      );
 
-    if (!currentAttribute.name) {
-      setErrors(prev => ({ ...prev, attributeName: "Attribute name is required" }));
-      return;
-    }
-
-    if (!currentAttribute.dataType) {
-      setErrors(prev => ({ ...prev, dataType: "Data type is required" }));
-      return;
-    }
-
-    const nameValid = await validateAttributeName(currentAttribute.name);
-    if (!nameValid) {
-      return;
-    }
-
-    if (currentAttribute.constraints.includes('PRIMARY KEY')) {
-      const hasPrimaryKeyAlready = attributes.some((attr, idx) => {
-        if (editingIndex !== null && idx === editingIndex) return false;
-        return attr.constraints.includes('PRIMARY KEY');
-      });
-
-      if (hasPrimaryKeyAlready) {
+      if (duplicateAttr) {
+        toast.error(`Attribute name "${currentAttribute.name}" already exists!`);
         return;
       }
-    }
 
-    if (editingIndex !== null) {
-      setAttributes(prev => prev.map((attr, index) => 
-        index === editingIndex ? currentAttribute : attr
-      ));
-      setEditingIndex(null);
-      toast.success("Attribute updated successfully!");
-    } else {
-      setAttributes(prev => [...prev, currentAttribute]);
-      toast.success("Attribute added successfully!");
-    }
+      setErrors({});
 
-    setCurrentAttribute(initialAttributeState);
+      const trimmedAttribute = {
+        ...currentAttribute,
+        name: currentAttribute.name.trim(),
+        defaultValue: currentAttribute.defaultValue?.trim() || ''
+      };
+
+      if (!trimmedAttribute.name) {
+        setErrors(prev => ({ ...prev, attributeName: "Attribute name is required" }));
+        return;
+      }
+
+      if (!trimmedAttribute.dataType) {
+        setErrors(prev => ({ ...prev, dataType: "Data type is required" }));
+        return;
+      }
+
+      const dataTypeProps = dataTypeProperties[trimmedAttribute.dataType.toLowerCase()];
+      
+      // Validate size
+      if (dataTypeProps?.needsSize) {
+        if (!trimmedAttribute.size) {
+          setErrors(prev => ({ ...prev, size: `Size is required for ${trimmedAttribute.dataType}` }));
+          return;
+        }
+        if (trimmedAttribute.size <= 0) {
+          setErrors(prev => ({ ...prev, size: 'Size must be greater than 0' }));
+          return;
+        }
+      }
+
+      // Validate precision
+      if (dataTypeProps?.needsPrecision) {
+        if (!trimmedAttribute.precision && trimmedAttribute.precision !== 0) {
+          setErrors(prev => ({ ...prev, precision: `Precision is required for ${trimmedAttribute.dataType}` }));
+          return;
+        }
+        const limits = precisionLimits[trimmedAttribute.dataType.toLowerCase()];
+        const type = trimmedAttribute.dataType.toLowerCase();
+        
+        // Special handling for decimal and numeric types
+        if (type === 'decimal' || type === 'numeric') {
+          if (trimmedAttribute.precision < 0 || trimmedAttribute.precision > limits.max) {
+            setErrors(prev => ({ 
+              ...prev, 
+              precision: `Precision for ${trimmedAttribute.dataType} must be between 0 and ${limits.max}` 
+            }));
+            return;
+          }
+        } else if (limits && (trimmedAttribute.precision < limits.min || trimmedAttribute.precision > limits.max)) {
+          setErrors(prev => ({ 
+            ...prev, 
+            precision: `Precision for ${trimmedAttribute.dataType} must be between ${limits.min} and ${limits.max}` 
+          }));
+          return;
+        }
+      }
+
+      const nameValid = await validateAttributeName(trimmedAttribute.name);
+      if (!nameValid) {
+        return;
+      }
+
+      if (trimmedAttribute.constraints.includes('PRIMARY KEY')) {
+        const hasPrimaryKeyAlready = attributes.some((attr, idx) => {
+          if (editingIndex !== null && idx === editingIndex) return false;
+          return attr.constraints.includes('PRIMARY KEY');
+        });
+
+        if (hasPrimaryKeyAlready) {
+          return;
+        }
+      }
+
+      if (editingIndex !== null) {
+        setAttributes(prev => prev.map((attr, index) => 
+          index === editingIndex ? trimmedAttribute : attr
+        ));
+        setEditingIndex(null);
+        toast.success("Attribute updated successfully!");
+      } else {
+        setAttributes(prev => [...prev, trimmedAttribute]);
+        toast.success("Attribute added successfully!");
+      }
+
+      setCurrentAttribute(initialAttributeState);
+    } catch (error) {
+      if (error instanceof yup.ValidationError) {
+        toast.error(error.message);
+      } else if (error instanceof Error) {
+        toast.error(`Failed to add attribute: ${error.message}`);
+      } else {
+        toast.error("An unexpected error occurred while adding the attribute");
+      }
+      console.error("Error in handleAddAttribute:", error);
+    }
   };
 
   return {
@@ -223,6 +252,7 @@ export const useEntitySetup = ({
     handleEntitySelect,
     handleEntityNameChange,
     handleAttributeNameChange,
+    handleDefaultValueChange,
     handleConstraintsChange,
     handleValidationsChange,
     handleAddAttribute

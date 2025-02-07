@@ -64,8 +64,11 @@ export default function TableForm() {
 
   // Handle entity save operation
   const handleSaveEntity = async () => {
+    // Trim the entity name
+    const trimmedEntityName = entityName.trim();
+    
     // Validate required fields
-    if (!entityName) {
+    if (!trimmedEntityName) {
       toast.error("Entity Name is required!");
       return;
     }
@@ -76,7 +79,7 @@ export default function TableForm() {
     }
 
     const entity: Entity = {
-      entityName,
+      entityName: trimmedEntityName,  // Use trimmed name
       attributes
     };
 
@@ -108,6 +111,8 @@ export default function TableForm() {
           setSelectedEntity={setSelectedEntity}
           editingIndex={editingIndex}
           setEditingIndex={setEditingIndex}
+          handleSaveEntity={handleSaveEntity}
+          resetForm={resetForm}
         />
 
         {/* Right Column - Preview and API Routes */}
@@ -119,6 +124,7 @@ export default function TableForm() {
             handleSaveEntity={handleSaveEntity}
             resetForm={resetForm}
             setEditingIndex={setEditingIndex}
+            entityName={entityName}
           />
           
           <EntityRoutes entityName={entityName} />
