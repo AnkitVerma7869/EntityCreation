@@ -1,4 +1,5 @@
 import { Attribute, ConfigData, Entity } from '../interfaces/types';
+import { generateTableRoutes } from '../utils/routeGenerator';
 
 // API endpoint from environment variables
 const API_URL = process.env.NEXT_PUBLIC_API_URL_ENDPOINT;
@@ -29,7 +30,11 @@ export async function fetchEntityConfig(): Promise<ConfigData> {
   return data;
 }
 
-// Save entity to backend API
+/**
+ * Saves entity to backend API and generates corresponding routes
+ * @param entity - The entity configuration to save
+ * @returns Promise<Response> from the API
+ */
 export async function saveEntity(entity: Entity): Promise<Response> {
   // Transform entity data to match API requirements
   const transformedEntity = {
@@ -61,9 +66,24 @@ export async function saveEntity(entity: Entity): Promise<Response> {
     body: JSON.stringify(transformedEntity),
   });
 
+  console.log('Response:', response);
   // Handle API response
-  if (!response.ok) {
-    throw new Error(`Failed to save entity: ${response.status} ${response.statusText}`);
+  // if (!response.ok) {
+  //   throw new Error(`Failed to save entity: ${response.status} ${response.statusText}`);
+  // }
+
+  // Generate routes after successful entity creation
+  try {
+    const config = {
+      entityName: entity.entityName,
+      attributes: entity.attributes
+    };
+    
+    await generateTableRoutes(config);
+    console.log('Routes generated successfully for:', entity.entityName);
+  } catch (error) {
+    console.error('Error generating routes:', error);
+    throw new Error('Entity saved but failed to generate routes');
   }
 
   return response;

@@ -20,7 +20,7 @@ export interface TableFormProps {
 }
 
 export interface TableData {
-  tableName: string;
+  entityName: string;
   attributes: {
     name: string;
     dataType: string;

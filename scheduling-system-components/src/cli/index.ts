@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import { generateTableRoutes } from '../utils/routeGenerator';
-import { TableConfig } from '../types';
+import { Entity } from '../interfaces/types';
 
 // Initialize a new Command instance for CLI
 const program = new Command();
@@ -11,7 +11,10 @@ program
   .version('1.0.0')
   .description('CLI for scheduling system components');
 
-// Define the generate-routes command
+/**
+ * Command to generate routes from the command line
+ * Useful for manual route generation or testing
+ */
 program
   .command('generate-routes')
   .description('Generate routes from table configuration')
@@ -19,7 +22,7 @@ program
   .action(async (configPath: string) => {
     try {
       // Load and parse the configuration file
-      const config: TableConfig = require(configPath);
+      const config: Entity = require(configPath);
       // Generate routes based on the configuration
       await generateTableRoutes(config);
       console.log('Routes generated successfully!');

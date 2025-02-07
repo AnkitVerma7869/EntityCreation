@@ -9,7 +9,7 @@ import {
 } from '@mui/x-data-grid';
 import { Box, Paper } from '@mui/material';
 import { useRouter } from 'next/navigation';
-import { TableData, Table } from '../../types';
+import { Entity } from '../../interfaces/types';
 
 interface TableListProps {
   onCreateNew?: () => void;
@@ -22,7 +22,7 @@ interface TableListProps {
  */
 export default function TablesList({ onCreateNew }: TableListProps) {
   const router = useRouter();
-  const [tables, setTables] = useState<Table[]>([]);
+  const [tables, setTables] = useState<Entity[]>([]);
   const [columns, setColumns] = useState<GridColDef[]>([]);
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
     pageSize: 5,
@@ -34,8 +34,8 @@ export default function TablesList({ onCreateNew }: TableListProps) {
    * Handles row click events by navigating to the detailed view of the selected table
    */
   const handleRowClick = (params: GridRowParams) => {
-    const tableName = params.row.tableName.toLowerCase();
-    router.push(`/${tableName}`);
+    const entityName = params.row.entityName.toLowerCase();
+    router.push(`/${entityName}`);
   };
 
   useEffect(() => {
@@ -57,8 +57,8 @@ export default function TablesList({ onCreateNew }: TableListProps) {
             filterable: true,
           },
           { 
-            field: 'tableName', 
-            headerName: 'Table Name', 
+            field: 'entityName', 
+            headerName: 'Entity Name', 
             flex: 1,
             filterable: true,
             sortable: true,
@@ -87,9 +87,9 @@ export default function TablesList({ onCreateNew }: TableListProps) {
         setColumns(dynamicColumns);
 
         // Transform API data into the format expected by the data grid
-        const formattedTables = data.tables.map((table: TableData, index: number) => ({
+        const formattedTables = data.tables.map((table: Entity, index: number) => ({
           id: index + 1,
-          tableName: table.tableName,
+          entityName: table.entityName,
           totalFields: table.attributes.length,
           attributes: table.attributes.map(attr => `${attr.name} (${attr.dataType})`).join(', '),
         }));
