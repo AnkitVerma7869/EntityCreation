@@ -1,6 +1,6 @@
 {
     "name": "dex-un-table-generator",
-    "version": "2.1.7",
+    "version": "2.1.23",
     "description": "Dynamic table and route generation components for Next.js",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",

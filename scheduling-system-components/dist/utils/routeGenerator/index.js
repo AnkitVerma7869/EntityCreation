@@ -39,6 +39,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateTableRoutes = generateTableRoutes;
 var pages_1 = require("./pages");
 var api_1 = require("./api");
+var storeGenerator_1 = require("./utils/storeGenerator");
 /**
  * Generates and saves all necessary routes for a table
  * @param config - Configuration for the table including name and attributes
@@ -47,13 +48,17 @@ var api_1 = require("./api");
 function generateTableRoutes(config) {
     return __awaiter(this, void 0, void 0, function () {
         var routes, response, result, error_1;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        var _a;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
                 case 0:
-                    _a.trys.push([0, 3, , 4]);
+                    _b.trys.push([0, 3, , 4]);
                     routes = {
                         pages: (0, pages_1.generatePages)(config),
-                        api: (0, api_1.generateApiRoutes)(config)
+                        api: (0, api_1.generateApiRoutes)(config),
+                        store: (_a = {},
+                            _a["".concat(config.entityName.toLowerCase(), "Store.ts")] = (0, storeGenerator_1.generateEntityStore)(config),
+                            _a)
                     };
                     console.log('calling generate-routes inside routeGenerator.ts:');
                     return [4 /*yield*/, fetch('/api/generate-routes', {
@@ -66,16 +71,16 @@ function generateTableRoutes(config) {
                             }),
                         })];
                 case 1:
-                    response = _a.sent();
+                    response = _b.sent();
                     return [4 /*yield*/, response.json()];
                 case 2:
-                    result = _a.sent();
+                    result = _b.sent();
                     if (!result.success) {
                         throw new Error(result.error || 'Failed to generate routes');
                     }
                     return [2 /*return*/, result];
                 case 3:
-                    error_1 = _a.sent();
+                    error_1 = _b.sent();
                     console.error('Error generating routes:', error_1);
                     throw error_1;
                 case 4: return [2 /*return*/];

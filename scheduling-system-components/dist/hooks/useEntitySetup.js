@@ -98,19 +98,11 @@ var utilstableform_1 = require("../utils/utilstableform");
 var yup = __importStar(require("yup"));
 var react_hot_toast_1 = __importDefault(require("react-hot-toast"));
 var validationSchemas_1 = require("../schemas/validationSchemas");
-/**
- * Custom hook for managing entity setup and configuration
- * Handles validation, state management, and operations for entity and attribute creation
- */
+var dataTypeProperties_1 = require("../constants/dataTypeProperties");
+var dataTypeProperties_2 = require("../constants/dataTypeProperties");
 var useEntitySetup = function (_a) {
     var configData = _a.configData, entityName = _a.entityName, setEntityName = _a.setEntityName, attributes = _a.attributes, setAttributes = _a.setAttributes, currentAttribute = _a.currentAttribute, setCurrentAttribute = _a.setCurrentAttribute, setIsCustomEntity = _a.setIsCustomEntity, setSelectedEntity = _a.setSelectedEntity, editingIndex = _a.editingIndex, setEditingIndex = _a.setEditingIndex;
-    // State for tracking validation errors
     var _b = (0, react_1.useState)({}), errors = _b[0], setErrors = _b[1];
-    /**
-     * Validates the entity name using Yup schema
-     * @param name - The entity name to validate
-     * @returns boolean indicating if validation passed
-     */
     var validateEntityName = function (name) { return __awaiter(void 0, void 0, void 0, function () {
         var err_1;
         return __generator(this, function (_a) {
@@ -134,11 +126,6 @@ var useEntitySetup = function (_a) {
             }
         });
     }); };
-    /**
-     * Validates the attribute name using Yup schema
-     * @param name - The attribute name to validate
-     * @returns boolean indicating if validation passed
-     */
     var validateAttributeName = function (name) { return __awaiter(void 0, void 0, void 0, function () {
         var err_2;
         return __generator(this, function (_a) {
@@ -162,11 +149,6 @@ var useEntitySetup = function (_a) {
             }
         });
     }); };
-    /**
-     * Handles entity selection, either custom or predefined
-     * Updates related states based on selection
-     * @param selected - The selected entity name or "custom"
-     */
     var handleEntitySelect = function (selected) {
         var _a;
         setSelectedEntity(selected);
@@ -186,10 +168,6 @@ var useEntitySetup = function (_a) {
             setAttributes([]);
         }
     };
-    /**
-     * Handles entity name input changes and validates the new value
-     * @param e - Change event from input field
-     */
     var handleEntityNameChange = function (e) { return __awaiter(void 0, void 0, void 0, function () {
         var value;
         return __generator(this, function (_a) {
@@ -204,10 +182,6 @@ var useEntitySetup = function (_a) {
             }
         });
     }); };
-    /**
-     * Handles attribute name input changes and validates the new value
-     * @param e - Change event from input field
-     */
     var handleAttributeNameChange = function (e) { return __awaiter(void 0, void 0, void 0, function () {
         var value;
         return __generator(this, function (_a) {
@@ -222,11 +196,10 @@ var useEntitySetup = function (_a) {
             }
         });
     }); };
-    /**
-     * Handles changes to attribute constraints
-     * Includes validation for primary key constraints
-     * @param e - Change event from select field
-     */
+    var handleDefaultValueChange = function (e) {
+        var value = e.target.value;
+        setCurrentAttribute(__assign(__assign({}, currentAttribute), { defaultValue: value }));
+    };
     var handleConstraintsChange = function (e) {
         var value = e.target.value;
         if (value === 'primary key') {
@@ -242,41 +215,74 @@ var useEntitySetup = function (_a) {
         }
         setCurrentAttribute(__assign(__assign({}, currentAttribute), { constraints: value ? [value] : [] }));
     };
-    /**
-     * Handles changes to attribute validations
-     * Currently supports required/optional validation
-     * @param e - Change event from select field
-     */
     var handleValidationsChange = function (e) {
         var value = e.target.value;
         setCurrentAttribute(__assign(__assign({}, currentAttribute), { validations: { required: value === 'required' } }));
     };
-    /**
-     * Handles adding or updating attributes
-     * Validates attribute data before adding/updating
-     * Shows success/error messages via toast
-     */
     var handleAddAttribute = function () { return __awaiter(void 0, void 0, void 0, function () {
-        var nameValid, hasPrimaryKeyAlready;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        var duplicateAttr, trimmedAttribute_1, dataTypeProps, limits_1, type, nameValid, hasPrimaryKeyAlready, error_1;
+        var _a;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
                 case 0:
+                    _b.trys.push([0, 2, , 3]);
+                    duplicateAttr = attributes.find(function (attr, index) {
+                        return attr.name.toLowerCase() === currentAttribute.name.toLowerCase() &&
+                            index !== editingIndex;
+                    });
+                    if (duplicateAttr) {
+                        react_hot_toast_1.default.error("Attribute name \"".concat(currentAttribute.name, "\" already exists!"));
+                        return [2 /*return*/];
+                    }
                     setErrors({});
-                    if (!currentAttribute.name) {
+                    trimmedAttribute_1 = __assign(__assign({}, currentAttribute), { name: currentAttribute.name.trim(), defaultValue: ((_a = currentAttribute.defaultValue) === null || _a === void 0 ? void 0 : _a.trim()) || '' });
+                    if (!trimmedAttribute_1.name) {
                         setErrors(function (prev) { return (__assign(__assign({}, prev), { attributeName: "Attribute name is required" })); });
                         return [2 /*return*/];
                     }
-                    if (!currentAttribute.dataType) {
+                    if (!trimmedAttribute_1.dataType) {
                         setErrors(function (prev) { return (__assign(__assign({}, prev), { dataType: "Data type is required" })); });
                         return [2 /*return*/];
                     }
-                    return [4 /*yield*/, validateAttributeName(currentAttribute.name)];
+                    dataTypeProps = dataTypeProperties_1.dataTypeProperties[trimmedAttribute_1.dataType.toLowerCase()];
+                    // Validate size
+                    if (dataTypeProps === null || dataTypeProps === void 0 ? void 0 : dataTypeProps.needsSize) {
+                        if (!trimmedAttribute_1.size) {
+                            setErrors(function (prev) { return (__assign(__assign({}, prev), { size: "Size is required for ".concat(trimmedAttribute_1.dataType) })); });
+                            return [2 /*return*/];
+                        }
+                        if (trimmedAttribute_1.size <= 0) {
+                            setErrors(function (prev) { return (__assign(__assign({}, prev), { size: 'Size must be greater than 0' })); });
+                            return [2 /*return*/];
+                        }
+                    }
+                    // Validate precision
+                    if (dataTypeProps === null || dataTypeProps === void 0 ? void 0 : dataTypeProps.needsPrecision) {
+                        if (!trimmedAttribute_1.precision && trimmedAttribute_1.precision !== 0) {
+                            setErrors(function (prev) { return (__assign(__assign({}, prev), { precision: "Precision is required for ".concat(trimmedAttribute_1.dataType) })); });
+                            return [2 /*return*/];
+                        }
+                        limits_1 = dataTypeProperties_2.precisionLimits[trimmedAttribute_1.dataType.toLowerCase()];
+                        type = trimmedAttribute_1.dataType.toLowerCase();
+                        // Special handling for decimal and numeric types
+                        if (type === 'decimal' || type === 'numeric') {
+                            if (trimmedAttribute_1.precision < 0 || trimmedAttribute_1.precision > limits_1.max) {
+                                setErrors(function (prev) { return (__assign(__assign({}, prev), { precision: "Precision for ".concat(trimmedAttribute_1.dataType, " must be between 0 and ").concat(limits_1.max) })); });
+                                return [2 /*return*/];
+                            }
+                        }
+                        else if (limits_1 && (trimmedAttribute_1.precision < limits_1.min || trimmedAttribute_1.precision > limits_1.max)) {
+                            setErrors(function (prev) { return (__assign(__assign({}, prev), { precision: "Precision for ".concat(trimmedAttribute_1.dataType, " must be between ").concat(limits_1.min, " and ").concat(limits_1.max) })); });
+                            return [2 /*return*/];
+                        }
+                    }
+                    return [4 /*yield*/, validateAttributeName(trimmedAttribute_1.name)];
                 case 1:
-                    nameValid = _a.sent();
+                    nameValid = _b.sent();
                     if (!nameValid) {
                         return [2 /*return*/];
                     }
-                    if (currentAttribute.constraints.includes('PRIMARY KEY')) {
+                    if (trimmedAttribute_1.constraints.includes('PRIMARY KEY')) {
                         hasPrimaryKeyAlready = attributes.some(function (attr, idx) {
                             if (editingIndex !== null && idx === editingIndex)
                                 return false;
@@ -288,17 +294,31 @@ var useEntitySetup = function (_a) {
                     }
                     if (editingIndex !== null) {
                         setAttributes(function (prev) { return prev.map(function (attr, index) {
-                            return index === editingIndex ? currentAttribute : attr;
+                            return index === editingIndex ? trimmedAttribute_1 : attr;
                         }); });
                         setEditingIndex(null);
                         react_hot_toast_1.default.success("Attribute updated successfully!");
                     }
                     else {
-                        setAttributes(function (prev) { return __spreadArray(__spreadArray([], prev, true), [currentAttribute], false); });
+                        setAttributes(function (prev) { return __spreadArray(__spreadArray([], prev, true), [trimmedAttribute_1], false); });
                         react_hot_toast_1.default.success("Attribute added successfully!");
                     }
                     setCurrentAttribute(utilstableform_1.initialAttributeState);
-                    return [2 /*return*/];
+                    return [3 /*break*/, 3];
+                case 2:
+                    error_1 = _b.sent();
+                    if (error_1 instanceof yup.ValidationError) {
+                        react_hot_toast_1.default.error(error_1.message);
+                    }
+                    else if (error_1 instanceof Error) {
+                        react_hot_toast_1.default.error("Failed to add attribute: ".concat(error_1.message));
+                    }
+                    else {
+                        react_hot_toast_1.default.error("An unexpected error occurred while adding the attribute");
+                    }
+                    console.error("Error in handleAddAttribute:", error_1);
+                    return [3 /*break*/, 3];
+                case 3: return [2 /*return*/];
             }
         });
     }); };
@@ -308,6 +328,7 @@ var useEntitySetup = function (_a) {
         handleEntitySelect: handleEntitySelect,
         handleEntityNameChange: handleEntityNameChange,
         handleAttributeNameChange: handleAttributeNameChange,
+        handleDefaultValueChange: handleDefaultValueChange,
         handleConstraintsChange: handleConstraintsChange,
         handleValidationsChange: handleValidationsChange,
         handleAddAttribute: handleAddAttribute

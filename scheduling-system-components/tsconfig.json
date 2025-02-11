@@ -1,6 +1,9 @@
 {
   "compilerOptions": {
     "target": "es5",
+    "paths": {
+      "@/*": ["./src/*"]
+},
     "lib": ["dom", "es2015"],
     "jsx": "react-jsx",
     "module": "commonjs",

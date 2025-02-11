@@ -6,6 +6,7 @@ interface EntityPreviewProps {
     handleSaveEntity: () => void;
     resetForm: () => void;
     setEditingIndex: React.Dispatch<React.SetStateAction<number | null>>;
+    entityName: string;
 }
-export default function EntityPreview({ attributes, setAttributes, setCurrentAttribute, handleSaveEntity, resetForm, setEditingIndex }: EntityPreviewProps): import("react/jsx-runtime").JSX.Element;
+export default function EntityPreview({ attributes, setAttributes, setCurrentAttribute, handleSaveEntity, resetForm, setEditingIndex, entityName }: EntityPreviewProps): import("react/jsx-runtime").JSX.Element;
 export {};

@@ -13,6 +13,7 @@ export interface Attribute {
   constraints: string[]; // SQL constraints (e.g., PRIMARY KEY, NOT NULL)
   defaultValue: string | null; // Default value for the column
   validations: ValidationRules; // Frontend validation rules
+  options?: Array<{ value: string; label: string }>;
 }
 
 // Interface for complete entity/table definition

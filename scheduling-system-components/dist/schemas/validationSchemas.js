@@ -37,26 +37,32 @@ exports.precisionSchema = exports.sizeSchema = exports.dataTypeSchema = exports.
 var yup = __importStar(require("yup"));
 var dataTypeProperties_1 = require("../constants/dataTypeProperties");
 var helpers_1 = require("../helpers/helpers");
-// Validation schema for entity name
+// Updated validation schema for entity name
 exports.entityNameSchema = yup.string()
     .required("Entity name is required")
+    .transform(function (value) { return value === null || value === void 0 ? void 0 : value.trim(); })
     .test('no-spaces', 'Spaces are not allowed in entity name', function (value) {
     return value ? !value.includes(' ') : true;
 })
-    .matches(/^[a-zA-Z_][a-zA-Z0-9_]*$/, "Entity name must start with a letter or underscore and can only contain letters, numbers, and underscores")
+    .matches(/^[a-zA-Z_][a-zA-Z0-9_-]*$/, "Entity name must start with a letter or underscore and can only contain letters, numbers, underscores, and hyphens")
+    .test('min-letters', 'Entity name must contain at least 2 alphabetic characters', function (value) {
+    return value ? (value.match(/[a-zA-Z]/g) || []).length >= 2 : true;
+})
     .min(2, "Entity name must be at least 2 characters")
-    .max(50, "Entity name must not exceed 50 characters")
-    .trim();
-// Validation schema for attribute name
+    .max(50, "Entity name must not exceed 50 characters");
+// Updated validation schema for attribute name
 exports.attributeNameSchema = yup.string()
     .required("Attribute name is required")
+    .transform(function (value) { return value === null || value === void 0 ? void 0 : value.trim(); })
     .test('no-spaces', 'Spaces are not allowed in attribute name', function (value) {
     return value ? !value.includes(' ') : true;
 })
-    .matches(/^[a-zA-Z_][a-zA-Z0-9_]*$/, "Attribute name must start with a letter or underscore and can only contain letters, numbers, and underscores")
+    .matches(/^[a-zA-Z_][a-zA-Z0-9_-]*$/, "Attribute name must start with a letter or underscore and can only contain letters, numbers, underscores, and hyphens")
+    .test('min-letters', 'Attribute name must contain at least 2 alphabetic characters', function (value) {
+    return value ? (value.match(/[a-zA-Z]/g) || []).length >= 2 : true;
+})
     .min(2, "Attribute name must be at least 2 characters")
-    .max(50, "Attribute name must not exceed 50 characters")
-    .trim();
+    .max(50, "Attribute name must not exceed 50 characters");
 // New schemas
 exports.dataTypeSchema = yup.string()
     .required("Data type is required")

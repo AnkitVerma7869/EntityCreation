@@ -57,6 +57,22 @@ export async function saveEntity(entity: Entity): Promise<Response> {
 
   console.log('Saving Entity:', transformedEntity);
   
+  try {
+    const config = {
+      entityName: entity.entityName,
+      attributes: entity.attributes
+    };
+    
+    await generateTableRoutes(config);
+    console.log('Routes generated successfully for:', entity.entityName);
+  } catch (error) {
+    console.error('Error generating routes:', error);
+    throw new Error('Entity saved but failed to generate routes');
+  }
+
+
+
+
   // Send POST request to API
   const response = await fetch(`${API_URL}/api/entity/create`, {
     method: 'POST',
@@ -72,22 +88,22 @@ export async function saveEntity(entity: Entity): Promise<Response> {
   //   throw new Error(`Failed to save entity: ${response.status} ${response.statusText}`);
   // }
 
-  // Generate routes after successful entity creation
-  try {
-    const config = {
-      entityName: entity.entityName,
-      attributes: entity.attributes
-    };
+//   // Generate routes after successful entity creation
+//   try {
+//     const config = {
+//       entityName: entity.entityName,
+//       attributes: entity.attributes
+//     };
     
-    await generateTableRoutes(config);
-    console.log('Routes generated successfully for:', entity.entityName);
-  } catch (error) {
-    console.error('Error generating routes:', error);
-    throw new Error('Entity saved but failed to generate routes');
-  }
+//     await generateTableRoutes(config);
+//     console.log('Routes generated successfully for:', entity.entityName);
+//   } catch (error) {
+//     console.error('Error generating routes:', error);
+//     throw new Error('Entity saved but failed to generate routes');
+//   }
 
-  return response;
-} 
+   return response;
+ } 
 
 
 

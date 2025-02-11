@@ -22,7 +22,6 @@ exports.dataTypeProperties = {
     real: { needsSize: false, needsPrecision: false },
     'double precision': { needsSize: false, needsPrecision: false },
     serial: { needsSize: false, needsPrecision: false },
-    // Other types
     boolean: { needsSize: false, needsPrecision: false },
     bytea: { needsSize: false, needsPrecision: false },
     enum: { needsSize: false, needsPrecision: false },
@@ -50,8 +49,8 @@ exports.maxSizes = {
     varchar: 65535, // Maximum size for VARCHAR in most databases
 };
 exports.precisionLimits = {
-    decimal: { min: 1, max: 1000 },
-    numeric: { min: 1, max: 1000 },
+    decimal: { min: 0, max: 1000 },
+    numeric: { min: 0, max: 1000 },
     timestamp: { min: 0, max: 6 },
     time: { min: 0, max: 6 },
     interval: { min: 0, max: 6 }

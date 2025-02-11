@@ -13,6 +13,8 @@ interface EntitySetupProps {
     setSelectedEntity: (entity: string) => void;
     editingIndex: number | null;
     setEditingIndex: React.Dispatch<React.SetStateAction<number | null>>;
+    handleSaveEntity: () => void;
+    resetForm: () => void;
 }
 export default function EntitySetup(props: EntitySetupProps): import("react/jsx-runtime").JSX.Element;
 export {};

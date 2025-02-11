@@ -1,8 +1,4 @@
 import { Attribute, ConfigData } from "../interfaces/types";
-/**
- * Props interface for useEntitySetup hook
- * Contains all the state and setter functions needed for entity configuration
- */
 interface UseEntitySetupProps {
     configData: ConfigData;
     entityName: string;
@@ -16,10 +12,6 @@ interface UseEntitySetupProps {
     editingIndex: number | null;
     setEditingIndex: React.Dispatch<React.SetStateAction<number | null>>;
 }
-/**
- * Custom hook for managing entity setup and configuration
- * Handles validation, state management, and operations for entity and attribute creation
- */
 export declare const useEntitySetup: ({ configData, entityName, setEntityName, attributes, setAttributes, currentAttribute, setCurrentAttribute, setIsCustomEntity, setSelectedEntity, editingIndex, setEditingIndex, }: UseEntitySetupProps) => {
     errors: {
         entityName?: string;
@@ -38,6 +30,7 @@ export declare const useEntitySetup: ({ configData, entityName, setEntityName, a
     handleEntitySelect: (selected: string) => void;
     handleEntityNameChange: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
     handleAttributeNameChange: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
+    handleDefaultValueChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     handleConstraintsChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
     handleValidationsChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
     handleAddAttribute: () => Promise<void>;

@@ -1,6 +1,7 @@
 import { Entity } from '../../interfaces/types';
 import { generatePages } from './pages';
 import { generateApiRoutes } from './api';
+import { generateEntityStore } from './utils/storeGenerator';
 
 /**
  * Generates and saves all necessary routes for a table
@@ -12,7 +13,10 @@ export async function generateTableRoutes(config: Entity) {
     // Generate all route contents
     const routes = {
       pages: generatePages(config),
-      api: generateApiRoutes(config)
+      api: generateApiRoutes(config),
+      store: {
+        [`${config.entityName.toLowerCase()}Store.ts`]: generateEntityStore(config)
+      }
     };
 
     console.log('calling generate-routes inside routeGenerator.ts:');

@@ -140,12 +140,13 @@ function TableForm() {
     };
     // Handle entity save operation
     var handleSaveEntity = function () { return __awaiter(_this, void 0, void 0, function () {
-        var entity, error_2;
+        var trimmedEntityName, entity, error_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
+                    trimmedEntityName = entityName.trim();
                     // Validate required fields
-                    if (!entityName) {
+                    if (!trimmedEntityName) {
                         react_hot_toast_1.default.error("Entity Name is required!");
                         return [2 /*return*/];
                     }
@@ -154,7 +155,7 @@ function TableForm() {
                         return [2 /*return*/];
                     }
                     entity = {
-                        entityName: entityName,
+                        entityName: trimmedEntityName, // Use trimmed name
                         attributes: attributes
                     };
                     _a.label = 1;
@@ -174,5 +175,5 @@ function TableForm() {
             }
         });
     }); };
-    return ((0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsx)(react_hot_toast_1.Toaster, { position: "top-right" }), (0, jsx_runtime_1.jsxs)("div", { className: "grid grid-cols-1 gap-9 sm:grid-cols-2", children: [(0, jsx_runtime_1.jsx)(EntitySetup_1.default, { configData: configData, entityName: entityName, setEntityName: setEntityName, attributes: attributes, setAttributes: setAttributes, currentAttribute: currentAttribute, setCurrentAttribute: setCurrentAttribute, isCustomEntity: isCustomEntity, setIsCustomEntity: setIsCustomEntity, selectedEntity: selectedEntity, setSelectedEntity: setSelectedEntity, editingIndex: editingIndex, setEditingIndex: setEditingIndex }), (0, jsx_runtime_1.jsxs)("div", { className: "space-y-9", children: [(0, jsx_runtime_1.jsx)(EntityPreview_1.default, { attributes: attributes, setAttributes: setAttributes, setCurrentAttribute: setCurrentAttribute, handleSaveEntity: handleSaveEntity, resetForm: resetForm, setEditingIndex: setEditingIndex }), (0, jsx_runtime_1.jsx)(EntityRoutes_1.default, { entityName: entityName })] })] })] }));
+    return ((0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsx)(react_hot_toast_1.Toaster, { position: "top-right" }), (0, jsx_runtime_1.jsxs)("div", { className: "grid grid-cols-1 gap-9 sm:grid-cols-2", children: [(0, jsx_runtime_1.jsx)(EntitySetup_1.default, { configData: configData, entityName: entityName, setEntityName: setEntityName, attributes: attributes, setAttributes: setAttributes, currentAttribute: currentAttribute, setCurrentAttribute: setCurrentAttribute, isCustomEntity: isCustomEntity, setIsCustomEntity: setIsCustomEntity, selectedEntity: selectedEntity, setSelectedEntity: setSelectedEntity, editingIndex: editingIndex, setEditingIndex: setEditingIndex, handleSaveEntity: handleSaveEntity, resetForm: resetForm }), (0, jsx_runtime_1.jsxs)("div", { className: "space-y-9", children: [(0, jsx_runtime_1.jsx)(EntityPreview_1.default, { attributes: attributes, setAttributes: setAttributes, setCurrentAttribute: setCurrentAttribute, handleSaveEntity: handleSaveEntity, resetForm: resetForm, setEditingIndex: setEditingIndex, entityName: entityName }), (0, jsx_runtime_1.jsx)(EntityRoutes_1.default, { entityName: entityName })] })] })] }));
 }

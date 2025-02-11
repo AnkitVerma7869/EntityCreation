@@ -10,6 +10,10 @@ export interface Attribute {
     constraints: string[];
     defaultValue: string | null;
     validations: ValidationRules;
+    options?: Array<{
+        value: string;
+        label: string;
+    }>;
 }
 export interface Entity {
     entityName: string;
