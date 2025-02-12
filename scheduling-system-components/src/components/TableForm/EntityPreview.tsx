@@ -13,6 +13,7 @@ interface EntityPreviewProps {
   resetForm: () => void;           // Function to reset form
   setEditingIndex: React.Dispatch<React.SetStateAction<number | null>>;
   entityName: string;
+  showToast: (message: string, type: 'success' | 'error') => void;
 }
 
 export default function EntityPreview({
@@ -22,7 +23,8 @@ export default function EntityPreview({
   handleSaveEntity,
   resetForm,
   setEditingIndex,
-  entityName
+  entityName,
+  showToast
 }: EntityPreviewProps) {
   // Handle editing of an existing attribute
   const handleEditAttribute = (index: number) => {
@@ -38,7 +40,7 @@ export default function EntityPreview({
     
     // Check if deleting a primary key
     if (attributeToDelete.constraints.includes('PRIMARY KEY')) {
-      toast.error("Warning: Deleting the primary key attribute!");
+      showToast("Warning: Deleting the primary key attribute!", 'error');
     }
     setAttributes((prev: Attribute[]) => prev.filter((_, i) => i !== index));
   };
@@ -54,13 +56,13 @@ export default function EntityPreview({
         .filter((name, index, arr) => arr.indexOf(name) !== index);
       
       if (duplicates.length > 0) {
-        toast.error(`Duplicate attribute names found: ${duplicates.join(', ')}`);
+        showToast(`Duplicate attribute names found: ${duplicates.join(', ')}`, 'error');
         return;
       }
 
       // Check if there are any attributes
       if (attributes.length === 0) {
-        toast.error("Please add at least one attribute");
+        showToast("Please add at least one attribute", 'error');
         return;
       }
 
@@ -68,7 +70,7 @@ export default function EntityPreview({
       handleSaveEntity();
     } catch (error) {
       if (error instanceof Error) {
-        toast.error(error.message);
+        showToast(error.message, 'error');
       }
     }
   };
@@ -96,6 +98,12 @@ export default function EntityPreview({
                 <th className="px-4 py-2 font-medium text-black dark:text-white whitespace-nowrap">
                   Constraints
                 </th>
+                <th className="px-2 py-2 font-medium text-black dark:text-white whitespace-nowrap">
+                  Editable
+                </th>
+                <th className="px-2 py-2 font-medium text-black dark:text-white whitespace-nowrap">
+                  Sortable
+                </th>
                 <th className="px-4 py-2 font-medium text-black dark:text-white whitespace-nowrap">
                   Actions
                 </th>
@@ -115,6 +123,36 @@ export default function EntityPreview({
                   </td>
                   <td className="border-b border-[#eee] px-4 py-3 dark:border-strokedark whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]">
                     {formatArrayToString(attr.constraints)}
+                  </td>
+                  <td className="border-b border-[#eee] px-2 py-3 dark:border-strokedark text-center">
+                    <input
+                      type="checkbox"
+                      checked={attr.isEditable}
+                      onChange={(e) => {
+                        const updatedAttributes = [...attributes];
+                        updatedAttributes[index] = {
+                          ...attr,
+                          isEditable: e.target.checked
+                        };
+                        setAttributes(updatedAttributes);
+                      }}
+                      className="form-checkbox h-4 w-4 text-primary rounded border-stroke dark:border-strokedark"
+                    />
+                  </td>
+                  <td className="border-b border-[#eee] px-2 py-3 dark:border-strokedark text-center">
+                    <input
+                      type="checkbox"
+                      checked={attr.sortable}
+                      onChange={(e) => {
+                        const updatedAttributes = [...attributes];
+                        updatedAttributes[index] = {
+                          ...attr,
+                          sortable: e.target.checked
+                        };
+                        setAttributes(updatedAttributes);
+                      }}
+                      className="form-checkbox h-4 w-4 text-primary rounded border-stroke dark:border-strokedark"
+                    />
                   </td>
                   <td className="border-b border-[#eee] px-4 py-3 dark:border-strokedark">
                     <div className="flex items-center space-x-2">

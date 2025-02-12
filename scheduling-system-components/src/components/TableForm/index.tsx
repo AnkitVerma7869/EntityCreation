@@ -7,6 +7,24 @@ import EntitySetup from "./EntitySetup";
 import EntityPreview from "./EntityPreview";
 import EntityRoutes from "./EntityRoutes";
 
+// Custom toast function to ensure only one toast at a time
+const showToast = (message: string, type: 'success' | 'error') => {
+  // Dismiss all existing toasts first
+  toast.dismiss();
+  // Show new toast
+  if (type === 'success') {
+    toast.success(message, {
+      duration: 3000,
+      position: 'top-right',
+    });
+  } else {
+    toast.error(message, {
+      duration: 3000,
+      position: 'top-right',
+    });
+  }
+};
+
 // Loading component shown while fetching initial data
 const LoadingState = () => (
   <div className="flex items-center justify-center min-h-screen">
@@ -21,7 +39,8 @@ export default function TableForm() {
     entities: {},
     dataTypes: [],
     constraints: [],
-    validations: []
+    validations: [],
+    inputTypes: {}
   });
 
   // Form state management
@@ -40,6 +59,7 @@ export default function TableForm() {
         setConfigData(data);
       } catch (error) {
         console.error('Error loading configuration:', error);
+        showToast('Error loading configuration', 'error');
       } finally {
         setLoading(false);
       }
@@ -69,54 +89,57 @@ export default function TableForm() {
     
     // Validate required fields
     if (!trimmedEntityName) {
-      toast.error("Entity Name is required!");
+      showToast("Entity Name is required!", 'error');
       return;
     }
 
     if (attributes.length === 0) {
-      toast.error("At least one attribute is required!");
+      showToast("At least one attribute is required!", 'error');
       return;
     }
 
     const entity: Entity = {
-      entityName: trimmedEntityName,  // Use trimmed name
+      entityName: trimmedEntityName,
       attributes
     };
 
     try {
       await saveEntity(entity);
-      toast.success("Entity saved successfully!");
+      showToast("Entity saved successfully!", 'success');
       resetForm();
     } catch (error) {
-      toast.error("Failed to save entity. Please try again.");
+      showToast("Failed to save entity. Please try again.", 'error');
     }
   };
 
   return (
     <div>
-      <Toaster position="top-right"/>
-      <div className="grid grid-cols-1 gap-9 sm:grid-cols-2">
-        {/* Left Column - Entity Setup Form */}
-        <EntitySetup
-          configData={configData}
-          entityName={entityName}
-          setEntityName={setEntityName}
-          attributes={attributes}
-          setAttributes={setAttributes}
-          currentAttribute={currentAttribute}
-          setCurrentAttribute={setCurrentAttribute}
-          isCustomEntity={isCustomEntity}
-          setIsCustomEntity={setIsCustomEntity}
-          selectedEntity={selectedEntity}
-          setSelectedEntity={setSelectedEntity}
-          editingIndex={editingIndex}
-          setEditingIndex={setEditingIndex}
-          handleSaveEntity={handleSaveEntity}
-          resetForm={resetForm}
-        />
+      <Toaster />
+      <div className="grid grid-cols-12 gap-4">
+        {/* Left Column - Entity Setup Form - Now 5 columns */}
+        <div className="col-span-4">
+          <EntitySetup
+            configData={configData}
+            entityName={entityName}
+            setEntityName={setEntityName}
+            attributes={attributes}
+            setAttributes={setAttributes}
+            currentAttribute={currentAttribute}
+            setCurrentAttribute={setCurrentAttribute}
+            isCustomEntity={isCustomEntity}
+            setIsCustomEntity={setIsCustomEntity}
+            selectedEntity={selectedEntity}
+            setSelectedEntity={setSelectedEntity}
+            editingIndex={editingIndex}
+            setEditingIndex={setEditingIndex}
+            handleSaveEntity={handleSaveEntity}
+            resetForm={resetForm}
+            showToast={showToast}
+          />
+        </div>
 
-        {/* Right Column - Preview and API Routes */}
-        <div className="space-y-9">
+        {/* Right Column - Preview and API Routes - Now 7 columns */}
+        <div className="col-span-8 space-y-4">
           <EntityPreview
             attributes={attributes}
             setAttributes={setAttributes}
@@ -125,6 +148,7 @@ export default function TableForm() {
             resetForm={resetForm}
             setEditingIndex={setEditingIndex}
             entityName={entityName}
+            showToast={showToast}
           />
           
           <EntityRoutes entityName={entityName} />

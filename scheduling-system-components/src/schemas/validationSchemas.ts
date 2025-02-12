@@ -107,4 +107,18 @@ export const precisionSchema = yup.number()
     }
 
     return true;
-  }); 
+  });
+
+// Add new schema for enum values validation
+export const enumValuesSchema = yup.array().test(
+  'unique-enum-values',
+  'Enum values must be unique (case-insensitive)',
+  function(values?: Array<{ value: string; label: string }>) {
+    if (!values || values.length === 0) return true;
+
+    const lowercaseValues = values.map(v => v.value.toLowerCase());
+    const uniqueValues = new Set(lowercaseValues);
+
+    return uniqueValues.size === values.length;
+  }
+); 

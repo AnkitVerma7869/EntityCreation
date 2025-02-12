@@ -19,7 +19,26 @@ interface UseEntitySetupProps {
   setSelectedEntity: (entity: string) => void;
   editingIndex: number | null;
   setEditingIndex: React.Dispatch<React.SetStateAction<number | null>>;
+  showToast: (message: string, type: 'success' | 'error') => void;
 }
+
+// Initial attribute state
+const initialAttribute: Attribute = {
+  name: '',
+  dataType: '',
+  size: null,
+  precision: null,
+  constraints: [],
+  defaultValue: null,
+  validations: {},
+  options: [],
+  min: null,
+  max: null,
+  step: null,
+  htmlType: '',
+  isEditable: false,
+  sortable: false
+};
 
 export const useEntitySetup = ({
   configData,
@@ -33,6 +52,7 @@ export const useEntitySetup = ({
   setSelectedEntity,
   editingIndex,
   setEditingIndex,
+  showToast
 }: UseEntitySetupProps) => {
   const [errors, setErrors] = useState<{
     entityName?: string;
@@ -80,7 +100,13 @@ export const useEntitySetup = ({
     } else if (selected) {
       setIsCustomEntity(false);
       setEntityName(selected);
-      setAttributes(configData.entities[selected]?.attributes || []);
+      const existingAttributes = configData.entities[selected]?.attributes || [];
+      const attributesWithDefaults = existingAttributes.map((attr: Attribute) => ({
+        ...attr,
+        isEditable: true,
+        sortable: true
+      }));
+      setAttributes(attributesWithDefaults);
     } else {
       setIsCustomEntity(false);
       setEntityName("");
@@ -115,7 +141,7 @@ export const useEntitySetup = ({
       });
       
       if (hasPrimaryKeyAlready) {
-        toast.error("Only one PRIMARY KEY constraint is allowed per table!");
+        showToast("Only one PRIMARY KEY constraint is allowed per table!", 'error');
         return;
       }
     }
@@ -143,7 +169,7 @@ export const useEntitySetup = ({
       );
 
       if (duplicateAttr) {
-        toast.error(`Attribute name "${currentAttribute.name}" already exists!`);
+        showToast(`Attribute name "${currentAttribute.name}" already exists!`, 'error');
         return;
       }
 
@@ -152,7 +178,9 @@ export const useEntitySetup = ({
       const trimmedAttribute = {
         ...currentAttribute,
         name: currentAttribute.name.trim(),
-        defaultValue: currentAttribute.defaultValue?.trim() || ''
+        defaultValue: currentAttribute.defaultValue?.trim() || '',
+        isEditable: currentAttribute.isEditable ?? true,
+        sortable: currentAttribute.sortable ?? true
       };
 
       if (!trimmedAttribute.name) {
@@ -162,6 +190,23 @@ export const useEntitySetup = ({
 
       if (!trimmedAttribute.dataType) {
         setErrors(prev => ({ ...prev, dataType: "Data type is required" }));
+        return;
+      }
+
+      // Validate validation values
+      const validationErrors: string[] = [];
+      Object.entries(trimmedAttribute.validations).forEach(([key, value]) => {
+        const validation = configData.validations
+          .flatMap(g => g.validations)
+          .find(v => v.name === key);
+
+        if (validation?.hasValue && (value === '' || value === null || value === undefined)) {
+          validationErrors.push(`Value is required for ${validation.label} validation`);
+        }
+      });
+
+      if (validationErrors.length > 0) {
+        showToast(validationErrors[0], 'error');
         return;
       }
 
@@ -227,20 +272,20 @@ export const useEntitySetup = ({
           index === editingIndex ? trimmedAttribute : attr
         ));
         setEditingIndex(null);
-        toast.success("Attribute updated successfully!");
+        showToast("Attribute updated successfully!", 'success');
       } else {
         setAttributes(prev => [...prev, trimmedAttribute]);
-        toast.success("Attribute added successfully!");
+        showToast("Attribute added successfully!", 'success');
       }
 
-      setCurrentAttribute(initialAttributeState);
+      setCurrentAttribute(initialAttribute);
     } catch (error) {
       if (error instanceof yup.ValidationError) {
-        toast.error(error.message);
+        showToast(error.message, 'error');
       } else if (error instanceof Error) {
-        toast.error(`Failed to add attribute: ${error.message}`);
+        showToast(`Failed to add attribute: ${error.message}`, 'error');
       } else {
-        toast.error("An unexpected error occurred while adding the attribute");
+        showToast("An unexpected error occurred while adding the attribute", 'error');
       }
       console.error("Error in handleAddAttribute:", error);
     }

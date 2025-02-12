@@ -46,7 +46,11 @@ export async function saveEntity(entity: Entity): Promise<Response> {
       precision: attr.precision,
       constraints: attr.constraints,
       defaultValue: attr.defaultValue || "",
+      enumValues: attr.dataType.toLowerCase() === 'enum' ? 
+        attr.options?.map(opt => typeof opt === 'string' ? opt : opt.value) : 
+        undefined,
       validations: {
+        ...attr.validations,
         required: attr.validations.required || 
                  attr.constraints?.includes('not null') || 
                  attr.constraints?.includes('primary key') || 
@@ -69,9 +73,6 @@ export async function saveEntity(entity: Entity): Promise<Response> {
     console.error('Error generating routes:', error);
     throw new Error('Entity saved but failed to generate routes');
   }
-
-
-
 
   // Send POST request to API
   const response = await fetch(`${API_URL}/api/entity/create`, {

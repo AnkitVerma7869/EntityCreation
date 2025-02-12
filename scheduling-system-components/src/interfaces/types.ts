@@ -1,4 +1,18 @@
 // Interface for validation rules
+export interface ValidationRule {
+  name: string;
+  label: string;
+  hasValue?: boolean;
+  valueType?: 'string' | 'number' | 'date';
+  isArray?: boolean;
+  value?: any;
+}
+
+export interface ValidationGroup {
+  group: string;
+  validations: ValidationRule[];
+}
+
 export interface ValidationRules {
   required?: boolean;
   [key: string]: any;  // Allow additional validation rules
@@ -6,14 +20,20 @@ export interface ValidationRules {
 
 // Interface for table column attributes
 export interface Attribute {
-  name: string;          // Column name
-  dataType: string;      // SQL data type
-  size: number | null;   // Size/length for types that support it
-  precision: number | null; // Decimal precision
-  constraints: string[]; // SQL constraints (e.g., PRIMARY KEY, NOT NULL)
-  defaultValue: string | null; // Default value for the column
-  validations: ValidationRules; // Frontend validation rules
+  name: string;          
+  dataType: string;    
+  size: number | null;   
+  precision: number | null; 
+  constraints: string[]; 
+  defaultValue: string | null; 
+  validations: ValidationRules; 
   options?: Array<{ value: string; label: string }>;
+  min?: number | null;
+  max?: number | null;
+  step?: number | null;
+  htmlType?: string;
+  isEditable?: boolean;
+  sortable?: boolean;
 }
 
 // Interface for complete entity/table definition
@@ -27,5 +47,18 @@ export interface ConfigData {
   entities: Record<string, any>;  // Existing entities
   dataTypes: string[];           // Available SQL data types
   constraints: string[];         // Available SQL constraints
-  validations: string[];        // Available validation rules
+  validations: ValidationGroup[];  // Available validation rules grouped by type
+  inputTypes: {
+    [key: string]: {
+      dataType: string;
+      size?: number;
+      precision?: number;
+      htmlType: string;
+      options?: Array<{ value: string; label: string }>;
+      min?: number;
+      max?: number;
+      step?: number;
+      isDataTypeFixed?: boolean;
+    }
+  };
 } 
