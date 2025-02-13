@@ -4,26 +4,16 @@ exports.generatePackageImports = generatePackageImports;
 function getFieldSpecificPackages(attributes) {
     var packages = [];
     attributes.forEach(function (attr) {
-        switch (attr.dataType.toLowerCase()) {
+        switch (attr.inputType.toLowerCase() || attr.dataType.toLowerCase()) {
             case 'date':
                 packages.push({
-                    name: '@mui/x-date-pickers',
-                    version: '^6.18.0',
+                    name: 'flatpickr',
+                    version: '^4.6.13',
                     isRequired: true
                 });
                 packages.push({
-                    name: '@emotion/react',
-                    version: '^11.11.0',
-                    isRequired: true
-                });
-                packages.push({
-                    name: '@emotion/styled',
-                    version: '^11.11.0',
-                    isRequired: true
-                });
-                packages.push({
-                    name: 'dayjs',
-                    version: '^1.11.10',
+                    name: '@types/flatpickr',
+                    version: '^3.1.2',
                     isRequired: true
                 });
                 break;
@@ -62,7 +52,7 @@ function getFieldSpecificPackages(attributes) {
             if (attr.validations.required || attr.validations.pattern || attr.validations.min || attr.validations.max) {
                 packages.push({
                     name: 'yup',
-                    version: '^1.0.0',
+                    version: '^1.3.2',
                     isRequired: true
                 });
                 packages.push({
@@ -99,30 +89,52 @@ function generatePackageImports(config) {
             version: '^5.14.0',
             isRequired: true
         },
-        '@mui/x-data-grid': {
-            name: '@mui/x-data-grid',
-            version: '^6.18.0',
+        '@emotion/react': {
+            name: '@emotion/react',
+            version: '^11.11.0',
+            isRequired: true
+        },
+        '@emotion/styled': {
+            name: '@emotion/styled',
+            version: '^11.11.0',
+            isRequired: true
+        },
+        '@mui/icons-material': {
+            name: '@mui/icons-material',
+            version: '^5.14.0',
             isRequired: true
         },
         // Form Management
         'react-hook-form': {
             name: 'react-hook-form',
-            version: '^7.0.0',
+            version: '^7.48.0',
             isRequired: config.attributes.length > 0
         },
         // State Management
         'zustand': {
             name: 'zustand',
-            version: '^4.0.0',
+            version: '^4.4.0',
             isRequired: true
         }
     };
     // Get field-specific packages
     var fieldPackages = getFieldSpecificPackages(config.attributes);
-    // Merge base packages with field-specific packages
+    // Merge base packages with field-specific packages and their dependencies
     fieldPackages.forEach(function (pkg) {
         if (!basePackages[pkg.name]) {
             basePackages[pkg.name] = pkg;
+        }
+        // Add dependencies if they exist
+        if (pkg.dependencies) {
+            pkg.dependencies.forEach(function (dep) {
+                if (!basePackages[dep]) {
+                    basePackages[dep] = {
+                        name: dep,
+                        version: pkg.version,
+                        isRequired: true
+                    };
+                }
+            });
         }
     });
     return {

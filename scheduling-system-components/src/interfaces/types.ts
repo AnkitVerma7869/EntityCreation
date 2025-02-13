@@ -21,7 +21,8 @@ export interface ValidationRules {
 // Interface for table column attributes
 export interface Attribute {
   name: string;          
-  dataType: string;    
+  dataType: string;   
+  inputType?: string; 
   size: number | null;   
   precision: number | null; 
   constraints: string[]; 
@@ -31,9 +32,16 @@ export interface Attribute {
   min?: number | null;
   max?: number | null;
   step?: number | null;
-  htmlType?: string;
   isEditable?: boolean;
-  sortable?: boolean;
+  sortable?: boolean;  // Options for select/multiselect
+  config?: {             // Additional configuration for specific input types
+    accept?: string[];   // Accepted file types
+    multiple?: boolean;  // Allow multiple selections
+    maxSize?: number;    // Maximum file size
+    placeholder?: string;// Placeholder text
+    format?: string;     // Date format
+    [key: string]: any; // Other config options
+  };
 }
 
 // Interface for complete entity/table definition
@@ -60,5 +68,5 @@ export interface ConfigData {
       step?: number;
       isDataTypeFixed?: boolean;
     }
-  };
+  };      
 } 

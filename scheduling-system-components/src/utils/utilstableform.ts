@@ -17,7 +17,8 @@ export const initialAttributeState: Attribute = {
   precision: null,
   constraints: [],
   defaultValue: null,
-  validations: { required: false }
+  validations: { required: false },
+  inputType: ''
 };
 
 // Fetch entity configuration from JSON file
@@ -41,7 +42,7 @@ export async function saveEntity(entity: Entity): Promise<Response> {
     entityName: entity.entityName,
     attributes: entity.attributes.map(attr => ({
       attributeName: attr.name,
-      inputType: attr.htmlType,
+      inputType: attr.inputType,
       dataType: attr.dataType.toLowerCase(),
       size: attr.size,
       precision: attr.precision,

@@ -1,6 +1,6 @@
 {
     "name": "dex-un-table-generator",
-    "version": "2.1.23",
+    "version": "2.1.36",
     "description": "Dynamic table and route generation components for Next.js",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -28,6 +28,7 @@
     "dependencies": {
         "@hookform/resolvers": "^3.10.0",
         "@types/yup": "^0.29.14",
+        "flatpickr": "^4.6.13",
         "yup": "^1.6.1"
     }
 }

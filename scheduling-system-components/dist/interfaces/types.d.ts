@@ -5,6 +5,7 @@ export interface ValidationRules {
 export interface Attribute {
     name: string;
     dataType: string;
+    inputType: string;
     size: number | null;
     precision: number | null;
     constraints: string[];
@@ -14,6 +15,14 @@ export interface Attribute {
         value: string;
         label: string;
     }>;
+    config?: {
+        accept?: string[];
+        multiple?: boolean;
+        maxSize?: number;
+        placeholder?: string;
+        format?: string;
+        [key: string]: any;
+    };
 }
 export interface Entity {
     entityName: string;
