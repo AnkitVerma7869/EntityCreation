@@ -41,6 +41,7 @@ export async function saveEntity(entity: Entity): Promise<Response> {
     entityName: entity.entityName,
     attributes: entity.attributes.map(attr => ({
       attributeName: attr.name,
+      inputType: attr.htmlType,
       dataType: attr.dataType.toLowerCase(),
       size: attr.size,
       precision: attr.precision,
