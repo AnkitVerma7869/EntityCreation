@@ -17,7 +17,8 @@ export const initialAttributeState: Attribute = {
   precision: null,
   constraints: [],
   defaultValue: null,
-  validations: { required: false }
+  validations: { required: false },
+  inputType: ''
 };
 
 // Fetch entity configuration from JSON file
