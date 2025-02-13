@@ -193,6 +193,11 @@ export const useEntitySetup = ({
         return;
       }
 
+      if (!trimmedAttribute.htmlType) {
+        showToast("Input type is required", 'error');
+        return;
+      }
+
       // Validate validation values
       const validationErrors: string[] = [];
       Object.entries(trimmedAttribute.validations).forEach(([key, value]) => {

@@ -74,7 +74,7 @@ export default function EntitySetup({
     handleDefaultValueChange,
     handleConstraintsChange,
     handleValidationsChange,
-    handleAddAttribute
+    handleAddAttribute: originalHandleAddAttribute
   } = useEntitySetup({
     configData,
     entityName,
@@ -417,6 +417,15 @@ export default function EntitySetup({
     });
   }, [currentAttribute.validations]);
 
+  // Override handleAddAttribute to include input type validation
+  const handleAddAttribute = async () => {
+    if (!selectedInputType) {
+      showToast("Input type is required", 'error');
+      return;
+    }
+    await originalHandleAddAttribute();
+  };
+
   return (
     <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
       <div className="border-b border-stroke px-6.5 py-4 dark:border-strokedark">
@@ -487,7 +496,7 @@ export default function EntitySetup({
             {/* Input Type Selection */}
             <div>
               <label className="mb-1 block text-sm font-medium text-black dark:text-white">
-                Input Type
+                Input Type<span className="text-meta-1">*</span>
               </label>
               <select
                 value={selectedInputType}
