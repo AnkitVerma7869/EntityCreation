@@ -15,6 +15,7 @@ export interface ValidationGroup {
 
 export interface ValidationRules {
   required?: boolean;
+  
   [key: string]: any;  // Allow additional validation rules
 }
 
@@ -22,7 +23,7 @@ export interface ValidationRules {
 export interface Attribute {
   name: string;          
   dataType: string;   
-  inputType?: string; 
+  inputType: string; 
   size: number | null;   
   precision: number | null; 
   constraints: string[]; 
@@ -42,6 +43,7 @@ export interface Attribute {
     format?: string;     // Date format
     [key: string]: any; // Other config options
   };
+  isMultiSelect?: boolean;
 }
 
 // Interface for complete entity/table definition

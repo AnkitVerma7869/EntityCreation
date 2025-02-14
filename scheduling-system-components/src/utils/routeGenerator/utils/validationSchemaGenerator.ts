@@ -11,8 +11,13 @@ export function generateValidationSchema(attributes: Attribute[]) {
       if (required) {
         schema += '.required("This field is required")';
       }
+      if(attr.inputType.toLowerCase() === 'email'){
+        schema += '.email("Invalid email address")';
+      }
 
-      switch (attr.dataType.toLowerCase()) {
+
+
+      switch (attr.dataType.toLowerCase()|| attr.inputType.toLowerCase()) {
         case 'number':
           if (min !== undefined) schema += `.min(${min}, "Minimum value is ${min}")`;
           if (max !== undefined) schema += `.max(${max}, "Maximum value is ${max}")`;
@@ -27,6 +32,9 @@ export function generateValidationSchema(attributes: Attribute[]) {
         case 'date':
           if (min) schema += `.min(new Date("${min}"), "Date must be after ${min}")`;
           if (max) schema += `.max(new Date("${max}"), "Date must be before ${max}")`;
+          break;
+        case 'password':
+          schema += '.min(8, "Password must be at least 8 characters")';
           break;
       }
     }

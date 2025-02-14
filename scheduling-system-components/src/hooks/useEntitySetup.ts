@@ -35,7 +35,7 @@ const initialAttribute: Attribute = {
   min: null,
   max: null,
   step: null,
-  htmlType: '',
+  inputType: '',
   isEditable: false,
   sortable: false
 };
@@ -60,6 +60,8 @@ export const useEntitySetup = ({
     dataType?: string;
     size?: string;
     precision?: string;
+    inputType?: string;
+    options?: string;
   }>({});
 
   const validateEntityName = async (name: string) => {
@@ -92,6 +94,11 @@ export const useEntitySetup = ({
 
   const handleEntitySelect = (selected: string) => {
     setSelectedEntity(selected);
+    setErrors({});
+    
+    // Reset form fields
+    setCurrentAttribute(initialAttribute);
+    setEditingIndex(null);
     
     if (selected === "custom") {
       setIsCustomEntity(true);
@@ -193,7 +200,7 @@ export const useEntitySetup = ({
         return;
       }
 
-      if (!trimmedAttribute.htmlType) {
+      if (!trimmedAttribute.inputType) {
         showToast("Input type is required", 'error');
         return;
       }
