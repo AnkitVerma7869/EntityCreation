@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.precisionSchema = exports.sizeSchema = exports.dataTypeSchema = exports.attributeNameSchema = exports.entityNameSchema = void 0;
+exports.enumValuesSchema = exports.precisionSchema = exports.sizeSchema = exports.dataTypeSchema = exports.attributeNameSchema = exports.entityNameSchema = void 0;
 var yup = __importStar(require("yup"));
 var dataTypeProperties_1 = require("../constants/dataTypeProperties");
 var helpers_1 = require("../helpers/helpers");
@@ -119,4 +119,12 @@ exports.precisionSchema = yup.number()
         });
     }
     return true;
+});
+// Add new schema for enum values validation
+exports.enumValuesSchema = yup.array().test('unique-enum-values', 'Enum values must be unique (case-insensitive)', function (values) {
+    if (!values || values.length === 0)
+        return true;
+    var lowercaseValues = values.map(function (v) { return v.value.toLowerCase(); });
+    var uniqueValues = new Set(lowercaseValues);
+    return uniqueValues.size === values.length;
 });

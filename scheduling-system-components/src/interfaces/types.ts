@@ -6,6 +6,12 @@ export interface ValidationRule {
   valueType?: 'string' | 'number' | 'date';
   isArray?: boolean;
   value?: any;
+  min?: number;
+  max?: number;
+  minLength?: number;
+  maxLength?: number;
+  pattern?: string;
+  nullable?: boolean;
 }
 
 export interface ValidationGroup {
@@ -15,6 +21,12 @@ export interface ValidationGroup {
 
 export interface ValidationRules {
   required?: boolean;
+  min?: number;
+  max?: number;
+  minLength?: number;
+  maxLength?: number;
+  pattern?: string;
+  nullable?: boolean;  
   [key: string]: any;  // Allow additional validation rules
 }
 
@@ -22,7 +34,7 @@ export interface ValidationRules {
 export interface Attribute {
   name: string;          
   dataType: string;   
-  inputType?: string; 
+  inputType: string; 
   size: number | null;   
   precision: number | null; 
   constraints: string[]; 

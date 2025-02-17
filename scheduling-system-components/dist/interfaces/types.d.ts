@@ -1,5 +1,29 @@
+export interface ValidationRule {
+    name: string;
+    label: string;
+    hasValue?: boolean;
+    valueType?: 'string' | 'number' | 'date';
+    isArray?: boolean;
+    value?: any;
+    min?: number;
+    max?: number;
+    minLength?: number;
+    maxLength?: number;
+    pattern?: string;
+    nullable?: boolean;
+}
+export interface ValidationGroup {
+    group: string;
+    validations: ValidationRule[];
+}
 export interface ValidationRules {
     required?: boolean;
+    min?: number;
+    max?: number;
+    minLength?: number;
+    maxLength?: number;
+    pattern?: string;
+    nullable?: boolean;
     [key: string]: any;
 }
 export interface Attribute {
@@ -15,6 +39,11 @@ export interface Attribute {
         value: string;
         label: string;
     }>;
+    min?: number | null;
+    max?: number | null;
+    step?: number | null;
+    isEditable?: boolean;
+    sortable?: boolean;
     config?: {
         accept?: string[];
         multiple?: boolean;
@@ -32,5 +61,21 @@ export interface ConfigData {
     entities: Record<string, any>;
     dataTypes: string[];
     constraints: string[];
-    validations: string[];
+    validations: ValidationGroup[];
+    inputTypes: {
+        [key: string]: {
+            dataType: string;
+            size?: number;
+            precision?: number;
+            htmlType: string;
+            options?: Array<{
+                value: string;
+                label: string;
+            }>;
+            min?: number;
+            max?: number;
+            step?: number;
+            isDataTypeFixed?: boolean;
+        };
+    };
 }

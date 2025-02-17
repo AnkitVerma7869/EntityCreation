@@ -88,20 +88,32 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.useEntitySetup = void 0;
 var react_1 = require("react");
-var utilstableform_1 = require("../utils/utilstableform");
 var yup = __importStar(require("yup"));
-var react_hot_toast_1 = __importDefault(require("react-hot-toast"));
 var validationSchemas_1 = require("../schemas/validationSchemas");
 var dataTypeProperties_1 = require("../constants/dataTypeProperties");
 var dataTypeProperties_2 = require("../constants/dataTypeProperties");
+// Initial attribute state
+var initialAttribute = {
+    name: '',
+    dataType: '',
+    size: null,
+    precision: null,
+    constraints: [],
+    defaultValue: null,
+    validations: {},
+    options: [],
+    min: null,
+    max: null,
+    step: null,
+    inputType: '',
+    isEditable: false,
+    sortable: false
+};
 var useEntitySetup = function (_a) {
-    var configData = _a.configData, entityName = _a.entityName, setEntityName = _a.setEntityName, attributes = _a.attributes, setAttributes = _a.setAttributes, currentAttribute = _a.currentAttribute, setCurrentAttribute = _a.setCurrentAttribute, setIsCustomEntity = _a.setIsCustomEntity, setSelectedEntity = _a.setSelectedEntity, editingIndex = _a.editingIndex, setEditingIndex = _a.setEditingIndex;
+    var configData = _a.configData, entityName = _a.entityName, setEntityName = _a.setEntityName, attributes = _a.attributes, setAttributes = _a.setAttributes, currentAttribute = _a.currentAttribute, setCurrentAttribute = _a.setCurrentAttribute, setIsCustomEntity = _a.setIsCustomEntity, setSelectedEntity = _a.setSelectedEntity, editingIndex = _a.editingIndex, setEditingIndex = _a.setEditingIndex, showToast = _a.showToast;
     var _b = (0, react_1.useState)({}), errors = _b[0], setErrors = _b[1];
     var validateEntityName = function (name) { return __awaiter(void 0, void 0, void 0, function () {
         var err_1;
@@ -160,7 +172,9 @@ var useEntitySetup = function (_a) {
         else if (selected) {
             setIsCustomEntity(false);
             setEntityName(selected);
-            setAttributes(((_a = configData.entities[selected]) === null || _a === void 0 ? void 0 : _a.attributes) || []);
+            var existingAttributes = ((_a = configData.entities[selected]) === null || _a === void 0 ? void 0 : _a.attributes) || [];
+            var attributesWithDefaults = existingAttributes.map(function (attr) { return (__assign(__assign({}, attr), { isEditable: true, sortable: true })); });
+            setAttributes(attributesWithDefaults);
         }
         else {
             setIsCustomEntity(false);
@@ -209,7 +223,7 @@ var useEntitySetup = function (_a) {
                 return attr.constraints.includes('primary key');
             });
             if (hasPrimaryKeyAlready) {
-                react_hot_toast_1.default.error("Only one PRIMARY KEY constraint is allowed per table!");
+                showToast("Only one PRIMARY KEY constraint is allowed per table!", 'error');
                 return;
             }
         }
@@ -220,28 +234,46 @@ var useEntitySetup = function (_a) {
         setCurrentAttribute(__assign(__assign({}, currentAttribute), { validations: { required: value === 'required' } }));
     };
     var handleAddAttribute = function () { return __awaiter(void 0, void 0, void 0, function () {
-        var duplicateAttr, trimmedAttribute_1, dataTypeProps, limits_1, type, nameValid, hasPrimaryKeyAlready, error_1;
-        var _a;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
+        var duplicateAttr, trimmedAttribute_1, validationErrors_1, dataTypeProps, limits_1, type, nameValid, hasPrimaryKeyAlready, error_1;
+        var _a, _b, _c;
+        return __generator(this, function (_d) {
+            switch (_d.label) {
                 case 0:
-                    _b.trys.push([0, 2, , 3]);
+                    _d.trys.push([0, 2, , 3]);
                     duplicateAttr = attributes.find(function (attr, index) {
                         return attr.name.toLowerCase() === currentAttribute.name.toLowerCase() &&
                             index !== editingIndex;
                     });
                     if (duplicateAttr) {
-                        react_hot_toast_1.default.error("Attribute name \"".concat(currentAttribute.name, "\" already exists!"));
+                        showToast("Attribute name \"".concat(currentAttribute.name, "\" already exists!"), 'error');
                         return [2 /*return*/];
                     }
                     setErrors({});
-                    trimmedAttribute_1 = __assign(__assign({}, currentAttribute), { name: currentAttribute.name.trim(), defaultValue: ((_a = currentAttribute.defaultValue) === null || _a === void 0 ? void 0 : _a.trim()) || '' });
+                    trimmedAttribute_1 = __assign(__assign({}, currentAttribute), { name: currentAttribute.name.trim(), defaultValue: ((_a = currentAttribute.defaultValue) === null || _a === void 0 ? void 0 : _a.trim()) || '', isEditable: (_b = currentAttribute.isEditable) !== null && _b !== void 0 ? _b : true, sortable: (_c = currentAttribute.sortable) !== null && _c !== void 0 ? _c : true });
                     if (!trimmedAttribute_1.name) {
                         setErrors(function (prev) { return (__assign(__assign({}, prev), { attributeName: "Attribute name is required" })); });
                         return [2 /*return*/];
                     }
                     if (!trimmedAttribute_1.dataType) {
                         setErrors(function (prev) { return (__assign(__assign({}, prev), { dataType: "Data type is required" })); });
+                        return [2 /*return*/];
+                    }
+                    if (!trimmedAttribute_1.inputType) {
+                        showToast("Input type is required", 'error');
+                        return [2 /*return*/];
+                    }
+                    validationErrors_1 = [];
+                    Object.entries(trimmedAttribute_1.validations).forEach(function (_a) {
+                        var key = _a[0], value = _a[1];
+                        var validation = configData.validations
+                            .flatMap(function (g) { return g.validations; })
+                            .find(function (v) { return v.name === key; });
+                        if ((validation === null || validation === void 0 ? void 0 : validation.hasValue) && (value === '' || value === null || value === undefined)) {
+                            validationErrors_1.push("Value is required for ".concat(validation.label, " validation"));
+                        }
+                    });
+                    if (validationErrors_1.length > 0) {
+                        showToast(validationErrors_1[0], 'error');
                         return [2 /*return*/];
                     }
                     dataTypeProps = dataTypeProperties_1.dataTypeProperties[trimmedAttribute_1.dataType.toLowerCase()];
@@ -278,7 +310,7 @@ var useEntitySetup = function (_a) {
                     }
                     return [4 /*yield*/, validateAttributeName(trimmedAttribute_1.name)];
                 case 1:
-                    nameValid = _b.sent();
+                    nameValid = _d.sent();
                     if (!nameValid) {
                         return [2 /*return*/];
                     }
@@ -297,24 +329,24 @@ var useEntitySetup = function (_a) {
                             return index === editingIndex ? trimmedAttribute_1 : attr;
                         }); });
                         setEditingIndex(null);
-                        react_hot_toast_1.default.success("Attribute updated successfully!");
+                        showToast("Attribute updated successfully!", 'success');
                     }
                     else {
                         setAttributes(function (prev) { return __spreadArray(__spreadArray([], prev, true), [trimmedAttribute_1], false); });
-                        react_hot_toast_1.default.success("Attribute added successfully!");
+                        showToast("Attribute added successfully!", 'success');
                     }
-                    setCurrentAttribute(utilstableform_1.initialAttributeState);
+                    setCurrentAttribute(initialAttribute);
                     return [3 /*break*/, 3];
                 case 2:
-                    error_1 = _b.sent();
+                    error_1 = _d.sent();
                     if (error_1 instanceof yup.ValidationError) {
-                        react_hot_toast_1.default.error(error_1.message);
+                        showToast(error_1.message, 'error');
                     }
                     else if (error_1 instanceof Error) {
-                        react_hot_toast_1.default.error("Failed to add attribute: ".concat(error_1.message));
+                        showToast("Failed to add attribute: ".concat(error_1.message), 'error');
                     }
                     else {
-                        react_hot_toast_1.default.error("An unexpected error occurred while adding the attribute");
+                        showToast("An unexpected error occurred while adding the attribute", 'error');
                     }
                     console.error("Error in handleAddAttribute:", error_1);
                     return [3 /*break*/, 3];

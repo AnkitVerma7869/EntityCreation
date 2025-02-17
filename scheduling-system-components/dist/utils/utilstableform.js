@@ -1,4 +1,15 @@
 "use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -92,20 +103,22 @@ function saveEntity(entity) {
                     transformedEntity = {
                         entityName: entity.entityName,
                         attributes: entity.attributes.map(function (attr) {
-                            var _a, _b;
+                            var _a, _b, _c;
                             return ({
                                 attributeName: attr.name,
+                                inputType: attr.inputType,
                                 dataType: attr.dataType.toLowerCase(),
                                 size: attr.size,
                                 precision: attr.precision,
                                 constraints: attr.constraints,
                                 defaultValue: attr.defaultValue || "",
-                                validations: {
-                                    required: attr.validations.required ||
-                                        ((_a = attr.constraints) === null || _a === void 0 ? void 0 : _a.includes('not null')) ||
-                                        ((_b = attr.constraints) === null || _b === void 0 ? void 0 : _b.includes('primary key')) ||
-                                        false
-                                }
+                                enumValues: attr.dataType.toLowerCase() === 'enum' ?
+                                    (_a = attr.options) === null || _a === void 0 ? void 0 : _a.map(function (opt) { return typeof opt === 'string' ? opt : opt.value; }) :
+                                    undefined,
+                                validations: __assign(__assign({}, attr.validations), { required: attr.validations.required ||
+                                        ((_b = attr.constraints) === null || _b === void 0 ? void 0 : _b.includes('not null')) ||
+                                        ((_c = attr.constraints) === null || _c === void 0 ? void 0 : _c.includes('primary key')) ||
+                                        false })
                             });
                         })
                     };
@@ -126,7 +139,7 @@ function saveEntity(entity) {
                     error_1 = _a.sent();
                     console.error('Error generating routes:', error_1);
                     throw new Error('Entity saved but failed to generate routes');
-                case 4: return [4 /*yield*/, fetch("".concat(API_URL, "/api/entity/create"), {
+                case 4: return [4 /*yield*/, fetch("".concat(API_URL, "/api/v1/entity/create"), {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

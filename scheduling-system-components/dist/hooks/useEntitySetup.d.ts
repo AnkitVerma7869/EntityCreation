@@ -11,8 +11,9 @@ interface UseEntitySetupProps {
     setSelectedEntity: (entity: string) => void;
     editingIndex: number | null;
     setEditingIndex: React.Dispatch<React.SetStateAction<number | null>>;
+    showToast: (message: string, type: 'success' | 'error') => void;
 }
-export declare const useEntitySetup: ({ configData, entityName, setEntityName, attributes, setAttributes, currentAttribute, setCurrentAttribute, setIsCustomEntity, setSelectedEntity, editingIndex, setEditingIndex, }: UseEntitySetupProps) => {
+export declare const useEntitySetup: ({ configData, entityName, setEntityName, attributes, setAttributes, currentAttribute, setCurrentAttribute, setIsCustomEntity, setSelectedEntity, editingIndex, setEditingIndex, showToast }: UseEntitySetupProps) => {
     errors: {
         entityName?: string;
         attributeName?: string;

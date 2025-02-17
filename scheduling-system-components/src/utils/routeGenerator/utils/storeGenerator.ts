@@ -1,5 +1,6 @@
 import { Entity, Attribute } from '../../../interfaces/types';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL_ENDPOINT;
 function generateFieldState(attr: Attribute): string {
   switch (attr.inputType.toLowerCase()) {
     case 'date':
@@ -144,7 +145,7 @@ export function generateEntityStore(config: Entity) {
           fetchRecord: async (id: string) => {
             set({ loading: true, error: null });
             try {
-              const response = await fetch(\`/api/${config.entityName.toLowerCase()}/\${id}\`);
+              const response = await fetch(\`${API_URL}/api/${config.entityName.toLowerCase()}/\${id}\`);
               const data = await response.json();
               if (!response.ok) throw new Error(data.error || 'Failed to fetch record');
               set({ currentRecord: data, formData: data });
@@ -158,19 +159,34 @@ export function generateEntityStore(config: Entity) {
           },
 
           createRecord: async (data: any) => {
-            set({ loading: true, error: null });
+            set({ loading: true, error: null });    
             try {
-              const response = await fetch(\`/api/${config.entityName.toLowerCase()}/create\`, {
+              const response = await fetch(\`${API_URL}/api/v1/${config.entityName.toLowerCase()}/create\`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json'
+                },
                 body: JSON.stringify(data)
               });
+
               const result = await response.json();
-              if (!response.ok) throw new Error(result.error || 'Failed to create record');
-              set({ success: 'Record created successfully' });
+              
+              if (!response.ok) {
+                throw new Error(result.error || 'Failed to create record');
+              }
+              
+              set({ 
+                success: 'Record created successfully',
+                error: null
+              });
+              
               return true;
             } catch (error: any) {
-              set({ error: error.message });
+              set({ 
+                error: error.message,
+                success: null
+              });
               return false;
             } finally {
               set({ loading: false });
@@ -180,7 +196,7 @@ export function generateEntityStore(config: Entity) {
           updateRecord: async (id: string, data: any) => {
             set({ loading: true, error: null });
             try {
-              const response = await fetch(\`/api/${config.entityName.toLowerCase()}/\${id}\`, {
+              const response = await fetch(\`${API_URL}/api/${config.entityName.toLowerCase()}/\${id}\`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
@@ -200,7 +216,7 @@ export function generateEntityStore(config: Entity) {
           deleteRecord: async (id: string) => {
             set({ loading: true, error: null });
             try {
-              const response = await fetch(\`/api/${config.entityName.toLowerCase()}/\${id}\`, {
+              const response = await fetch(\`${API_URL}/api/${config.entityName.toLowerCase()}/\${id}\`, {
                 method: 'DELETE'
               });
               const result = await response.json();

@@ -61,7 +61,7 @@ export function generateCreatePage(config: Entity): string {
                   </h3>
                 </div>
 
-                <form onSubmit={handleSubmit(onSubmit)}>
+                <form onSubmit={handleSubmit(onSubmit)} noValidate>
                   <div className="p-6.5">
                     ${generateField(config)}
 
