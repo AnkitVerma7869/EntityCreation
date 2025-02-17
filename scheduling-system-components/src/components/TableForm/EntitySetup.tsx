@@ -147,8 +147,21 @@ export default function EntitySetup({
     setErrors({});
     setInputOptions([]);
 
-    if (inputType && configData.inputTypes[inputType]) {
-      const { dataType, size, precision, options = [], htmlType } = configData.inputTypes[inputType];
+    if (['select', 'radio', 'checkbox'].includes(inputType)) {
+      setCurrentAttribute({
+        ...currentAttribute,
+        inputType,
+        dataType: 'enum',
+        size: null,
+        precision: null,
+        options: [],
+        validations: {},
+        isMultiSelect: false // Default to single select
+      });
+      setIsMultiSelect(false);
+    } else if (configData.inputTypes[inputType]) {
+      // For other input types, use the config data
+      const { dataType, size, precision, options = [] } = configData.inputTypes[inputType];
       const formattedOptions = Array.isArray(options) 
         ? options.map(opt => ({ 
             value: typeof opt === 'string' ? opt : opt.value,
@@ -159,15 +172,24 @@ export default function EntitySetup({
       setInputOptions(formattedOptions);
       setCurrentAttribute({
         ...currentAttribute,
+        inputType,
         dataType,
         size: size || null,
         precision: precision || null,
         options: formattedOptions,
-        inputType,
-        validations: {}, // Clear validations when input type changes
-        isMultiSelect: inputType === 'select' ? false : undefined
+        validations: {}
       });
     }
+  };
+
+  // Update the radio button change handler
+  const handleSelectTypeChange = (isMulti: boolean) => {
+    setIsMultiSelect(isMulti);
+    setCurrentAttribute({
+      ...currentAttribute,
+      inputType: 'select', // Always keep as 'select'
+      isMultiSelect: isMulti // Just update the isMultiSelect flag
+    });
   };
 
   // Display options update
@@ -556,17 +578,15 @@ export default function EntitySetup({
             {/* Data Type Selection */}
             <div>
               <label className="mb-1 block text-sm font-medium text-black dark:text-white">
-                Data Type <span className="text-meta-1">*</span>
+                Data Type<span className="text-meta-1">*</span>
               </label>
               <select
                 value={currentAttribute.dataType}
                 onChange={handleDataTypeChange}
-                disabled={configData.inputTypes[selectedInputType]?.isDataTypeFixed}
+                disabled={['select', 'radio', 'checkbox'].includes(selectedInputType)}
                 className={`w-full rounded border-[1.5px] ${
                   errors.dataType ? 'border-meta-1' : 'border-stroke'
-                } bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
-                  configData.inputTypes[selectedInputType]?.isDataTypeFixed ? 'opacity-60 cursor-not-allowed' : ''
-                }`}
+                } bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-not-allowed disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary`}
               >
                 <option value="">Select data type</option>
                 {configData.dataTypes.map((type) => (
@@ -592,7 +612,7 @@ export default function EntitySetup({
                       <input
                         type="radio"
                         checked={!isMultiSelect}
-                        onChange={() => setIsMultiSelect(false)}
+                        onChange={() => handleSelectTypeChange(false)}
                         className="form-radio h-4 w-4 text-primary"
                       />
                       <span className="ml-2 text-sm">Single Select</span>
@@ -601,7 +621,7 @@ export default function EntitySetup({
                       <input
                         type="radio"
                         checked={isMultiSelect}
-                        onChange={() => setIsMultiSelect(true)}
+                        onChange={() => handleSelectTypeChange(true)}
                         className="form-radio h-4 w-4 text-primary"
                       />
                       <span className="ml-2 text-sm">Multi Select</span>
@@ -609,12 +629,14 @@ export default function EntitySetup({
                   </div>
                 </div>
               </div>
-            ) : (currentAttribute.dataType === 'enum' || ['radio', 'checkbox'].includes(selectedInputType)) ? (
+            ) : null}
+
+            {/* Options input for select, radio, checkbox and enum */}
+            {(currentAttribute.dataType === 'enum' || ['radio', 'checkbox', 'select'].includes(selectedInputType)) && (
               <div className="space-y-1">
                 <label className="mb-1 block text-sm font-medium text-black dark:text-white">
                   Options <span className="text-meta-1">*</span>
                 </label>
-                
                 <div className={`flex gap-2 ${errors.options ? 'border-meta-1' : ''}`}>
                   <input
                     type="text"
@@ -661,7 +683,7 @@ export default function EntitySetup({
                   <p className="text-meta-1 text-sm mt-1">{errors.options}</p>
                 )}
               </div>
-            ) : null}
+            )}
 
             {/* Range Input Additional Fields */}
             {selectedInputType === 'range' && (
