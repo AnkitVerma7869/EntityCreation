@@ -15,48 +15,88 @@ import { generateColorField } from './ColorField';
 import { generateRangeField } from './RangeField';
 import { generateSearchField } from './SearchField';
 import { generateHiddenField } from './HiddenField';
+import { generateTimeField } from './TimeField';
+import { generateTextAreaField } from './TextAreaField';
+
+// Helper function to format field labels (e.g., "first_name" to "First Name")
+function formatFieldLabel(name: string): string {
+  return name
+    // Split by underscore and space
+    .split(/[_\s]+/)
+    // Capitalize first letter of each word
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    // Join with space
+    .join(' ');
+}
+
+// Helper function to format field names for form handling (keeps original format but ensures valid identifier)
+function formatFieldName(name: string): string {
+  return name
+    // Replace any invalid characters with underscore
+    .replace(/[^a-zA-Z0-9_]/g, '_')
+    // Remove multiple consecutive underscores
+    .replace(/_+/g, '_')
+    // Remove leading/trailing underscores
+    .replace(/^_+|_+$/g, '')
+    .toLowerCase();
+}
 
 function generateSingleField(attr: Attribute, fieldName: string): string {
+  // Format the label for display (e.g., "First Name")
+  const fieldLabel = formatFieldLabel(attr.name);
+  // Format the field name for form handling (e.g., "first_name")
+  const formattedFieldName = formatFieldName(fieldName);
+  
+  // Create a new attribute with formatted names
+  const formattedAttr: Attribute = {
+    ...attr,
+    name: fieldLabel // Use formatted label for display
+  };
+  
   switch (attr.inputType.toLowerCase() || attr.dataType.toLowerCase()) {
     case 'date':
-      return generateDateField(attr, fieldName);
+      return generateDateField(formattedAttr, formattedFieldName);
     case 'datetime-local':
-      return generateDateTimeField(attr, fieldName);
+      return generateDateTimeField(formattedAttr, formattedFieldName);
     case 'select':
     case 'multiselect':
-      return generateSelectField(attr, fieldName);
+      return generateSelectField(formattedAttr, formattedFieldName);
     case 'rich-text':
-      return generateRichTextField(attr, fieldName);
+      return generateRichTextField(formattedAttr, formattedFieldName);
     case 'file':
-      return generateFileField(attr, fieldName);
+      return generateFileField(formattedAttr, formattedFieldName);
     case 'email':
-      return generateEmailField(attr, fieldName);
+      return generateEmailField(formattedAttr, formattedFieldName);
     case 'password':
-      return generatePasswordField(attr, fieldName);
+      return generatePasswordField(formattedAttr, formattedFieldName);
     case 'checkbox':
-      return generateCheckboxField(attr, fieldName);
+      return generateCheckboxField(formattedAttr, formattedFieldName);
     case 'radio':
-      return generateRadioField(attr, fieldName);
+      return generateRadioField(formattedAttr, formattedFieldName);
     case 'tel':
-      return generateTelField(attr, fieldName);
+      return generateTelField(formattedAttr, formattedFieldName);
     case 'url':
-      return generateUrlField(attr, fieldName);
+      return generateUrlField(formattedAttr, formattedFieldName);
     case 'color':
-      return generateColorField(attr, fieldName);
+      return generateColorField(formattedAttr, formattedFieldName);
     case 'range':
-      return generateRangeField(attr, fieldName);
+      return generateRangeField(formattedAttr, formattedFieldName);
     case 'search':
-      return generateSearchField(attr, fieldName);
+      return generateSearchField(formattedAttr, formattedFieldName);
     case 'hidden':
-      return generateHiddenField(attr, fieldName);
+      return generateHiddenField(formattedAttr, formattedFieldName);
+    case 'time':
+      return generateTimeField(formattedAttr, formattedFieldName);
+    case 'textarea':
+      return generateTextAreaField(formattedAttr, formattedFieldName);
     default:
-      return generateTextField(attr, fieldName);
+      return generateTextField(formattedAttr, formattedFieldName);
   }
 }
 
 export function generateField(entity: Entity): string {
   const fields = entity.attributes.map(attr => {
-    const fieldName = attr.name.replace(/\s+/g, '_');
+    const fieldName = attr.name;
     return generateSingleField(attr, fieldName);
   });
 
@@ -100,5 +140,7 @@ export {
   generateColorField,
   generateRangeField,
   generateSearchField,
-  generateHiddenField
+  generateHiddenField,
+  generateTimeField,
+  generateTextAreaField
 }; 
