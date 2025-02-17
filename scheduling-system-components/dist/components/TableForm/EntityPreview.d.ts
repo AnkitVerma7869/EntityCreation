@@ -7,6 +7,7 @@ interface EntityPreviewProps {
     resetForm: () => void;
     setEditingIndex: React.Dispatch<React.SetStateAction<number | null>>;
     entityName: string;
+    showToast: (message: string, type: 'success' | 'error') => void;
 }
-export default function EntityPreview({ attributes, setAttributes, setCurrentAttribute, handleSaveEntity, resetForm, setEditingIndex, entityName }: EntityPreviewProps): import("react/jsx-runtime").JSX.Element;
+export default function EntityPreview({ attributes, setAttributes, setCurrentAttribute, handleSaveEntity, resetForm, setEditingIndex, entityName, showToast }: EntityPreviewProps): import("react/jsx-runtime").JSX.Element;
 export {};

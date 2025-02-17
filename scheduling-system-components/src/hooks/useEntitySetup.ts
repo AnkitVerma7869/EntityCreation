@@ -35,7 +35,7 @@ const initialAttribute: Attribute = {
   min: null,
   max: null,
   step: null,
-  htmlType: '',
+  inputType: '',
   isEditable: false,
   sortable: false
 };
@@ -193,7 +193,7 @@ export const useEntitySetup = ({
         return;
       }
 
-      if (!trimmedAttribute.htmlType) {
+      if (!trimmedAttribute.inputType) {
         showToast("Input type is required", 'error');
         return;
       }

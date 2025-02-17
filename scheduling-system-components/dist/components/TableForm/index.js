@@ -81,6 +81,24 @@ var utilstableform_1 = require("../../utils/utilstableform");
 var EntitySetup_1 = __importDefault(require("./EntitySetup"));
 var EntityPreview_1 = __importDefault(require("./EntityPreview"));
 var EntityRoutes_1 = __importDefault(require("./EntityRoutes"));
+// Custom toast function to ensure only one toast at a time
+var showToast = function (message, type) {
+    // Dismiss all existing toasts first
+    react_hot_toast_1.default.dismiss();
+    // Show new toast
+    if (type === 'success') {
+        react_hot_toast_1.default.success(message, {
+            duration: 3000,
+            position: 'top-right',
+        });
+    }
+    else {
+        react_hot_toast_1.default.error(message, {
+            duration: 3000,
+            position: 'top-right',
+        });
+    }
+};
 // Loading component shown while fetching initial data
 var LoadingState = function () { return ((0, jsx_runtime_1.jsx)("div", { className: "flex items-center justify-center min-h-screen", children: (0, jsx_runtime_1.jsx)("div", { className: "text-lg", children: "Loading..." }) })); };
 function TableForm() {
@@ -91,7 +109,8 @@ function TableForm() {
         entities: {},
         dataTypes: [],
         constraints: [],
-        validations: []
+        validations: [],
+        inputTypes: {}
     }), configData = _b[0], setConfigData = _b[1];
     // Form state management
     var _c = (0, react_1.useState)(""), entityName = _c[0], setEntityName = _c[1];
@@ -116,6 +135,7 @@ function TableForm() {
                     case 2:
                         error_1 = _a.sent();
                         console.error('Error loading configuration:', error_1);
+                        showToast('Error loading configuration', 'error');
                         return [3 /*break*/, 4];
                     case 3:
                         setLoading(false);
@@ -147,15 +167,15 @@ function TableForm() {
                     trimmedEntityName = entityName.trim();
                     // Validate required fields
                     if (!trimmedEntityName) {
-                        react_hot_toast_1.default.error("Entity Name is required!");
+                        showToast("Entity Name is required!", 'error');
                         return [2 /*return*/];
                     }
                     if (attributes.length === 0) {
-                        react_hot_toast_1.default.error("At least one attribute is required!");
+                        showToast("At least one attribute is required!", 'error');
                         return [2 /*return*/];
                     }
                     entity = {
-                        entityName: trimmedEntityName, // Use trimmed name
+                        entityName: trimmedEntityName,
                         attributes: attributes
                     };
                     _a.label = 1;
@@ -164,16 +184,16 @@ function TableForm() {
                     return [4 /*yield*/, (0, utilstableform_1.saveEntity)(entity)];
                 case 2:
                     _a.sent();
-                    react_hot_toast_1.default.success("Entity saved successfully!");
+                    showToast("Entity saved successfully!", 'success');
                     resetForm();
                     return [3 /*break*/, 4];
                 case 3:
                     error_2 = _a.sent();
-                    react_hot_toast_1.default.error("Failed to save entity. Please try again.");
+                    showToast("Failed to save entity. Please try again.", 'error');
                     return [3 /*break*/, 4];
                 case 4: return [2 /*return*/];
             }
         });
     }); };
-    return ((0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsx)(react_hot_toast_1.Toaster, { position: "top-right" }), (0, jsx_runtime_1.jsxs)("div", { className: "grid grid-cols-1 gap-9 sm:grid-cols-2", children: [(0, jsx_runtime_1.jsx)(EntitySetup_1.default, { configData: configData, entityName: entityName, setEntityName: setEntityName, attributes: attributes, setAttributes: setAttributes, currentAttribute: currentAttribute, setCurrentAttribute: setCurrentAttribute, isCustomEntity: isCustomEntity, setIsCustomEntity: setIsCustomEntity, selectedEntity: selectedEntity, setSelectedEntity: setSelectedEntity, editingIndex: editingIndex, setEditingIndex: setEditingIndex, handleSaveEntity: handleSaveEntity, resetForm: resetForm }), (0, jsx_runtime_1.jsxs)("div", { className: "space-y-9", children: [(0, jsx_runtime_1.jsx)(EntityPreview_1.default, { attributes: attributes, setAttributes: setAttributes, setCurrentAttribute: setCurrentAttribute, handleSaveEntity: handleSaveEntity, resetForm: resetForm, setEditingIndex: setEditingIndex, entityName: entityName }), (0, jsx_runtime_1.jsx)(EntityRoutes_1.default, { entityName: entityName })] })] })] }));
+    return ((0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsx)(react_hot_toast_1.Toaster, {}), (0, jsx_runtime_1.jsxs)("div", { className: "grid grid-cols-12 gap-4", children: [(0, jsx_runtime_1.jsx)("div", { className: "col-span-4", children: (0, jsx_runtime_1.jsx)(EntitySetup_1.default, { configData: configData, entityName: entityName, setEntityName: setEntityName, attributes: attributes, setAttributes: setAttributes, currentAttribute: currentAttribute, setCurrentAttribute: setCurrentAttribute, isCustomEntity: isCustomEntity, setIsCustomEntity: setIsCustomEntity, selectedEntity: selectedEntity, setSelectedEntity: setSelectedEntity, editingIndex: editingIndex, setEditingIndex: setEditingIndex, handleSaveEntity: handleSaveEntity, resetForm: resetForm, showToast: showToast }) }), (0, jsx_runtime_1.jsxs)("div", { className: "col-span-8 space-y-4", children: [(0, jsx_runtime_1.jsx)(EntityPreview_1.default, { attributes: attributes, setAttributes: setAttributes, setCurrentAttribute: setCurrentAttribute, handleSaveEntity: handleSaveEntity, resetForm: resetForm, setEditingIndex: setEditingIndex, entityName: entityName, showToast: showToast }), (0, jsx_runtime_1.jsx)(EntityRoutes_1.default, { entityName: entityName })] })] })] }));
 }

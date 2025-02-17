@@ -21,6 +21,14 @@ export const initialAttributeState: Attribute = {
   inputType: ''
 };
 
+
+
+
+
+
+
+
+
 // Fetch entity configuration from JSON file
 export async function fetchEntityConfig(): Promise<ConfigData> {
   const response = await fetch('/data/entityConfig.json');
@@ -77,7 +85,7 @@ export async function saveEntity(entity: Entity): Promise<Response> {
   }
 
   // Send POST request to API
-  const response = await fetch(`${API_URL}/api/entity/create`, {
+  const response = await fetch(`${API_URL}/api/v1/entity/create`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json', 

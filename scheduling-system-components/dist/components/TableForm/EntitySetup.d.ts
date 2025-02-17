@@ -1,6 +1,23 @@
 import { Attribute, ConfigData } from "../../interfaces/types";
 interface EntitySetupProps {
-    configData: ConfigData;
+    configData: ConfigData & {
+        inputTypes: {
+            [key: string]: {
+                dataType: string;
+                size?: number;
+                precision?: number;
+                htmlType: string;
+                options?: Array<{
+                    value: string;
+                    label: string;
+                }>;
+                min?: number;
+                max?: number;
+                step?: number;
+                isDataTypeFixed?: boolean;
+            };
+        };
+    };
     entityName: string;
     setEntityName: (name: string) => void;
     attributes: Attribute[];
@@ -15,6 +32,7 @@ interface EntitySetupProps {
     setEditingIndex: React.Dispatch<React.SetStateAction<number | null>>;
     handleSaveEntity: () => void;
     resetForm: () => void;
+    showToast: (message: string, type: 'success' | 'error') => void;
 }
-export default function EntitySetup(props: EntitySetupProps): import("react/jsx-runtime").JSX.Element;
+export default function EntitySetup({ configData, entityName, setEntityName, attributes, setAttributes, currentAttribute, setCurrentAttribute, isCustomEntity, setIsCustomEntity, selectedEntity, setSelectedEntity, editingIndex, setEditingIndex, handleSaveEntity, resetForm, showToast }: EntitySetupProps): import("react/jsx-runtime").JSX.Element;
 export {};
