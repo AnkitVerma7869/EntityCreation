@@ -158,7 +158,7 @@ export default function EntitySetup({
         size: size || null,
         precision: precision || null,
         options: formattedOptions,
-        htmlType
+        inputType
       });
       setErrors(prev => ({ ...prev, dataType: undefined }));
     }
@@ -386,7 +386,7 @@ export default function EntitySetup({
       defaultValue: null,
       validations: {},
       options: [],
-      htmlType: '',
+      inputType: '',
       isEditable: true,
       sortable: true
     });
