@@ -56,6 +56,10 @@ export async function saveEntity(entity: Entity): Promise<Response> {
       precision: attr.precision,
       constraints: attr.constraints,
       defaultValue: attr.defaultValue || "",
+      options: attr.options,
+      isMultiSelect: attr.isMultiSelect,
+      isEditable: attr.isEditable,
+      sortable: attr.sortable,
       enumValues: attr.dataType.toLowerCase() === 'enum' ? 
         attr.options?.map(opt => typeof opt === 'string' ? opt : opt.value) : 
         undefined,

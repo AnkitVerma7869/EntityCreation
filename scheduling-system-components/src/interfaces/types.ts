@@ -27,6 +27,7 @@ export interface ValidationRules {
   maxLength?: number;
   pattern?: string;
   nullable?: boolean;  
+  
   [key: string]: any;  // Allow additional validation rules
 }
 
@@ -54,6 +55,7 @@ export interface Attribute {
     format?: string;     // Date format
     [key: string]: any; // Other config options
   };
+  isMultiSelect?: boolean;
 }
 
 // Interface for complete entity/table definition

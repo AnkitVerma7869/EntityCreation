@@ -103,6 +103,9 @@ export default function EntitySetup({
   // Add validation errors state
   const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({});
 
+  // First, add a new state for select type
+  const [isMultiSelect, setIsMultiSelect] = useState(false);
+
   // Add handler for adding options
   const handleAddOption = async () => {
     if (newOption.trim()) {
@@ -118,9 +121,10 @@ export default function EntitySetup({
           options: updatedOptions
         });
         setNewOption('');
+        setErrors(prev => ({ ...prev, options: undefined })); // Clear any previous options error
       } catch (err) {
         if (err instanceof yup.ValidationError) {
-          showToast(err.message, 'error');
+          setErrors(prev => ({ ...prev, options: err.message }));
         }
       }
     }
@@ -140,10 +144,24 @@ export default function EntitySetup({
   const handleInputTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const inputType = e.target.value;
     setSelectedInputType(inputType);
-    setInputOptions([]); // Reset options when input type changes
+    setErrors({});
+    setInputOptions([]);
 
-    if (inputType && configData.inputTypes[inputType]) {
-      const { dataType, size, precision, options = [], htmlType } = configData.inputTypes[inputType];
+    if (['select', 'radio', 'checkbox'].includes(inputType)) {
+      setCurrentAttribute({
+        ...currentAttribute,
+        inputType,
+        dataType: 'enum',
+        size: null,
+        precision: null,
+        options: [],
+        validations: {},
+        isMultiSelect: false // Default to single select
+      });
+      setIsMultiSelect(false);
+    } else if (configData.inputTypes[inputType]) {
+      // For other input types, use the config data
+      const { dataType, size, precision, options = [] } = configData.inputTypes[inputType];
       const formattedOptions = Array.isArray(options) 
         ? options.map(opt => ({ 
             value: typeof opt === 'string' ? opt : opt.value,
@@ -154,14 +172,24 @@ export default function EntitySetup({
       setInputOptions(formattedOptions);
       setCurrentAttribute({
         ...currentAttribute,
+        inputType,
         dataType,
         size: size || null,
         precision: precision || null,
         options: formattedOptions,
-        inputType
+        validations: {}
       });
-      setErrors(prev => ({ ...prev, dataType: undefined }));
     }
+  };
+
+  // Update the radio button change handler
+  const handleSelectTypeChange = (isMulti: boolean) => {
+    setIsMultiSelect(isMulti);
+    setCurrentAttribute({
+      ...currentAttribute,
+      inputType: 'select', // Always keep as 'select'
+      isMultiSelect: isMulti // Just update the isMultiSelect flag
+    });
   };
 
   // Display options update
@@ -173,18 +201,7 @@ export default function EntitySetup({
         type="button"
         className="text-meta-1 hover:text-meta-1/80"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-5 w-5"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-        >
-          <path
-            fillRule="evenodd"
-            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-            clipRule="evenodd"
-          />
-        </svg>
+        <X size={16} />
       </button>
     </div>
   ))}
@@ -302,8 +319,9 @@ export default function EntitySetup({
     }
   };
 
-  // Update handleDataTypeChange to handle errors immediately
+  // Update handleDataTypeChange
   const handleDataTypeChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setErrors({}); 
     const newDataType = e.target.value.toLowerCase();
     
     try {
@@ -312,22 +330,13 @@ export default function EntitySetup({
       
       const typeProps = dataTypeProperties[newDataType] || { needsSize: false, needsPrecision: false };
       
-      // Update current attribute
       setCurrentAttribute({
         ...currentAttribute,
         dataType: newDataType,
         size: typeProps.needsSize ? currentAttribute.size : null,
-        precision: typeProps.needsPrecision ? currentAttribute.precision : null
+        precision: typeProps.needsPrecision ? currentAttribute.precision : null,
+        validations: {} // Clear validations when data type changes
       });
-
-      // Validate size and precision immediately if they exist
-      if (typeProps.needsSize && currentAttribute.size) {
-        await validateSize(currentAttribute.size, newDataType);
-      }
-      
-      if (typeProps.needsPrecision && currentAttribute.precision) {
-        await validatePrecision(currentAttribute.precision, newDataType);
-      }
 
     } catch (err) {
       if (err instanceof yup.ValidationError) {
@@ -417,14 +426,63 @@ export default function EntitySetup({
     });
   }, [currentAttribute.validations]);
 
-  // Override handleAddAttribute to include input type validation
+  // Update handleAddAttribute
   const handleAddAttribute = async () => {
+    // Clear previous errors
+    setErrors({});
+    let hasErrors = false;
+
+    // 1. Validate attribute name
+    if (!currentAttribute.name) {
+      setErrors(prev => ({ ...prev, attributeName: "Attribute name is required" }));
+      hasErrors = true;
+    }
+
+    // 2. Validate input type
     if (!selectedInputType) {
-      showToast("Input type is required", 'error');
+      setErrors(prev => ({ ...prev, inputType: "Input type is required" }));
+      hasErrors = true;
+    }
+
+    // 3. Validate data type
+    if (!currentAttribute.dataType) {
+      setErrors(prev => ({ ...prev, dataType: "Data type is required" }));
+      hasErrors = true;
+    }
+
+    // 4. Validate options for enum/select/radio/checkbox
+    if ((currentAttribute.dataType.toLowerCase() === 'enum' || 
+        ['radio', 'checkbox'].includes(selectedInputType)) && 
+        (!inputOptions || inputOptions.length === 0)) {
+      setErrors(prev => ({ ...prev, options: "At least one option is required" }));
+      hasErrors = true;
+    }
+
+    if (selectedInputType === 'select') {
+      setCurrentAttribute({
+        ...currentAttribute,
+        isMultiSelect
+      });
+    }
+
+    if (hasErrors) {
       return;
     }
+
     await originalHandleAddAttribute();
   };
+
+  // Add this useEffect near other useEffects in EntitySetup
+  useEffect(() => {
+    // When editing an attribute, set the selectedInputType
+    if (editingIndex !== null && currentAttribute.inputType) {
+      setSelectedInputType(currentAttribute.inputType);
+      // Also set input options if they exist
+      if (currentAttribute.options) {
+        setInputOptions(currentAttribute.options);
+      }
+    }
+  }, [editingIndex, currentAttribute]);
 
   return (
     <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
@@ -501,7 +559,9 @@ export default function EntitySetup({
               <select
                 value={selectedInputType}
                 onChange={handleInputTypeChange}
-                className="w-full rounded border-[1.5px] border-stroke bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                className={`w-full rounded border-[1.5px] ${
+                  errors.inputType ? 'border-meta-1' : 'border-stroke'
+                } bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary`}
               >
                 <option value="">Select input type</option>
                 {Object.entries(configData.inputTypes).map(([type, config]) => (
@@ -510,29 +570,23 @@ export default function EntitySetup({
                   </option>
                 ))}
               </select>
+              {errors.inputType && (
+                <p className="text-meta-1 text-sm mt-1">{errors.inputType}</p>
+              )}
             </div>
 
             {/* Data Type Selection */}
             <div>
               <label className="mb-1 block text-sm font-medium text-black dark:text-white">
-                Data Type <span className="text-meta-1">*</span>
+                Data Type<span className="text-meta-1">*</span>
               </label>
               <select
                 value={currentAttribute.dataType}
-                onChange={(e) => {
-                  handleDataTypeChange(e);
-                  // Reset options when switching to/from enum type
-                  if (e.target.value === 'enum' || currentAttribute.dataType === 'enum') {
-                    setInputOptions([]);
-                    setNewOption('');
-                  }
-                }}
-                disabled={configData.inputTypes[selectedInputType]?.isDataTypeFixed}
+                onChange={handleDataTypeChange}
+                disabled={['select', 'radio', 'checkbox'].includes(selectedInputType)}
                 className={`w-full rounded border-[1.5px] ${
                   errors.dataType ? 'border-meta-1' : 'border-stroke'
-                } bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
-                  configData.inputTypes[selectedInputType]?.isDataTypeFixed ? 'opacity-60 cursor-not-allowed' : ''
-                }`}
+                } bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-not-allowed disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary`}
               >
                 <option value="">Select data type</option>
                 {configData.dataTypes.map((type) => (
@@ -547,20 +601,53 @@ export default function EntitySetup({
             </div>
 
             {/* Options Management for radio, checkbox, select and enum data type */}
-            {(selectedInputType && ['radio', 'checkbox', 'select'].includes(selectedInputType)) || 
-             (currentAttribute.dataType === 'enum') ? (
+            {selectedInputType === 'select' ? (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="mb-1 block text-sm font-medium text-black dark:text-white">
+                    Select Type
+                  </label>
+                  <div className="flex gap-4 mt-2">
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        checked={!isMultiSelect}
+                        onChange={() => handleSelectTypeChange(false)}
+                        className="form-radio h-4 w-4 text-primary"
+                      />
+                      <span className="ml-2 text-sm">Single Select</span>
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        checked={isMultiSelect}
+                        onChange={() => handleSelectTypeChange(true)}
+                        className="form-radio h-4 w-4 text-primary"
+                      />
+                      <span className="ml-2 text-sm">Multi Select</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {/* Options input for select, radio, checkbox and enum */}
+            {(currentAttribute.dataType === 'enum' || ['radio', 'checkbox', 'select'].includes(selectedInputType)) && (
               <div className="space-y-1">
                 <label className="mb-1 block text-sm font-medium text-black dark:text-white">
                   Options <span className="text-meta-1">*</span>
                 </label>
-                
-                {/* Add new option */}
-                <div className="flex gap-2">
+                <div className={`flex gap-2 ${errors.options ? 'border-meta-1' : ''}`}>
                   <input
                     type="text"
                     value={newOption}
-                    onChange={(e) => setNewOption(e.target.value)}
-                    className="flex-1 rounded border-[1.5px] border-stroke bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                    onChange={(e) => {
+                      setNewOption(e.target.value);
+                      setErrors({});
+                    }}
+                    className={`flex-1 rounded border-[1.5px] ${
+                      errors.options ? 'border-meta-1' : 'border-stroke'
+                    } bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary`}
                     placeholder="Enter option value"
                   />
                   <button
@@ -585,27 +672,18 @@ export default function EntitySetup({
                           onClick={() => handleRemoveOption(index)}
                           className="ml-1 hover:text-meta-1"
                         >
-                          <svg 
-                            xmlns="http://www.w3.org/2000/svg" 
-                            width="14" 
-                            height="14" 
-                            viewBox="0 0 24 24" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            strokeWidth="2" 
-                            strokeLinecap="round" 
-                            strokeLinejoin="round"
-                          >
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                          </svg>
+                          <X size={14} />
                         </button>
                       </span>
                     ))}
                   </div>
                 )}
+
+                {errors.options && (
+                  <p className="text-meta-1 text-sm mt-1">{errors.options}</p>
+                )}
               </div>
-            ) : null}
+            )}
 
             {/* Range Input Additional Fields */}
             {selectedInputType === 'range' && (
@@ -789,9 +867,9 @@ export default function EntitySetup({
                             case 'boolean':
                               return g.group === "Boolean";
                             case 'date':
+                              return g.group === "Date";
                             case 'timestamp':
                             case 'time':
-                              return g.group === "Date";
                             default:
                               return false;
                           }
@@ -815,25 +893,55 @@ export default function EntitySetup({
 
                     if (!validation) return null;
 
+                    // Get the appropriate label based on input type
+                    const validationLabel = (() => {
+                      if (currentAttribute.inputType === 'date' && ['min', 'max'].includes(validation.name)) {
+                        return validation.name === 'min' ? 'Min Date' : 'Max Date';
+                      }
+                      return validation.label;
+                    })();
+
                     return (
                       <div key={key} className="flex flex-col w-full">
                         <div className="flex items-center justify-between w-full bg-gray-50 dark:bg-boxdark-2 p-2 rounded border border-stroke dark:border-strokedark">
                           <div className="flex items-center gap-2 flex-grow">
-                            <span className="text-sm">{validation.label}</span>
+                            <span className="text-sm">{validationLabel}</span>
                             
                             {validation.hasValue && (
                               <input
-                                type={validation.valueType === 'number' ? 'number' : 'text'}
+                                type={(() => {
+                                  if (validation.valueType === 'date' || 
+                                      (currentAttribute.inputType === 'date' && ['min', 'max'].includes(validation.name))) {
+                                    return 'date';
+                                  }
+                                  if (validation.valueType === 'number') {
+                                    return 'number';
+                                  }
+                                  return 'text';
+                                })()}
                                 value={value || ''}
                                 onChange={(e) => {
-                                  const newValue = validation.valueType === 'number' ? 
-                                    Number(e.target.value) : e.target.value;
+                                  let newValue;
+                                  if (currentAttribute.inputType === 'date' && ['min', 'max'].includes(validation.name)) {
+                                    // Format date value as YYYY-MM-DD
+                                    const date = new Date(e.target.value);
+                                    newValue = date.toISOString().split('T')[0];
+                                  } else {
+                                    newValue = validation.valueType === 'number' ? 
+                                      Number(e.target.value) : e.target.value;
+                                  }
                                   handleValidationValueChange(key, newValue, validation);
                                 }}
                                 className={`flex-1 rounded border-[1.5px] ${
                                   validationErrors[key] ? 'border-meta-1' : 'border-stroke'
                                 } bg-transparent px-4 py-1 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary`}
-                                placeholder={validation.valueType === 'number' ? '0' : 'Enter value'}
+                                placeholder={(() => {
+                                  if (validation.valueType === 'date' || 
+                                      (currentAttribute.inputType === 'date' && ['min', 'max'].includes(validation.name))) {
+                                    return 'Select date';
+                                  }
+                                  return validation.valueType === 'number' ? '0' : 'Enter value';
+                                })()}
                               />
                             )}
                           </div>

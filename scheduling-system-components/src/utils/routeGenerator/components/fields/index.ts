@@ -15,6 +15,8 @@ import { generateColorField } from './ColorField';
 import { generateRangeField } from './RangeField';
 import { generateSearchField } from './SearchField';
 import { generateHiddenField } from './HiddenField';
+import { generateTimeField } from './TimeField';
+import { generateTextAreaField } from './TextAreaField';
 
 // Helper function to format field labels (e.g., "first_name" to "First Name")
 function formatFieldLabel(name: string): string {
@@ -83,6 +85,10 @@ function generateSingleField(attr: Attribute, fieldName: string): string {
       return generateSearchField(formattedAttr, formattedFieldName);
     case 'hidden':
       return generateHiddenField(formattedAttr, formattedFieldName);
+    case 'time':
+      return generateTimeField(formattedAttr, formattedFieldName);
+    case 'textarea':
+      return generateTextAreaField(formattedAttr, formattedFieldName);
     default:
       return generateTextField(formattedAttr, formattedFieldName);
   }
@@ -134,5 +140,7 @@ export {
   generateColorField,
   generateRangeField,
   generateSearchField,
-  generateHiddenField
+  generateHiddenField,
+  generateTimeField,
+  generateTextAreaField
 }; 

@@ -60,6 +60,8 @@ export const useEntitySetup = ({
     dataType?: string;
     size?: string;
     precision?: string;
+    inputType?: string;
+    options?: string;
   }>({});
 
   const validateEntityName = async (name: string) => {
@@ -92,6 +94,11 @@ export const useEntitySetup = ({
 
   const handleEntitySelect = (selected: string) => {
     setSelectedEntity(selected);
+    setErrors({});
+    
+    // Reset form fields
+    setCurrentAttribute(initialAttribute);
+    setEditingIndex(null);
     
     if (selected === "custom") {
       setIsCustomEntity(true);
