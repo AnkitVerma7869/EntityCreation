@@ -111,9 +111,9 @@ var helpers_1 = require("../../helpers/helpers");
 var useEntitySetup_1 = require("../../hooks/useEntitySetup");
 function EntitySetup(_a) {
     var _this = this;
-    var _b, _c, _d, _e;
+    var _b, _c;
     var configData = _a.configData, entityName = _a.entityName, setEntityName = _a.setEntityName, attributes = _a.attributes, setAttributes = _a.setAttributes, currentAttribute = _a.currentAttribute, setCurrentAttribute = _a.setCurrentAttribute, isCustomEntity = _a.isCustomEntity, setIsCustomEntity = _a.setIsCustomEntity, selectedEntity = _a.selectedEntity, setSelectedEntity = _a.setSelectedEntity, editingIndex = _a.editingIndex, setEditingIndex = _a.setEditingIndex, handleSaveEntity = _a.handleSaveEntity, resetForm = _a.resetForm, showToast = _a.showToast;
-    var _f = (0, useEntitySetup_1.useEntitySetup)({
+    var _d = (0, useEntitySetup_1.useEntitySetup)({
         configData: configData,
         entityName: entityName,
         setEntityName: setEntityName,
@@ -126,16 +126,18 @@ function EntitySetup(_a) {
         editingIndex: editingIndex,
         setEditingIndex: setEditingIndex,
         showToast: showToast
-    }), errors = _f.errors, setErrors = _f.setErrors, handleEntitySelect = _f.handleEntitySelect, handleEntityNameChange = _f.handleEntityNameChange, handleAttributeNameChange = _f.handleAttributeNameChange, handleDefaultValueChange = _f.handleDefaultValueChange, handleConstraintsChange = _f.handleConstraintsChange, handleValidationsChange = _f.handleValidationsChange, originalHandleAddAttribute = _f.handleAddAttribute;
+    }), errors = _d.errors, setErrors = _d.setErrors, handleEntitySelect = _d.handleEntitySelect, handleEntityNameChange = _d.handleEntityNameChange, handleAttributeNameChange = _d.handleAttributeNameChange, handleDefaultValueChange = _d.handleDefaultValueChange, handleConstraintsChange = _d.handleConstraintsChange, handleValidationsChange = _d.handleValidationsChange, originalHandleAddAttribute = _d.handleAddAttribute;
     // Add button text based on edit state
     var addButtonText = editingIndex !== null ? 'Update Attribute' : 'Add Attribute';
     // Add state for input type
-    var _g = (0, react_1.useState)(''), selectedInputType = _g[0], setSelectedInputType = _g[1];
+    var _e = (0, react_1.useState)(''), selectedInputType = _e[0], setSelectedInputType = _e[1];
     // Update state type
-    var _h = (0, react_1.useState)([]), inputOptions = _h[0], setInputOptions = _h[1];
-    var _j = (0, react_1.useState)(''), newOption = _j[0], setNewOption = _j[1];
+    var _f = (0, react_1.useState)([]), inputOptions = _f[0], setInputOptions = _f[1];
+    var _g = (0, react_1.useState)(''), newOption = _g[0], setNewOption = _g[1];
     // Add validation errors state
-    var _k = (0, react_1.useState)({}), validationErrors = _k[0], setValidationErrors = _k[1];
+    var _h = (0, react_1.useState)({}), validationErrors = _h[0], setValidationErrors = _h[1];
+    // First, add a new state for select type
+    var _j = (0, react_1.useState)(false), isMultiSelect = _j[0], setIsMultiSelect = _j[1];
     // Add handler for adding options
     var handleAddOption = function () { return __awaiter(_this, void 0, void 0, function () {
         var newOptionValue, newOptionObj, updatedOptions, err_1;
@@ -155,11 +157,12 @@ function EntitySetup(_a) {
                     setInputOptions(updatedOptions);
                     setCurrentAttribute(__assign(__assign({}, currentAttribute), { options: updatedOptions }));
                     setNewOption('');
+                    setErrors(function (prev) { return (__assign(__assign({}, prev), { options: undefined })); }); // Clear any previous options error
                     return [3 /*break*/, 4];
                 case 3:
                     err_1 = _a.sent();
                     if (err_1 instanceof yup.ValidationError) {
-                        showToast(err_1.message, 'error');
+                        setErrors(function (prev) { return (__assign(__assign({}, prev), { options: err_1.message })); });
                     }
                     return [3 /*break*/, 4];
                 case 4: return [2 /*return*/];
@@ -177,9 +180,16 @@ function EntitySetup(_a) {
     var handleInputTypeChange = function (e) {
         var inputType = e.target.value;
         setSelectedInputType(inputType);
-        setInputOptions([]); // Reset options when input type changes
-        if (inputType && configData.inputTypes[inputType]) {
-            var _a = configData.inputTypes[inputType], dataType = _a.dataType, size = _a.size, precision = _a.precision, _b = _a.options, options = _b === void 0 ? [] : _b, htmlType = _a.htmlType;
+        setErrors({});
+        setInputOptions([]);
+        if (['select', 'radio', 'checkbox'].includes(inputType)) {
+            setCurrentAttribute(__assign(__assign({}, currentAttribute), { inputType: inputType, dataType: 'enum', size: null, precision: null, options: [], validations: {}, isMultiSelect: false // Default to single select
+             }));
+            setIsMultiSelect(false);
+        }
+        else if (configData.inputTypes[inputType]) {
+            // For other input types, use the config data
+            var _a = configData.inputTypes[inputType], dataType = _a.dataType, size = _a.size, precision = _a.precision, _b = _a.options, options = _b === void 0 ? [] : _b;
             var formattedOptions = Array.isArray(options)
                 ? options.map(function (opt) { return ({
                     value: typeof opt === 'string' ? opt : opt.value,
@@ -187,13 +197,18 @@ function EntitySetup(_a) {
                 }); })
                 : [];
             setInputOptions(formattedOptions);
-            setCurrentAttribute(__assign(__assign({}, currentAttribute), { dataType: dataType, size: size || null, precision: precision || null, options: formattedOptions, inputType: inputType }));
-            setErrors(function (prev) { return (__assign(__assign({}, prev), { dataType: undefined })); });
+            setCurrentAttribute(__assign(__assign({}, currentAttribute), { inputType: inputType, dataType: dataType, size: size || null, precision: precision || null, options: formattedOptions, validations: {} }));
         }
+    };
+    // Update the radio button change handler
+    var handleSelectTypeChange = function (isMulti) {
+        setIsMultiSelect(isMulti);
+        setCurrentAttribute(__assign(__assign({}, currentAttribute), { inputType: 'select', isMultiSelect: isMulti // Just update the isMultiSelect flag
+         }));
     };
     // Display options update
     {
-        inputOptions.map(function (option, index) { return ((0, jsx_runtime_1.jsxs)("div", { className: "flex items-center justify-between bg-gray-50 dark:bg-boxdark-2 p-2 rounded", children: [(0, jsx_runtime_1.jsx)("span", { children: option.label }), (0, jsx_runtime_1.jsx)("button", { onClick: function () { return handleRemoveOption(index); }, type: "button", className: "text-meta-1 hover:text-meta-1/80", children: (0, jsx_runtime_1.jsx)("svg", { xmlns: "http://www.w3.org/2000/svg", className: "h-5 w-5", viewBox: "0 0 20 20", fill: "currentColor", children: (0, jsx_runtime_1.jsx)("path", { fillRule: "evenodd", d: "M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z", clipRule: "evenodd" }) }) })] }, index)); });
+        inputOptions.map(function (option, index) { return ((0, jsx_runtime_1.jsxs)("div", { className: "flex items-center justify-between bg-gray-50 dark:bg-boxdark-2 p-2 rounded", children: [(0, jsx_runtime_1.jsx)("span", { children: option.label }), (0, jsx_runtime_1.jsx)("button", { onClick: function () { return handleRemoveOption(index); }, type: "button", className: "text-meta-1 hover:text-meta-1/80", children: (0, jsx_runtime_1.jsx)(lucide_react_1.X, { size: 16 }) })] }, index)); });
     }
     // Update validateSize function
     var validateSize = function (size, dataType) { return __awaiter(_this, void 0, void 0, function () {
@@ -313,42 +328,32 @@ function EntitySetup(_a) {
             return [2 /*return*/];
         });
     }); };
-    // Update handleDataTypeChange to handle errors immediately
+    // Update handleDataTypeChange
     var handleDataTypeChange = function (e) { return __awaiter(_this, void 0, void 0, function () {
         var newDataType, typeProps, err_4;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
+                    setErrors({});
                     newDataType = e.target.value.toLowerCase();
                     _a.label = 1;
                 case 1:
-                    _a.trys.push([1, 7, , 8]);
+                    _a.trys.push([1, 3, , 4]);
                     return [4 /*yield*/, validationSchemas_1.dataTypeSchema.validate(newDataType)];
                 case 2:
                     _a.sent();
                     setErrors(function (prev) { return (__assign(__assign({}, prev), { dataType: undefined })); });
                     typeProps = dataTypeProperties_1.dataTypeProperties[newDataType] || { needsSize: false, needsPrecision: false };
-                    // Update current attribute
-                    setCurrentAttribute(__assign(__assign({}, currentAttribute), { dataType: newDataType, size: typeProps.needsSize ? currentAttribute.size : null, precision: typeProps.needsPrecision ? currentAttribute.precision : null }));
-                    if (!(typeProps.needsSize && currentAttribute.size)) return [3 /*break*/, 4];
-                    return [4 /*yield*/, validateSize(currentAttribute.size, newDataType)];
+                    setCurrentAttribute(__assign(__assign({}, currentAttribute), { dataType: newDataType, size: typeProps.needsSize ? currentAttribute.size : null, precision: typeProps.needsPrecision ? currentAttribute.precision : null, validations: {} // Clear validations when data type changes
+                     }));
+                    return [3 /*break*/, 4];
                 case 3:
-                    _a.sent();
-                    _a.label = 4;
-                case 4:
-                    if (!(typeProps.needsPrecision && currentAttribute.precision)) return [3 /*break*/, 6];
-                    return [4 /*yield*/, validatePrecision(currentAttribute.precision, newDataType)];
-                case 5:
-                    _a.sent();
-                    _a.label = 6;
-                case 6: return [3 /*break*/, 8];
-                case 7:
                     err_4 = _a.sent();
                     if (err_4 instanceof yup.ValidationError) {
                         setErrors(function (prev) { return (__assign(__assign({}, prev), { dataType: err_4.message })); });
                     }
-                    return [3 /*break*/, 8];
-                case 8: return [2 /*return*/];
+                    return [3 /*break*/, 4];
+                case 4: return [2 /*return*/];
             }
         });
     }); };
@@ -423,13 +428,41 @@ function EntitySetup(_a) {
             }
         });
     }, [currentAttribute.validations]);
-    // Override handleAddAttribute to include input type validation
+    // Update handleAddAttribute
     var handleAddAttribute = function () { return __awaiter(_this, void 0, void 0, function () {
+        var hasErrors;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
+                    // Clear previous errors
+                    setErrors({});
+                    hasErrors = false;
+                    // 1. Validate attribute name
+                    if (!currentAttribute.name) {
+                        setErrors(function (prev) { return (__assign(__assign({}, prev), { attributeName: "Attribute name is required" })); });
+                        hasErrors = true;
+                    }
+                    // 2. Validate input type
                     if (!selectedInputType) {
-                        showToast("Input type is required", 'error');
+                        setErrors(function (prev) { return (__assign(__assign({}, prev), { inputType: "Input type is required" })); });
+                        hasErrors = true;
+                    }
+                    // 3. Validate data type
+                    if (!currentAttribute.dataType) {
+                        setErrors(function (prev) { return (__assign(__assign({}, prev), { dataType: "Data type is required" })); });
+                        hasErrors = true;
+                    }
+                    // 4. Validate options for enum/select/radio/checkbox
+                    if ((currentAttribute.dataType.toLowerCase() === 'enum' ||
+                        ['radio', 'checkbox'].includes(selectedInputType)) &&
+                        (!inputOptions || inputOptions.length === 0)) {
+                        setErrors(function (prev) { return (__assign(__assign({}, prev), { options: "At least one option is required" })); });
+                        hasErrors = true;
+                    }
+                    if (selectedInputType === 'select') {
+                        setCurrentAttribute(__assign(__assign({}, currentAttribute), { isMultiSelect: isMultiSelect }));
+                    }
+                    if (hasErrors) {
                         return [2 /*return*/];
                     }
                     return [4 /*yield*/, originalHandleAddAttribute()];
@@ -439,24 +472,30 @@ function EntitySetup(_a) {
             }
         });
     }); };
-    return ((0, jsx_runtime_1.jsxs)("div", { className: "rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark", children: [(0, jsx_runtime_1.jsx)("div", { className: "border-b border-stroke px-6.5 py-4 dark:border-strokedark", children: (0, jsx_runtime_1.jsx)("h3", { className: "font-bold text-xl text-black dark:text-white", children: "Entity Setup" }) }), (0, jsx_runtime_1.jsxs)("div", { className: "p-6.5 space-y-4", children: [(0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsxs)("label", { className: "mb-1 block text-sm font-medium text-black dark:text-white", children: ["Select Entity ", (0, jsx_runtime_1.jsx)("span", { className: "text-meta-1", children: "*" })] }), (0, jsx_runtime_1.jsxs)("select", { value: selectedEntity, onChange: function (e) { return handleEntitySelect(e.target.value); }, className: "w-full rounded border-[1.5px] border-stroke bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary", children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: "Select an entity" }), Object.keys(configData.entities).map(function (entity) { return ((0, jsx_runtime_1.jsx)("option", { value: entity, children: entity }, entity)); }), (0, jsx_runtime_1.jsx)("option", { value: "custom", children: "Create Custom Entity" })] })] }), isCustomEntity && ((0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsxs)("label", { className: "mb-1 block text-sm font-medium text-black dark:text-white", children: ["Entity Name ", (0, jsx_runtime_1.jsx)("span", { className: "text-meta-1", children: "*" })] }), (0, jsx_runtime_1.jsx)("input", { type: "text", value: entityName, onChange: handleEntityNameChange, className: "w-full rounded border-[1.5px] ".concat(errors.entityName ? 'border-meta-1' : 'border-stroke', " bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"), placeholder: "Enter entity name" }), errors.entityName && ((0, jsx_runtime_1.jsx)("p", { className: "text-meta-1 text-sm mt-1", children: errors.entityName }))] })), (isCustomEntity || entityName) && ((0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [(0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsxs)("label", { className: "mb-1 block text-sm font-medium text-black dark:text-white", children: ["Attribute Name ", (0, jsx_runtime_1.jsx)("span", { className: "text-meta-1", children: "*" })] }), (0, jsx_runtime_1.jsx)("input", { type: "text", value: currentAttribute.name, onChange: handleAttributeNameChange, required: true, className: "w-full rounded border-[1.5px] ".concat(errors.attributeName ? 'border-meta-1' : 'border-stroke', " bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"), placeholder: "Enter attribute name" }), errors.attributeName && ((0, jsx_runtime_1.jsx)("p", { className: "text-meta-1 text-sm mt-1", children: errors.attributeName }))] }), (0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsxs)("label", { className: "mb-1 block text-sm font-medium text-black dark:text-white", children: ["Input Type", (0, jsx_runtime_1.jsx)("span", { className: "text-meta-1", children: "*" })] }), (0, jsx_runtime_1.jsxs)("select", { value: selectedInputType, onChange: handleInputTypeChange, className: "w-full rounded border-[1.5px] border-stroke bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary", children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: "Select input type" }), Object.entries(configData.inputTypes).map(function (_a) {
+    // Add this useEffect near other useEffects in EntitySetup
+    (0, react_1.useEffect)(function () {
+        // When editing an attribute, set the selectedInputType
+        if (editingIndex !== null && currentAttribute.inputType) {
+            setSelectedInputType(currentAttribute.inputType);
+            // Also set input options if they exist
+            if (currentAttribute.options) {
+                setInputOptions(currentAttribute.options);
+            }
+        }
+    }, [editingIndex, currentAttribute]);
+    return ((0, jsx_runtime_1.jsxs)("div", { className: "rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark", children: [(0, jsx_runtime_1.jsx)("div", { className: "border-b border-stroke px-6.5 py-4 dark:border-strokedark", children: (0, jsx_runtime_1.jsx)("h3", { className: "font-bold text-xl text-black dark:text-white", children: "Entity Setup" }) }), (0, jsx_runtime_1.jsxs)("div", { className: "p-6.5 space-y-4", children: [(0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsxs)("label", { className: "mb-1 block text-sm font-medium text-black dark:text-white", children: ["Select Entity ", (0, jsx_runtime_1.jsx)("span", { className: "text-meta-1", children: "*" })] }), (0, jsx_runtime_1.jsxs)("select", { value: selectedEntity, onChange: function (e) { return handleEntitySelect(e.target.value); }, className: "w-full rounded border-[1.5px] border-stroke bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary", children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: "Select an entity" }), Object.keys(configData.entities).map(function (entity) { return ((0, jsx_runtime_1.jsx)("option", { value: entity, children: entity }, entity)); }), (0, jsx_runtime_1.jsx)("option", { value: "custom", children: "Create Custom Entity" })] })] }), isCustomEntity && ((0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsxs)("label", { className: "mb-1 block text-sm font-medium text-black dark:text-white", children: ["Entity Name ", (0, jsx_runtime_1.jsx)("span", { className: "text-meta-1", children: "*" })] }), (0, jsx_runtime_1.jsx)("input", { type: "text", value: entityName, onChange: handleEntityNameChange, className: "w-full rounded border-[1.5px] ".concat(errors.entityName ? 'border-meta-1' : 'border-stroke', " bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"), placeholder: "Enter entity name" }), errors.entityName && ((0, jsx_runtime_1.jsx)("p", { className: "text-meta-1 text-sm mt-1", children: errors.entityName }))] })), (isCustomEntity || entityName) && ((0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [(0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsxs)("label", { className: "mb-1 block text-sm font-medium text-black dark:text-white", children: ["Attribute Name ", (0, jsx_runtime_1.jsx)("span", { className: "text-meta-1", children: "*" })] }), (0, jsx_runtime_1.jsx)("input", { type: "text", value: currentAttribute.name, onChange: handleAttributeNameChange, required: true, className: "w-full rounded border-[1.5px] ".concat(errors.attributeName ? 'border-meta-1' : 'border-stroke', " bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"), placeholder: "Enter attribute name" }), errors.attributeName && ((0, jsx_runtime_1.jsx)("p", { className: "text-meta-1 text-sm mt-1", children: errors.attributeName }))] }), (0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsxs)("label", { className: "mb-1 block text-sm font-medium text-black dark:text-white", children: ["Input Type", (0, jsx_runtime_1.jsx)("span", { className: "text-meta-1", children: "*" })] }), (0, jsx_runtime_1.jsxs)("select", { value: selectedInputType, onChange: handleInputTypeChange, className: "w-full rounded border-[1.5px] ".concat(errors.inputType ? 'border-meta-1' : 'border-stroke', " bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"), children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: "Select input type" }), Object.entries(configData.inputTypes).map(function (_a) {
                                                 var type = _a[0], config = _a[1];
                                                 return ((0, jsx_runtime_1.jsxs)("option", { value: type, children: [type.charAt(0).toUpperCase() + type.slice(1), " (", config.htmlType, ")"] }, type));
-                                            })] })] }), (0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsxs)("label", { className: "mb-1 block text-sm font-medium text-black dark:text-white", children: ["Data Type ", (0, jsx_runtime_1.jsx)("span", { className: "text-meta-1", children: "*" })] }), (0, jsx_runtime_1.jsxs)("select", { value: currentAttribute.dataType, onChange: function (e) {
-                                            handleDataTypeChange(e);
-                                            // Reset options when switching to/from enum type
-                                            if (e.target.value === 'enum' || currentAttribute.dataType === 'enum') {
-                                                setInputOptions([]);
-                                                setNewOption('');
-                                            }
-                                        }, disabled: (_b = configData.inputTypes[selectedInputType]) === null || _b === void 0 ? void 0 : _b.isDataTypeFixed, className: "w-full rounded border-[1.5px] ".concat(errors.dataType ? 'border-meta-1' : 'border-stroke', " bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ").concat(((_c = configData.inputTypes[selectedInputType]) === null || _c === void 0 ? void 0 : _c.isDataTypeFixed) ? 'opacity-60 cursor-not-allowed' : ''), children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: "Select data type" }), configData.dataTypes.map(function (type) { return ((0, jsx_runtime_1.jsx)("option", { value: type, children: type.charAt(0).toUpperCase() + type.slice(1).toLowerCase() }, type)); })] }), errors.dataType && ((0, jsx_runtime_1.jsx)("p", { className: "text-meta-1 text-sm mt-1", children: errors.dataType }))] }), (selectedInputType && ['radio', 'checkbox', 'select'].includes(selectedInputType)) ||
-                                (currentAttribute.dataType === 'enum') ? ((0, jsx_runtime_1.jsxs)("div", { className: "space-y-1", children: [(0, jsx_runtime_1.jsxs)("label", { className: "mb-1 block text-sm font-medium text-black dark:text-white", children: ["Options ", (0, jsx_runtime_1.jsx)("span", { className: "text-meta-1", children: "*" })] }), (0, jsx_runtime_1.jsxs)("div", { className: "flex gap-2", children: [(0, jsx_runtime_1.jsx)("input", { type: "text", value: newOption, onChange: function (e) { return setNewOption(e.target.value); }, className: "flex-1 rounded border-[1.5px] border-stroke bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary", placeholder: "Enter option value" }), (0, jsx_runtime_1.jsx)("button", { onClick: handleAddOption, type: "button", className: "inline-flex items-center justify-center rounded bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-opacity-90", children: "Add Option" })] }), inputOptions.length > 0 && ((0, jsx_runtime_1.jsx)("div", { className: "flex flex-wrap gap-2", children: inputOptions.map(function (option, index) { return ((0, jsx_runtime_1.jsxs)("span", { className: "px-2 py-1 text-xs bg-primary/10 text-primary rounded flex items-center gap-1", children: [option.label, (0, jsx_runtime_1.jsx)("button", { onClick: function () { return handleRemoveOption(index); }, className: "ml-1 hover:text-meta-1", children: (0, jsx_runtime_1.jsxs)("svg", { xmlns: "http://www.w3.org/2000/svg", width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", children: [(0, jsx_runtime_1.jsx)("line", { x1: "18", y1: "6", x2: "6", y2: "18" }), (0, jsx_runtime_1.jsx)("line", { x1: "6", y1: "6", x2: "18", y2: "18" })] }) })] }, index)); }) }))] })) : null, selectedInputType === 'range' && ((0, jsx_runtime_1.jsxs)("div", { className: "grid grid-cols-3 gap-4", children: [(0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsx)("label", { className: "mb-1 block text-sm font-medium text-black dark:text-white", children: "Min Value" }), (0, jsx_runtime_1.jsx)("input", { type: "number", value: currentAttribute.min || 0, onChange: function (e) { return setCurrentAttribute(__assign(__assign({}, currentAttribute), { min: Number(e.target.value) })); }, className: "w-full rounded border-[1.5px] border-stroke bg-transparent px-4 py-2 text-black outline-none" })] }), (0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsx)("label", { className: "mb-1 block text-sm font-medium text-black dark:text-white", children: "Max Value" }), (0, jsx_runtime_1.jsx)("input", { type: "number", value: currentAttribute.max || 100, onChange: function (e) { return setCurrentAttribute(__assign(__assign({}, currentAttribute), { max: Number(e.target.value) })); }, className: "w-full rounded border-[1.5px] border-stroke bg-transparent px-4 py-2 text-black outline-none" })] }), (0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsx)("label", { className: "mb-1 block text-sm font-medium text-black dark:text-white", children: "Step" }), (0, jsx_runtime_1.jsx)("input", { type: "number", value: currentAttribute.step || 1, onChange: function (e) { return setCurrentAttribute(__assign(__assign({}, currentAttribute), { step: Number(e.target.value) })); }, className: "w-full rounded border-[1.5px] border-stroke bg-transparent px-4 py-2 text-black outline-none" })] })] })), (0, jsx_runtime_1.jsxs)("div", { className: "grid grid-cols-2 gap-4", children: [(0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsxs)("label", { className: "mb-1 block text-sm font-medium text-black dark:text-white", children: ["Size", (0, helpers_1.needsSizeValidation)(currentAttribute.dataType) &&
+                                            })] }), errors.inputType && ((0, jsx_runtime_1.jsx)("p", { className: "text-meta-1 text-sm mt-1", children: errors.inputType }))] }), (0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsxs)("label", { className: "mb-1 block text-sm font-medium text-black dark:text-white", children: ["Data Type", (0, jsx_runtime_1.jsx)("span", { className: "text-meta-1", children: "*" })] }), (0, jsx_runtime_1.jsxs)("select", { value: currentAttribute.dataType, onChange: handleDataTypeChange, disabled: ['select', 'radio', 'checkbox'].includes(selectedInputType), className: "w-full rounded border-[1.5px] ".concat(errors.dataType ? 'border-meta-1' : 'border-stroke', " bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-not-allowed disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"), children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: "Select data type" }), configData.dataTypes.map(function (type) { return ((0, jsx_runtime_1.jsx)("option", { value: type, children: type.charAt(0).toUpperCase() + type.slice(1).toLowerCase() }, type)); })] }), errors.dataType && ((0, jsx_runtime_1.jsx)("p", { className: "text-meta-1 text-sm mt-1", children: errors.dataType }))] }), selectedInputType === 'select' ? ((0, jsx_runtime_1.jsx)("div", { className: "space-y-4", children: (0, jsx_runtime_1.jsxs)("div", { className: "space-y-2", children: [(0, jsx_runtime_1.jsx)("label", { className: "mb-1 block text-sm font-medium text-black dark:text-white", children: "Select Type" }), (0, jsx_runtime_1.jsxs)("div", { className: "flex gap-4 mt-2", children: [(0, jsx_runtime_1.jsxs)("label", { className: "flex items-center", children: [(0, jsx_runtime_1.jsx)("input", { type: "radio", checked: !isMultiSelect, onChange: function () { return handleSelectTypeChange(false); }, className: "form-radio h-4 w-4 text-primary" }), (0, jsx_runtime_1.jsx)("span", { className: "ml-2 text-sm", children: "Single Select" })] }), (0, jsx_runtime_1.jsxs)("label", { className: "flex items-center", children: [(0, jsx_runtime_1.jsx)("input", { type: "radio", checked: isMultiSelect, onChange: function () { return handleSelectTypeChange(true); }, className: "form-radio h-4 w-4 text-primary" }), (0, jsx_runtime_1.jsx)("span", { className: "ml-2 text-sm", children: "Multi Select" })] })] })] }) })) : null, (currentAttribute.dataType === 'enum' || ['radio', 'checkbox', 'select'].includes(selectedInputType)) && ((0, jsx_runtime_1.jsxs)("div", { className: "space-y-1", children: [(0, jsx_runtime_1.jsxs)("label", { className: "mb-1 block text-sm font-medium text-black dark:text-white", children: ["Options ", (0, jsx_runtime_1.jsx)("span", { className: "text-meta-1", children: "*" })] }), (0, jsx_runtime_1.jsxs)("div", { className: "flex gap-2 ".concat(errors.options ? 'border-meta-1' : ''), children: [(0, jsx_runtime_1.jsx)("input", { type: "text", value: newOption, onChange: function (e) {
+                                                    setNewOption(e.target.value);
+                                                    setErrors({});
+                                                }, className: "flex-1 rounded border-[1.5px] ".concat(errors.options ? 'border-meta-1' : 'border-stroke', " bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"), placeholder: "Enter option value" }), (0, jsx_runtime_1.jsx)("button", { onClick: handleAddOption, type: "button", className: "inline-flex items-center justify-center rounded bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-opacity-90", children: "Add Option" })] }), inputOptions.length > 0 && ((0, jsx_runtime_1.jsx)("div", { className: "flex flex-wrap gap-2", children: inputOptions.map(function (option, index) { return ((0, jsx_runtime_1.jsxs)("span", { className: "px-2 py-1 text-xs bg-primary/10 text-primary rounded flex items-center gap-1", children: [option.label, (0, jsx_runtime_1.jsx)("button", { onClick: function () { return handleRemoveOption(index); }, className: "ml-1 hover:text-meta-1", children: (0, jsx_runtime_1.jsx)(lucide_react_1.X, { size: 14 }) })] }, index)); }) })), errors.options && ((0, jsx_runtime_1.jsx)("p", { className: "text-meta-1 text-sm mt-1", children: errors.options }))] })), selectedInputType === 'range' && ((0, jsx_runtime_1.jsxs)("div", { className: "grid grid-cols-3 gap-4", children: [(0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsx)("label", { className: "mb-1 block text-sm font-medium text-black dark:text-white", children: "Min Value" }), (0, jsx_runtime_1.jsx)("input", { type: "number", value: currentAttribute.min || 0, onChange: function (e) { return setCurrentAttribute(__assign(__assign({}, currentAttribute), { min: Number(e.target.value) })); }, className: "w-full rounded border-[1.5px] border-stroke bg-transparent px-4 py-2 text-black outline-none" })] }), (0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsx)("label", { className: "mb-1 block text-sm font-medium text-black dark:text-white", children: "Max Value" }), (0, jsx_runtime_1.jsx)("input", { type: "number", value: currentAttribute.max || 100, onChange: function (e) { return setCurrentAttribute(__assign(__assign({}, currentAttribute), { max: Number(e.target.value) })); }, className: "w-full rounded border-[1.5px] border-stroke bg-transparent px-4 py-2 text-black outline-none" })] }), (0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsx)("label", { className: "mb-1 block text-sm font-medium text-black dark:text-white", children: "Step" }), (0, jsx_runtime_1.jsx)("input", { type: "number", value: currentAttribute.step || 1, onChange: function (e) { return setCurrentAttribute(__assign(__assign({}, currentAttribute), { step: Number(e.target.value) })); }, className: "w-full rounded border-[1.5px] border-stroke bg-transparent px-4 py-2 text-black outline-none" })] })] })), (0, jsx_runtime_1.jsxs)("div", { className: "grid grid-cols-2 gap-4", children: [(0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsxs)("label", { className: "mb-1 block text-sm font-medium text-black dark:text-white", children: ["Size", (0, helpers_1.needsSizeValidation)(currentAttribute.dataType) &&
                                                         (0, jsx_runtime_1.jsx)("span", { className: "text-meta-1", children: "*" })] }), (0, jsx_runtime_1.jsx)("input", { type: "number", min: "1", value: currentAttribute.size || '', onChange: handleSizeChange, disabled: !(0, helpers_1.needsSizeValidation)(currentAttribute.dataType), className: "w-full rounded border-[1.5px] ".concat(errors.size ? 'border-meta-1' : 'border-stroke', " bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ").concat(!(0, helpers_1.needsSizeValidation)(currentAttribute.dataType) ? 'opacity-50' : ''), placeholder: (0, helpers_1.needsSizeValidation)(currentAttribute.dataType) ? 'Enter size' : 'Not applicable' }), errors.size && ((0, jsx_runtime_1.jsx)("p", { className: "text-meta-1 text-sm mt-1", children: errors.size }))] }), (0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsxs)("label", { className: "mb-1 block text-sm font-medium text-black dark:text-white", children: ["Precision", (0, helpers_1.needsPrecision)(currentAttribute.dataType) &&
-                                                        (0, jsx_runtime_1.jsx)("span", { className: "text-meta-1", children: "*" })] }), (0, jsx_runtime_1.jsx)("input", { type: "number", value: (_d = currentAttribute.precision) !== null && _d !== void 0 ? _d : '', onChange: handlePrecisionChange, disabled: !(0, helpers_1.needsPrecision)(currentAttribute.dataType), className: "w-full rounded border-[1.5px] ".concat(errors.precision ? 'border-meta-1' : 'border-stroke', " bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ").concat(!(0, helpers_1.needsPrecision)(currentAttribute.dataType) ? 'opacity-50' : ''), placeholder: (0, helpers_1.needsPrecision)(currentAttribute.dataType) ? 'Enter precision' : 'Not applicable' }), errors.precision && ((0, jsx_runtime_1.jsx)("p", { className: "text-meta-1 text-sm mt-1", children: errors.precision }))] })] }), (0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsx)("label", { className: "mb-1 block text-sm font-medium text-black dark:text-white", children: "Constraints" }), (0, jsx_runtime_1.jsxs)("select", { value: currentAttribute.constraints[0] || '', onChange: handleConstraintsChange, className: "w-full rounded border-[1.5px] border-stroke bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary", children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: "Select constraint" }), configData.constraints.map(function (constraint) {
+                                                        (0, jsx_runtime_1.jsx)("span", { className: "text-meta-1", children: "*" })] }), (0, jsx_runtime_1.jsx)("input", { type: "number", value: (_b = currentAttribute.precision) !== null && _b !== void 0 ? _b : '', onChange: handlePrecisionChange, disabled: !(0, helpers_1.needsPrecision)(currentAttribute.dataType), className: "w-full rounded border-[1.5px] ".concat(errors.precision ? 'border-meta-1' : 'border-stroke', " bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ").concat(!(0, helpers_1.needsPrecision)(currentAttribute.dataType) ? 'opacity-50' : ''), placeholder: (0, helpers_1.needsPrecision)(currentAttribute.dataType) ? 'Enter precision' : 'Not applicable' }), errors.precision && ((0, jsx_runtime_1.jsx)("p", { className: "text-meta-1 text-sm mt-1", children: errors.precision }))] })] }), (0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsx)("label", { className: "mb-1 block text-sm font-medium text-black dark:text-white", children: "Constraints" }), (0, jsx_runtime_1.jsxs)("select", { value: currentAttribute.constraints[0] || '', onChange: handleConstraintsChange, className: "w-full rounded border-[1.5px] border-stroke bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary", children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: "Select constraint" }), configData.constraints.map(function (constraint) {
                                                 var isDisabled = constraint === 'primary key' && (0, helpers_1.isPrimaryKeyExists)(attributes, editingIndex);
                                                 return ((0, jsx_runtime_1.jsx)("option", { value: constraint, disabled: isDisabled, className: isDisabled ? dataTypeProperties_1.disabledOptionClass : '', title: constraint === 'primary key' ? "There can be only one primary key in a table" : "", children: constraint.split(' ').map(function (word) { return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(); }).join(' ') }, constraint));
-                                            })] })] }), (0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsx)("label", { className: "mb-1 block text-sm font-medium text-black dark:text-white", children: "Default Value" }), (0, jsx_runtime_1.jsx)("input", { type: "text", value: currentAttribute.defaultValue || '', onChange: handleDefaultValueChange, className: "w-full rounded border-[1.5px] border-stroke bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary", placeholder: "Enter default value" })] }), (0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsx)("label", { className: "mb-1 block text-sm font-medium text-black dark:text-white", children: "Validations" }), (0, jsx_runtime_1.jsxs)("div", { className: "space-y-2", children: [(0, jsx_runtime_1.jsx)("div", { className: "flex gap-2", children: (0, jsx_runtime_1.jsxs)("select", { value: "", onChange: handleValidationChange, className: "w-full rounded border-[1.5px] border-stroke bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary", children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: "Add validation" }), (_e = configData.validations
-                                                            .find(function (g) { return g.group === "General"; })) === null || _e === void 0 ? void 0 : _e.validations.map(function (validation) { return ((0, jsx_runtime_1.jsx)("option", { value: validation.name, children: validation.label }, validation.name)); }), currentAttribute.dataType && (function () {
+                                            })] })] }), (0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsx)("label", { className: "mb-1 block text-sm font-medium text-black dark:text-white", children: "Default Value" }), (0, jsx_runtime_1.jsx)("input", { type: "text", value: currentAttribute.defaultValue || '', onChange: handleDefaultValueChange, className: "w-full rounded border-[1.5px] border-stroke bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary", placeholder: "Enter default value" })] }), (0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsx)("label", { className: "mb-1 block text-sm font-medium text-black dark:text-white", children: "Validations" }), (0, jsx_runtime_1.jsxs)("div", { className: "space-y-2", children: [(0, jsx_runtime_1.jsx)("div", { className: "flex gap-2", children: (0, jsx_runtime_1.jsxs)("select", { value: "", onChange: handleValidationChange, className: "w-full rounded border-[1.5px] border-stroke bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary", children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: "Add validation" }), (_c = configData.validations
+                                                            .find(function (g) { return g.group === "General"; })) === null || _c === void 0 ? void 0 : _c.validations.map(function (validation) { return ((0, jsx_runtime_1.jsx)("option", { value: validation.name, children: validation.label }, validation.name)); }), currentAttribute.dataType && (function () {
                                                             var _a;
                                                             var typeValidations = (_a = configData.validations
                                                                 .find(function (g) {
@@ -474,9 +513,9 @@ function EntitySetup(_a) {
                                                                     case 'boolean':
                                                                         return g.group === "Boolean";
                                                                     case 'date':
+                                                                        return g.group === "Date";
                                                                     case 'timestamp':
                                                                     case 'time':
-                                                                        return g.group === "Date";
                                                                     default:
                                                                         return false;
                                                                 }
@@ -489,11 +528,41 @@ function EntitySetup(_a) {
                                                         .find(function (v) { return v.name === key; });
                                                     if (!validation)
                                                         return null;
-                                                    return ((0, jsx_runtime_1.jsxs)("div", { className: "flex flex-col w-full", children: [(0, jsx_runtime_1.jsxs)("div", { className: "flex items-center justify-between w-full bg-gray-50 dark:bg-boxdark-2 p-2 rounded border border-stroke dark:border-strokedark", children: [(0, jsx_runtime_1.jsxs)("div", { className: "flex items-center gap-2 flex-grow", children: [(0, jsx_runtime_1.jsx)("span", { className: "text-sm", children: validation.label }), validation.hasValue && ((0, jsx_runtime_1.jsx)("input", { type: validation.valueType === 'number' ? 'number' : 'text', value: value || '', onChange: function (e) {
-                                                                                    var newValue = validation.valueType === 'number' ?
-                                                                                        Number(e.target.value) : e.target.value;
+                                                    // Get the appropriate label based on input type
+                                                    var validationLabel = (function () {
+                                                        if (currentAttribute.inputType === 'date' && ['min', 'max'].includes(validation.name)) {
+                                                            return validation.name === 'min' ? 'Min Date' : 'Max Date';
+                                                        }
+                                                        return validation.label;
+                                                    })();
+                                                    return ((0, jsx_runtime_1.jsxs)("div", { className: "flex flex-col w-full", children: [(0, jsx_runtime_1.jsxs)("div", { className: "flex items-center justify-between w-full bg-gray-50 dark:bg-boxdark-2 p-2 rounded border border-stroke dark:border-strokedark", children: [(0, jsx_runtime_1.jsxs)("div", { className: "flex items-center gap-2 flex-grow", children: [(0, jsx_runtime_1.jsx)("span", { className: "text-sm", children: validationLabel }), validation.hasValue && ((0, jsx_runtime_1.jsx)("input", { type: (function () {
+                                                                                    if (validation.valueType === 'date' ||
+                                                                                        (currentAttribute.inputType === 'date' && ['min', 'max'].includes(validation.name))) {
+                                                                                        return 'date';
+                                                                                    }
+                                                                                    if (validation.valueType === 'number') {
+                                                                                        return 'number';
+                                                                                    }
+                                                                                    return 'text';
+                                                                                })(), value: value || '', onChange: function (e) {
+                                                                                    var newValue;
+                                                                                    if (currentAttribute.inputType === 'date' && ['min', 'max'].includes(validation.name)) {
+                                                                                        // Format date value as YYYY-MM-DD
+                                                                                        var date = new Date(e.target.value);
+                                                                                        newValue = date.toISOString().split('T')[0];
+                                                                                    }
+                                                                                    else {
+                                                                                        newValue = validation.valueType === 'number' ?
+                                                                                            Number(e.target.value) : e.target.value;
+                                                                                    }
                                                                                     handleValidationValueChange(key, newValue, validation);
-                                                                                }, className: "flex-1 rounded border-[1.5px] ".concat(validationErrors[key] ? 'border-meta-1' : 'border-stroke', " bg-transparent px-4 py-1 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"), placeholder: validation.valueType === 'number' ? '0' : 'Enter value' }))] }), (0, jsx_runtime_1.jsx)("button", { onClick: function () {
+                                                                                }, className: "flex-1 rounded border-[1.5px] ".concat(validationErrors[key] ? 'border-meta-1' : 'border-stroke', " bg-transparent px-4 py-1 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"), placeholder: (function () {
+                                                                                    if (validation.valueType === 'date' ||
+                                                                                        (currentAttribute.inputType === 'date' && ['min', 'max'].includes(validation.name))) {
+                                                                                        return 'Select date';
+                                                                                    }
+                                                                                    return validation.valueType === 'number' ? '0' : 'Enter value';
+                                                                                })() }))] }), (0, jsx_runtime_1.jsx)("button", { onClick: function () {
                                                                             var _a = currentAttribute.validations, _b = key, _ = _a[_b], restValidations = __rest(_a, [typeof _b === "symbol" ? _b : _b + ""]);
                                                                             setCurrentAttribute(__assign(__assign({}, currentAttribute), { validations: restValidations }));
                                                                             // Clear error when removing validation

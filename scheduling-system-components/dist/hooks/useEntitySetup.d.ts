@@ -20,6 +20,8 @@ export declare const useEntitySetup: ({ configData, entityName, setEntityName, a
         dataType?: string;
         size?: string;
         precision?: string;
+        inputType?: string;
+        options?: string;
     };
     setErrors: import("react").Dispatch<import("react").SetStateAction<{
         entityName?: string;
@@ -27,6 +29,8 @@ export declare const useEntitySetup: ({ configData, entityName, setEntityName, a
         dataType?: string;
         size?: string;
         precision?: string;
+        inputType?: string;
+        options?: string;
     }>>;
     handleEntitySelect: (selected: string) => void;
     handleEntityNameChange: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;

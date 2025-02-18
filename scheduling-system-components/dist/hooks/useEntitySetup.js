@@ -164,6 +164,10 @@ var useEntitySetup = function (_a) {
     var handleEntitySelect = function (selected) {
         var _a;
         setSelectedEntity(selected);
+        setErrors({});
+        // Reset form fields
+        setCurrentAttribute(initialAttribute);
+        setEditingIndex(null);
         if (selected === "custom") {
             setIsCustomEntity(true);
             setEntityName("");

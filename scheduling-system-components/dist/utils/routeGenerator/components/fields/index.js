@@ -11,7 +11,7 @@ var __assign = (this && this.__assign) || function () {
     return __assign.apply(this, arguments);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateHiddenField = exports.generateSearchField = exports.generateRangeField = exports.generateColorField = exports.generateUrlField = exports.generateTelField = exports.generateRadioField = exports.generateCheckboxField = exports.generateDateTimeField = exports.generatePasswordField = exports.generateEmailField = exports.generateFileField = exports.generateRichTextField = exports.generateSelectField = exports.generateDateField = void 0;
+exports.generateTextAreaField = exports.generateTimeField = exports.generateHiddenField = exports.generateSearchField = exports.generateRangeField = exports.generateColorField = exports.generateUrlField = exports.generateTelField = exports.generateRadioField = exports.generateCheckboxField = exports.generateDateTimeField = exports.generatePasswordField = exports.generateEmailField = exports.generateFileField = exports.generateRichTextField = exports.generateSelectField = exports.generateDateField = void 0;
 exports.generateField = generateField;
 var DateField_1 = require("./DateField");
 Object.defineProperty(exports, "generateDateField", { enumerable: true, get: function () { return DateField_1.generateDateField; } });
@@ -44,6 +44,10 @@ var SearchField_1 = require("./SearchField");
 Object.defineProperty(exports, "generateSearchField", { enumerable: true, get: function () { return SearchField_1.generateSearchField; } });
 var HiddenField_1 = require("./HiddenField");
 Object.defineProperty(exports, "generateHiddenField", { enumerable: true, get: function () { return HiddenField_1.generateHiddenField; } });
+var TimeField_1 = require("./TimeField");
+Object.defineProperty(exports, "generateTimeField", { enumerable: true, get: function () { return TimeField_1.generateTimeField; } });
+var TextAreaField_1 = require("./TextAreaField");
+Object.defineProperty(exports, "generateTextAreaField", { enumerable: true, get: function () { return TextAreaField_1.generateTextAreaField; } });
 // Helper function to format field labels (e.g., "first_name" to "First Name")
 function formatFieldLabel(name) {
     return name
@@ -105,6 +109,10 @@ function generateSingleField(attr, fieldName) {
             return (0, SearchField_1.generateSearchField)(formattedAttr, formattedFieldName);
         case 'hidden':
             return (0, HiddenField_1.generateHiddenField)(formattedAttr, formattedFieldName);
+        case 'time':
+            return (0, TimeField_1.generateTimeField)(formattedAttr, formattedFieldName);
+        case 'textarea':
+            return (0, TextAreaField_1.generateTextAreaField)(formattedAttr, formattedFieldName);
         default:
             return (0, TextField_1.generateTextField)(formattedAttr, formattedFieldName);
     }

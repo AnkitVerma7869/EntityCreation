@@ -160,7 +160,7 @@ function TableForm() {
     };
     // Handle entity save operation
     var handleSaveEntity = function () { return __awaiter(_this, void 0, void 0, function () {
-        var trimmedEntityName, entity, error_2;
+        var trimmedEntityName, entity, response, error_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -183,13 +183,13 @@ function TableForm() {
                     _a.trys.push([1, 3, , 4]);
                     return [4 /*yield*/, (0, utilstableform_1.saveEntity)(entity)];
                 case 2:
-                    _a.sent();
-                    showToast("Entity saved successfully!", 'success');
+                    response = _a.sent();
+                    showToast(response.message, 'success');
                     resetForm();
                     return [3 /*break*/, 4];
                 case 3:
                     error_2 = _a.sent();
-                    showToast("Failed to save entity. Please try again.", 'error');
+                    showToast(error_2.message || "Failed to save entity. Please try again.", 'error');
                     return [3 /*break*/, 4];
                 case 4: return [2 /*return*/];
             }

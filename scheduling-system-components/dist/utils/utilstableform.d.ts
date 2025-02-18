@@ -5,6 +5,9 @@ export declare function fetchEntityConfig(): Promise<ConfigData>;
 /**
  * Saves entity to backend API and generates corresponding routes
  * @param entity - The entity configuration to save
- * @returns Promise<Response> from the API
+ * @returns Promise<{message: string, success: boolean}> from the API
  */
-export declare function saveEntity(entity: Entity): Promise<Response>;
+export declare function saveEntity(entity: Entity): Promise<{
+    message: string;
+    success: boolean;
+}>;

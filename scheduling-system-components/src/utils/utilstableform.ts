@@ -21,14 +21,6 @@ export const initialAttributeState: Attribute = {
   inputType: ''
 };
 
-
-
-
-
-
-
-
-
 // Fetch entity configuration from JSON file
 export async function fetchEntityConfig(): Promise<ConfigData> {
   const response = await fetch('/data/entityConfig.json');
@@ -39,12 +31,38 @@ export async function fetchEntityConfig(): Promise<ConfigData> {
   return data;
 }
 
+interface ApiSuccessResponse {
+  success: {
+    code: number;
+    type: string;
+    message: string;
+    data: {
+      create: { method: string; url: string };
+      list: { method: string; url: string };
+      get: { method: string; url: string };
+      update: { method: string; url: string };
+      delete: { method: string; url: string };
+    };
+  };
+}
+
+interface ApiErrorResponse {
+  error: {
+    code: number;
+    type: string;
+    message: string;
+    data: null;
+  };
+}
+
+type ApiResponse = ApiSuccessResponse | ApiErrorResponse;
+
 /**
  * Saves entity to backend API and generates corresponding routes
  * @param entity - The entity configuration to save
- * @returns Promise<Response> from the API
+ * @returns Promise<{message: string, success: boolean}> from the API
  */
-export async function saveEntity(entity: Entity): Promise<Response> {
+export async function saveEntity(entity: Entity): Promise<{message: string, success: boolean}> {
   // Transform entity data to match API requirements
   const transformedEntity = {
     entityName: entity.entityName,
@@ -74,7 +92,26 @@ export async function saveEntity(entity: Entity): Promise<Response> {
   };
 
   console.log('Saving Entity:', transformedEntity);
+ 
+
+  // Send POST request to API
+   const response = await fetch(`${API_URL}/api/v1/entity/create`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json', 
+    },
+    body: JSON.stringify(transformedEntity),
+  });
+
+  console.log('Response:', response);
   
+  const responseData: ApiResponse = await response.json();
+
+  // Check if response contains error
+  if ('error' in responseData) {
+    throw new Error(responseData.error.message);
+  }
+
   try {
     const config = {
       entityName: entity.entityName,
@@ -88,36 +125,10 @@ export async function saveEntity(entity: Entity): Promise<Response> {
     throw new Error('Entity saved but failed to generate routes');
   }
 
-  // Send POST request to API
-  const response = await fetch(`${API_URL}/api/v1/entity/create`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json', 
-    },
-    body: JSON.stringify(transformedEntity),
-  });
-
-  console.log('Response:', response);
-  // Handle API response
-  // if (!response.ok) {
-  //   throw new Error(`Failed to save entity: ${response.status} ${response.statusText}`);
-  // }
-
-//   // Generate routes after successful entity creation
-//   try {
-//     const config = {
-//       entityName: entity.entityName,
-//       attributes: entity.attributes
-//     };
-    
-//     await generateTableRoutes(config);
-//     console.log('Routes generated successfully for:', entity.entityName);
-//   } catch (error) {
-//     console.error('Error generating routes:', error);
-//     throw new Error('Entity saved but failed to generate routes');
-//   }
-
-   return response;
+  return {
+    message: responseData.success.message,
+    success: true
+  };
  } 
 
 

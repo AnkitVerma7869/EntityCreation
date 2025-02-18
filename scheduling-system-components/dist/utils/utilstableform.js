@@ -92,11 +92,11 @@ function fetchEntityConfig() {
 /**
  * Saves entity to backend API and generates corresponding routes
  * @param entity - The entity configuration to save
- * @returns Promise<Response> from the API
+ * @returns Promise<{message: string, success: boolean}> from the API
  */
 function saveEntity(entity) {
     return __awaiter(this, void 0, void 0, function () {
-        var transformedEntity, config, error_1, response;
+        var transformedEntity, response, responseData, config, error_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -112,6 +112,10 @@ function saveEntity(entity) {
                                 precision: attr.precision,
                                 constraints: attr.constraints,
                                 defaultValue: attr.defaultValue || "",
+                                options: attr.options,
+                                isMultiSelect: attr.isMultiSelect,
+                                isEditable: attr.isEditable,
+                                sortable: attr.sortable,
                                 enumValues: attr.dataType.toLowerCase() === 'enum' ?
                                     (_a = attr.options) === null || _a === void 0 ? void 0 : _a.map(function (opt) { return typeof opt === 'string' ? opt : opt.value; }) :
                                     undefined,
@@ -123,49 +127,43 @@ function saveEntity(entity) {
                         })
                     };
                     console.log('Saving Entity:', transformedEntity);
-                    _a.label = 1;
+                    return [4 /*yield*/, fetch("".concat(API_URL, "/api/v1/entity/create"), {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(transformedEntity),
+                        })];
                 case 1:
-                    _a.trys.push([1, 3, , 4]);
+                    response = _a.sent();
+                    console.log('Response:', response);
+                    return [4 /*yield*/, response.json()];
+                case 2:
+                    responseData = _a.sent();
+                    // Check if response contains error
+                    if ('error' in responseData) {
+                        throw new Error(responseData.error.message);
+                    }
+                    _a.label = 3;
+                case 3:
+                    _a.trys.push([3, 5, , 6]);
                     config = {
                         entityName: entity.entityName,
                         attributes: entity.attributes
                     };
                     return [4 /*yield*/, (0, routeGenerator_1.generateTableRoutes)(config)];
-                case 2:
+                case 4:
                     _a.sent();
                     console.log('Routes generated successfully for:', entity.entityName);
-                    return [3 /*break*/, 4];
-                case 3:
+                    return [3 /*break*/, 6];
+                case 5:
                     error_1 = _a.sent();
                     console.error('Error generating routes:', error_1);
                     throw new Error('Entity saved but failed to generate routes');
-                case 4: return [4 /*yield*/, fetch("".concat(API_URL, "/api/v1/entity/create"), {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(transformedEntity),
-                    })];
-                case 5:
-                    response = _a.sent();
-                    console.log('Response:', response);
-                    // Handle API response
-                    // if (!response.ok) {
-                    //   throw new Error(`Failed to save entity: ${response.status} ${response.statusText}`);
-                    // }
-                    //   // Generate routes after successful entity creation
-                    //   try {
-                    //     const config = {
-                    //       entityName: entity.entityName,
-                    //       attributes: entity.attributes
-                    //     };
-                    //     await generateTableRoutes(config);
-                    //     console.log('Routes generated successfully for:', entity.entityName);
-                    //   } catch (error) {
-                    //     console.error('Error generating routes:', error);
-                    //     throw new Error('Entity saved but failed to generate routes');
-                    //   }
-                    return [2 /*return*/, response];
+                case 6: return [2 /*return*/, {
+                        message: responseData.success.message,
+                        success: true
+                    }];
             }
         });
     });

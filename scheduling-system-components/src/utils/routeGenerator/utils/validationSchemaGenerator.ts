@@ -4,8 +4,15 @@ export function generateValidationSchema(attributes: Attribute[]) {
   return attributes.map(attr => {
     const fieldName = attr.name.replace(/\s+/g, '_');
     
-    // Start with the type declaration first
+    // Start with the type declaration and typeError
     let schema = `${fieldName}: yup.${getYupType(attr)}()`;
+
+    // Add typeError based on the field type
+    if (getYupType(attr) === 'number') {
+      schema += `.typeError("${attr.name} must be a number")`;
+    } else if (getYupType(attr) === 'date') {
+      schema += `.typeError("${attr.name} must be a valid date")`;
+    }
 
     if (attr.validations) {
       // Debug log for validations
@@ -19,20 +26,6 @@ export function generateValidationSchema(attributes: Attribute[]) {
       // Handle nullable validation
       if (attr.validations.nullable) {
         schema += '.nullable()';
-      }
-
-      // Handle type transformations for numbers
-      if (getYupType(attr) === 'number') {
-        schema += '.transform((value) => (isNaN(value) || value === "" ? undefined : Number(value)))';
-      }
-
-      // Handle type transformations for dates
-      if (getYupType(attr) === 'date') {
-        schema += `.transform((value) => {
-          if (!value || value === "") return null;
-          const date = new Date(value);
-          return isNaN(date.getTime()) ? null : date;
-        })`;
       }
 
       // Handle string-specific validations

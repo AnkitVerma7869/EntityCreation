@@ -14,5 +14,7 @@ import { generateColorField } from './ColorField';
 import { generateRangeField } from './RangeField';
 import { generateSearchField } from './SearchField';
 import { generateHiddenField } from './HiddenField';
+import { generateTimeField } from './TimeField';
+import { generateTextAreaField } from './TextAreaField';
 export declare function generateField(entity: Entity): string;
-export { generateDateField, generateSelectField, generateRichTextField, generateFileField, generateEmailField, generatePasswordField, generateDateTimeField, generateCheckboxField, generateRadioField, generateTelField, generateUrlField, generateColorField, generateRangeField, generateSearchField, generateHiddenField };
+export { generateDateField, generateSelectField, generateRichTextField, generateFileField, generateEmailField, generatePasswordField, generateDateTimeField, generateCheckboxField, generateRadioField, generateTelField, generateUrlField, generateColorField, generateRangeField, generateSearchField, generateHiddenField, generateTimeField, generateTextAreaField };

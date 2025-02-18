@@ -52,6 +52,7 @@ export interface Attribute {
         format?: string;
         [key: string]: any;
     };
+    isMultiSelect?: boolean;
 }
 export interface Entity {
     entityName: string;

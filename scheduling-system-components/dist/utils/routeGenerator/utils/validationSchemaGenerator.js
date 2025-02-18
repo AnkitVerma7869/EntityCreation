@@ -4,8 +4,15 @@ exports.generateValidationSchema = generateValidationSchema;
 function generateValidationSchema(attributes) {
     return attributes.map(function (attr) {
         var fieldName = attr.name.replace(/\s+/g, '_');
-        // Start with the type declaration first
+        // Start with the type declaration and typeError
         var schema = "".concat(fieldName, ": yup.").concat(getYupType(attr), "()");
+        // Add typeError based on the field type
+        if (getYupType(attr) === 'number') {
+            schema += ".typeError(\"".concat(attr.name, " must be a number\")");
+        }
+        else if (getYupType(attr) === 'date') {
+            schema += ".typeError(\"".concat(attr.name, " must be a valid date\")");
+        }
         if (attr.validations) {
             // Debug log for validations
             console.log('Validations for', attr.name, ':', attr.validations);
@@ -16,14 +23,6 @@ function generateValidationSchema(attributes) {
             // Handle nullable validation
             if (attr.validations.nullable) {
                 schema += '.nullable()';
-            }
-            // Handle type transformations for numbers
-            if (getYupType(attr) === 'number') {
-                schema += '.transform((value) => (isNaN(value) || value === "" ? undefined : Number(value)))';
-            }
-            // Handle type transformations for dates
-            if (getYupType(attr) === 'date') {
-                schema += ".transform((value) => {\n          if (!value || value === \"\") return null;\n          const date = new Date(value);\n          return isNaN(date.getTime()) ? null : date;\n        })";
             }
             // Handle string-specific validations
             if (getYupType(attr) === 'string') {

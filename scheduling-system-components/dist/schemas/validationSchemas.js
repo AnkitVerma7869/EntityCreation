@@ -120,8 +120,10 @@ exports.precisionSchema = yup.number()
     }
     return true;
 });
-// Add new schema for enum values validation
-exports.enumValuesSchema = yup.array().test('unique-enum-values', 'Enum values must be unique (case-insensitive)', function (values) {
+// Update enum values schema to require at least one value
+exports.enumValuesSchema = yup.array()
+    .min(1, 'At least one option is required')
+    .test('unique-enum-values', 'Enum values must be unique (case-insensitive)', function (values) {
     if (!values || values.length === 0)
         return true;
     var lowercaseValues = values.map(function (v) { return v.value.toLowerCase(); });

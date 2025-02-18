@@ -104,11 +104,11 @@ export default function TableForm() {
     };
 
     try {
-      await saveEntity(entity);
-      showToast("Entity saved successfully!", 'success');
+      const response = await saveEntity(entity);
+      showToast(response.message, 'success');
       resetForm();
-    } catch (error) {
-      showToast("Failed to save entity. Please try again.", 'error');
+    } catch (error: any) {
+      showToast(error.message || "Failed to save entity. Please try again.", 'error');
     }
   };
 
