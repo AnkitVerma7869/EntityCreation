@@ -183,10 +183,10 @@ export function generateEntityStore(config: Entity) {
               }
               
               set({ 
-                records: data.data?.result || [],
-                totalPages: data.data?.totalPages || 0,
-                currentPage: data.data?.currentPage || 1,
-                totalRecords: data.data?.totalRecords || 0,
+                records: data.success?.data?.result || [],
+                totalPages: data.success?.data?.totalPages || 0,
+                currentPage: data.success?.data?.currentPage || 1,
+                totalRecords: data.success?.data?.totalRecords || 0,
                 error: null 
               });
               
