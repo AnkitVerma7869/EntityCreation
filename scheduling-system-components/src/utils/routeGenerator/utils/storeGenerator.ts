@@ -22,6 +22,17 @@ export function generateEntityStore(config: Entity) {
     import { create } from 'zustand';
     import { devtools } from 'zustand/middleware';
 
+    interface ListParams {
+      page: number;
+      limit: number;
+      sortBy: string;
+      orderBy: 'asc' | 'desc';
+      search: string;
+      searchFields: string[];
+      returnFields: string[];
+      conditions: Record<string, any>;
+    }
+
     interface ${config.entityName}State {
       // Form Data
       formData: {
@@ -44,6 +55,12 @@ export function generateEntityStore(config: Entity) {
       records: any[];
       currentRecord: any | null;
       
+      // Pagination and Sorting State
+      listParams: ListParams;
+      totalPages: number;
+      currentPage: number;
+      totalRecords: number;
+      
       // Actions
       setFormData: (data: Partial<${config.entityName}State['formData']>) => void;
       resetForm: () => void;
@@ -58,7 +75,7 @@ export function generateEntityStore(config: Entity) {
       handleRichTextChange: (field: string, content: string) => void;
       
       // API Actions
-      fetchRecords: () => Promise<void>;
+      fetchRecords: (params?: Partial<ListParams>) => Promise<boolean>;
       fetchRecord: (id: string) => Promise<any>;
       createRecord: (data: any) => Promise<boolean>;
       updateRecord: (id: string, data: any) => Promise<boolean>;
@@ -79,6 +96,19 @@ export function generateEntityStore(config: Entity) {
           success: null,
           records: [],
           currentRecord: null,
+          listParams: {
+            page: 1,
+            limit: 10,
+            sortBy: 'id',
+            orderBy: 'asc',
+            search: '',
+            searchFields: ${JSON.stringify(config.attributes.map(attr => attr.name.replace(/\s+/g, '_')))},
+            returnFields: ${JSON.stringify(['id', ...config.attributes.map(attr => attr.name.replace(/\s+/g, '_'))])},
+            conditions: {}
+          },
+          totalPages: 0,
+          currentPage: 1,
+          totalRecords: 0,
 
           // State Setters
           setFormData: (data) => set((state) => ({
@@ -126,16 +156,46 @@ export function generateEntityStore(config: Entity) {
           })),
 
           // API Actions
-          fetchRecords: async () => {
+          fetchRecords: async (params?: Partial<ListParams>) => {
             set({ loading: true, error: null });
             try {
-              const response = await fetch('/api/${config.entityName.toLowerCase()}/list');
+              const currentParams = get().listParams;
+              const requestParams = {
+                ...currentParams,
+                ...params
+              };
+              
+              set({ listParams: requestParams });
+
+              const response = await fetch(\`${API_URL}/api/v1/${config.entityName.toLowerCase()}/\`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json'
+                },
+                body: JSON.stringify(requestParams)
+              });
+              
               const data = await response.json();
-              if (!response.ok) throw new Error(data.error || 'Failed to fetch records');
-              set({ records: data.records || [] });
+              
+              if (!response.ok) {
+                throw new Error(data.message || 'Failed to fetch records');
+              }
+              
+              set({ 
+                records: data.data?.result || [],
+                totalPages: data.data?.totalPages || 0,
+                currentPage: data.data?.currentPage || 1,
+                totalRecords: data.data?.totalRecords || 0,
+                error: null 
+              });
+              
               return true;
             } catch (error: any) {
-              set({ error: error.message });
+              set({ 
+                error: error.message,
+                records: []
+              });
               return false;
             } finally {
               set({ loading: false });

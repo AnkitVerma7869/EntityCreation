@@ -509,7 +509,7 @@ export default function EntitySetup({
           </select>
         </div>
 
-        {isCustomEntity && (
+        {(isCustomEntity || selectedEntity) && (
           <div>
             <label className="mb-1 block text-sm font-medium text-black dark:text-white">
               Entity Name <span className="text-meta-1">*</span>

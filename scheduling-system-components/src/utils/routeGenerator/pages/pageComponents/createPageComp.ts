@@ -46,7 +46,7 @@ export function generateCreatePage(config: Entity): string {
       const onSubmit = async (data: any) => {
         const success = await createRecord(data);
         if (success) {
-          router.push('/${config.entityName.toLowerCase()}/list');
+          router.push('/${config.entityName.toLowerCase()}');
         }
       };
 

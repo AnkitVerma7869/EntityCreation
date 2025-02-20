@@ -5,7 +5,7 @@ export function generateTimeField(attr: Attribute, fieldName: string) {
     <div>
       <label className="mb-1 block text-sm font-medium text-black dark:text-white">
         ${attr.name} ${attr.validations?.required ? '<span className="text-meta-1">*</span>' : ''}
-      </label>
+      </label>  
       <input
         type="time"
         {...register("${fieldName}")}
