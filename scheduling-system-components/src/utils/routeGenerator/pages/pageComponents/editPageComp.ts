@@ -48,7 +48,10 @@ export function generateEditPage(config: Entity): string {
           try {
             const record = await fetchRecord(params.id);
             if (record) {
-        reset(record);
+              // Reset form with each field from the record
+              Object.keys(record).forEach((key) => {
+                setValue(key, record[key]);
+              });
             }
           } catch (err: any) {
             console.error('Failed to load record:', err);
@@ -56,7 +59,7 @@ export function generateEditPage(config: Entity): string {
         };
 
         loadRecord();
-      }, [params.id, reset, fetchRecord]);
+      }, [params.id, setValue, fetchRecord]);
 
       const onSubmit = async (data: any) => {
         const success = await updateRecord(params.id, data);

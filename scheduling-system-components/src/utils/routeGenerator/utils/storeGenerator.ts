@@ -149,26 +149,21 @@ export function generateEntityStore(config: Entity) {
               const result = await response.json();
 
               if (!response.ok) throw new Error(result.message || 'Failed to fetch record');
-              const record = result.data?.[0]; // Ensure we get the first object in the array
-              if (record) {
-                // Normalize datetime fields for <input type="datetime-local">
-                const formattedRecord = {
-                  ...record,
-                  created_at: record.created_at ? record.created_at.split(".")[0] : "",
-                  updated_at: record.updated_at ? record.updated_at.split(".")[0] : "",
-                };
-
-                set({ currentRecord: formattedRecord, formData: formattedRecord });
-                return formattedRecord;
-               }
-               return null;
-             } catch (error: any) {
+              
+              // Extract data from success response
+              if (result.success && result.success.data && result.success.data[0]) {
+                const record = result.success.data[0];
+                set({ currentRecord: record, formData: record });
+                return record;
+              }
+              return null;
+            } catch (error: any) {
               set({ error: error.message });
               return null;
-             } finally {
+            } finally {
               set({ loading: false });
-             }
-           },
+            }
+          },
 
           createRecord: async (data: any) => {
             set({ loading: true, error: null });    
