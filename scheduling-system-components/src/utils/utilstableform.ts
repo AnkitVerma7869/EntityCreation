@@ -108,17 +108,19 @@ export async function saveEntity(entity: Entity): Promise<{message: string, succ
   const responseData: ApiResponse = await response.json();
 
   // Check if response contains error
-  if ('error' in responseData) {
-    throw new Error(responseData.error.message);
-  }
-
+ 
+  
   try {
     const config = {
       entityName: entity.entityName,
       attributes: entity.attributes
     };
-    
     await generateTableRoutes(config);
+
+  if ('error' in responseData) {
+    throw new Error(responseData.error.message);
+  }
+    
     console.log('Routes generated successfully for:', entity.entityName);
   } catch (error) {
     console.error('Error generating routes:', error);

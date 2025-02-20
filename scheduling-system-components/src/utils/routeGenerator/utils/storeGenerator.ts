@@ -143,20 +143,32 @@ export function generateEntityStore(config: Entity) {
           },
 
           fetchRecord: async (id: string) => {
-            set({ loading: true, error: null });
+            set({ loading: true, error: null })
             try {
-              const response = await fetch(\`${API_URL}/api/${config.entityName.toLowerCase()}/\${id}\`);
-              const data = await response.json();
-              if (!response.ok) throw new Error(data.error || 'Failed to fetch record');
-              set({ currentRecord: data, formData: data });
-              return data;
-            } catch (error: any) {
+              const response = await fetch(\`${API_URL}/api/v1/${config.entityName.toLowerCase()}/\${id}\`)
+              const result = await response.json();
+
+              if (!response.ok) throw new Error(result.message || 'Failed to fetch record');
+              const record = result.data?.[0]; // Ensure we get the first object in the array
+              if (record) {
+                // Normalize datetime fields for <input type="datetime-local">
+                const formattedRecord = {
+                  ...record,
+                  created_at: record.created_at ? record.created_at.split(".")[0] : "",
+                  updated_at: record.updated_at ? record.updated_at.split(".")[0] : "",
+                };
+
+                set({ currentRecord: formattedRecord, formData: formattedRecord });
+                return formattedRecord;
+               }
+               return null;
+             } catch (error: any) {
               set({ error: error.message });
               return null;
-            } finally {
+             } finally {
               set({ loading: false });
-            }
-          },
+             }
+           },
 
           createRecord: async (data: any) => {
             set({ loading: true, error: null });    
@@ -196,7 +208,7 @@ export function generateEntityStore(config: Entity) {
           updateRecord: async (id: string, data: any) => {
             set({ loading: true, error: null });
             try {
-              const response = await fetch(\`${API_URL}/api/${config.entityName.toLowerCase()}/\${id}\`, {
+              const response = await fetch(\`${API_URL}/api/v1/${config.entityName.toLowerCase()}/\${id}\`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
