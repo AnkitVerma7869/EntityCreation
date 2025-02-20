@@ -203,13 +203,20 @@ export function generateEntityStore(config: Entity) {
           },
 
           fetchRecord: async (id: string) => {
-            set({ loading: true, error: null });
+            set({ loading: true, error: null })
             try {
-              const response = await fetch(\`${API_URL}/api/${config.entityName.toLowerCase()}/\${id}\`);
-              const data = await response.json();
-              if (!response.ok) throw new Error(data.error || 'Failed to fetch record');
-              set({ currentRecord: data, formData: data });
-              return data;
+              const response = await fetch(\`${API_URL}/api/v1/${config.entityName.toLowerCase()}/\${id}\`)
+              const result = await response.json();
+
+              if (!response.ok) throw new Error(result.message || 'Failed to fetch record');
+              
+              // Extract data from success response
+              if (result.success && result.success.data && result.success.data[0]) {
+                const record = result.success.data[0];
+                set({ currentRecord: record, formData: record });
+                return record;
+              }
+              return null;
             } catch (error: any) {
               set({ error: error.message });
               return null;
@@ -256,7 +263,7 @@ export function generateEntityStore(config: Entity) {
           updateRecord: async (id: string, data: any) => {
             set({ loading: true, error: null });
             try {
-              const response = await fetch(\`${API_URL}/api/${config.entityName.toLowerCase()}/\${id}\`, {
+              const response = await fetch(\`${API_URL}/api/v1/${config.entityName.toLowerCase()}/\${id}\`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
