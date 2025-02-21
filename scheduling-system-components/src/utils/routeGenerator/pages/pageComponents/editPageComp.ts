@@ -64,7 +64,7 @@ export function generateEditPage(config: Entity): string {
       const onSubmit = async (data: any) => {
         const success = await updateRecord(params.id, data);
         if (success) {
-          router.push('/${config.entityName.toLowerCase()}/list');
+          router.push('/${config.entityName.toLowerCase()}');
         }
       };
 

@@ -18,6 +18,14 @@ function generateFieldState(attr: Attribute): string {
 }
 
 export function generateEntityStore(config: Entity) {
+  // Filter out password fields
+  const nonPasswordFields = config.attributes
+    .filter(attr => 
+      !attr.name.toLowerCase().includes('password') && 
+      attr.inputType.toLowerCase() !== 'password'
+    )
+    .map(attr => attr.name.replace(/\s+/g, '_'));
+
   return `
     import { create } from 'zustand';
     import { devtools } from 'zustand/middleware';
@@ -89,7 +97,7 @@ export function generateEntityStore(config: Entity) {
           formData: {
             ${config.attributes
               .map(attr => `${attr.name.replace(/\s+/g, '_')}: ${generateFieldState(attr)}`)
-              .join(',\n            ')}
+              .join(',\n')}
           },
           loading: false,
           error: null,
@@ -102,8 +110,8 @@ export function generateEntityStore(config: Entity) {
             sortBy: 'id',
             orderBy: 'asc',
             search: '',
-            searchFields: ${JSON.stringify(config.attributes.map(attr => attr.name.replace(/\s+/g, '_')))},
-            returnFields: ${JSON.stringify(['id', ...config.attributes.map(attr => attr.name.replace(/\s+/g, '_'))])},
+            searchFields: ${JSON.stringify(nonPasswordFields)},
+            returnFields: ${JSON.stringify(['id', ...nonPasswordFields])},
             conditions: {}
           },
           totalPages: 0,
@@ -283,8 +291,12 @@ export function generateEntityStore(config: Entity) {
           deleteRecord: async (id: string) => {
             set({ loading: true, error: null });
             try {
-              const response = await fetch(\`${API_URL}/api/${config.entityName.toLowerCase()}/\${id}\`, {
-                method: 'DELETE'
+              const response = await fetch(\`${API_URL}/api/v1/${config.entityName.toLowerCase()}/\${id}\`, {
+                method: 'DELETE',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json'
+                }
               });
               const result = await response.json();
               if (!response.ok) throw new Error(result.error || 'Failed to delete record');
