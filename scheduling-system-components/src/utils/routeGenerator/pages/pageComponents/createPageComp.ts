@@ -18,6 +18,11 @@ export function generateCreatePage(config: Entity): string {
     import DatePickerOneRequired from '@/components/FormElements/DatePickerOneRequired';
     import { use${config.entityName}Store } from '@/store/${config.entityName.toLowerCase()}Store';
     `;
+    const dateColumns = config.attributes
+    .filter(attr => ['date', 'datetime', 'timestamp', 'time', 'datetime-local']
+      .some(type => attr.dataType.toLowerCase().includes(type)))
+    .map(attr => `'${attr.name}'`);
+
 
   return `
     'use client';
@@ -43,8 +48,41 @@ export function generateCreatePage(config: Entity): string {
         resolver: yupResolver(validationSchema)
       });
 
+    
+
+        const formatLocalToISOString = (date) => {
+        const pad = (num) => String(num).padStart(2, "0");
+    
+        const year = date.getFullYear();
+        const month = pad(date.getMonth() + 1);
+        const day = pad(date.getDate());
+        const hours = pad(date.getHours());
+        const minutes = pad(date.getMinutes());
+        const seconds = pad(date.getSeconds());
+        const milliseconds = pad(date.getMilliseconds());
+    
+        const offset = -date.getTimezoneOffset();
+        const offsetHours = pad(Math.floor(Math.abs(offset) / 60));
+        const offsetMinutes = pad(Math.abs(offset) % 60);
+        const timezoneSign = offset >= 0 ? "+" : "-";
+    
+        return \`\${year}-\${month}-\${day}T\${hours}:\${minutes}:\${seconds}.\${milliseconds}\${timezoneSign}\${offsetHours}:\${offsetMinutes}\`;
+      };
+
+      const DateFormatColumns = [${dateColumns.join(', ')}];
+
       const onSubmit = async (data: any) => {
-        const success = await createRecord(data);
+        const formattedData = { ...data };
+        
+        
+        
+        DateFormatColumns.forEach(columnName => {
+          if (formattedData[columnName]) {
+            formattedData[columnName] = formatLocalToISOString(formattedData[columnName]);
+          }
+        });
+
+        const success = await createRecord(formattedData);
         if (success) {
           router.push('/${config.entityName.toLowerCase()}');
         }

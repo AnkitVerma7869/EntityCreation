@@ -6,7 +6,6 @@ import { generateValidationSchema } from '../../utils/validationSchemaGenerator'
 export function generateEditPage(config: Entity): string {
   const { packages } = generatePackageImports(config);
   
-  // Generate dynamic imports based on packages
   const dynamicImports = `
     import { useEffect } from 'react';
     import { useRouter } from 'next/navigation';
@@ -18,11 +17,16 @@ export function generateEditPage(config: Entity): string {
     import { use${config.entityName}Store } from '@/store/${config.entityName.toLowerCase()}Store';
     `;
 
+  const dateColumns = config.attributes
+    .filter(attr => ['date', 'datetime', 'timestamp', 'time', 'datetime-local']
+      .some(type => attr.dataType.toLowerCase().includes(type)))
+    .map(attr => `'${attr.name}'`);
+
+
   return `
     'use client';
     ${dynamicImports}
     
-    // Generate validation schema based on attributes
     const validationSchema = yup.object({
       ${generateValidationSchema(config.attributes)}
     });
@@ -43,28 +47,76 @@ export function generateEditPage(config: Entity): string {
         resolver: yupResolver(validationSchema)
       });
 
+      const convertToLocal = (isoString) => {
+        if (!isoString) return "";
+        const date = new Date(isoString);
+        const pad = (num) => String(num).padStart(2, "0");
+        
+        const year = date.getFullYear();
+        const month = pad(date.getMonth() + 1); 
+        const day = pad(date.getDate());
+        const hours = pad(date.getHours());
+        const minutes = pad(date.getMinutes());
+        
+        return \`\${year}-\${month}-\${day}T\${hours}:\${minutes}\`;
+      };
+
+      const formatLocalToISOString = (date) => {
+        const pad = (num) => String(num).padStart(2, "0");
+    
+        const year = date.getFullYear();
+        const month = pad(date.getMonth() + 1);
+        const day = pad(date.getDate());
+        const hours = pad(date.getHours());
+        const minutes = pad(date.getMinutes());
+        const seconds = pad(date.getSeconds());
+        const milliseconds = pad(date.getMilliseconds());
+    
+        const offset = -date.getTimezoneOffset();
+        const offsetHours = pad(Math.floor(Math.abs(offset) / 60));
+        const offsetMinutes = pad(Math.abs(offset) % 60);
+        const timezoneSign = offset >= 0 ? "+" : "-";
+    
+        return \`\${year}-\${month}-\${day}T\${hours}:\${minutes}:\${seconds}.\${milliseconds}\${timezoneSign}\${offsetHours}:\${offsetMinutes}\`;
+      };
+
+      const DateFormatColumns = [${dateColumns.join(', ')}];
+
       useEffect(() => {
         const loadRecord = async () => {
           try {
             const record = await fetchRecord(params.id);
             if (record) {
-              // Reset form with each field from the record
-              Object.keys(record).forEach((key) => {
-                setValue(key, record[key]);
+              const formattedData = { ...record };
+              
+              DateFormatColumns.forEach(columnName => {
+                if (formattedData[columnName]) {
+                  formattedData[columnName] = convertToLocal(formattedData[columnName]);
+                }
               });
+
+              reset(formattedData);
             }
-          } catch (err: any) {
+          } catch (err) {
             console.error('Failed to load record:', err);
           }
         };
 
         loadRecord();
-      }, [params.id, setValue, fetchRecord]);
+      }, [params.id, reset, fetchRecord]);
 
-      const onSubmit = async (data: any) => {
-        const success = await updateRecord(params.id, data);
+      const onSubmit = async (data) => {  
+        const formattedData = { ...data };
+        
+        DateFormatColumns.forEach(columnName => {
+          if (formattedData[columnName]) {
+            formattedData[columnName] = formatLocalToISOString(formattedData[columnName]);
+          }
+        });
+
+        const success = await updateRecord(params.id, formattedData);
         if (success) {
-          router.push('/${config.entityName.toLowerCase()}/list');
+          router.push('/${config.entityName.toLowerCase()}');
         }
       };
 

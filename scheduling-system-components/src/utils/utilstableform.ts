@@ -94,6 +94,7 @@ export async function saveEntity(entity: Entity): Promise<{message: string, succ
   console.log('Saving Entity:', transformedEntity);
  
 
+  
   // Send POST request to API
    const response = await fetch(`${API_URL}/api/v1/entity/create`, {
     method: 'POST',
