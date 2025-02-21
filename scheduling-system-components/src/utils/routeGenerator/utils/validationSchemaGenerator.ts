@@ -3,14 +3,34 @@ import { Attribute } from '../../../interfaces/types';
 export function generateValidationSchema(attributes: Attribute[]) {
   return attributes.map(attr => {
     const fieldName = attr.name.replace(/\s+/g, '_');
+    const yupType = getYupType(attr);
     
-    // Start with the type declaration and typeError
-    let schema = `${fieldName}: yup.${getYupType(attr)}()`;
+    // Start with the type declaration
+    let schema = `${fieldName}: yup.${yupType}()`;
+
+    // For checkbox with options, add validation for array of strings
+    if (attr.inputType.toLowerCase() === 'checkbox' && Array.isArray(attr.options) && attr.options.length > 0) {
+      schema = `${fieldName}: yup.array().of(yup.string())`;
+      
+      if (attr.validations?.required) {
+        schema += '.min(1, "Please select at least one option")';
+      }
+      
+      if (attr.validations?.min !== undefined) {
+        schema += `.min(${attr.validations.min}, "Please select at least ${attr.validations.min} options")`;
+      }
+      
+      if (attr.validations?.max !== undefined) {
+        schema += `.max(${attr.validations.max}, "Please select at most ${attr.validations.max} options")`;
+      }
+      
+      return schema;
+    }
 
     // Add typeError based on the field type
-    if (getYupType(attr) === 'number') {
+    if (yupType === 'number') {
       schema += `.typeError("${attr.name} must be a number")`;
-    } else if (getYupType(attr) === 'date') {
+    } else if (yupType === 'date') {
       schema += `.typeError("${attr.name} must be a valid date")`;
     }
 
@@ -29,7 +49,7 @@ export function generateValidationSchema(attributes: Attribute[]) {
       }
 
       // Handle string-specific validations
-      if (getYupType(attr) === 'string') {
+      if (yupType === 'string') {
         if (attr.validations.trim) schema += '.trim()';
         if (attr.validations.lowercase) schema += '.lowercase()';
         if (attr.validations.uppercase) schema += '.uppercase()';
@@ -42,7 +62,7 @@ export function generateValidationSchema(attributes: Attribute[]) {
       }
 
       // Handle number-specific validations
-      if (getYupType(attr) === 'number') {
+      if (yupType === 'number') {
         if (attr.validations.integer) schema += '.integer("Must be an integer")';
         if (attr.validations.positive) schema += '.positive("Must be a positive number")';
         if (attr.validations.negative) schema += '.negative("Must be a negative number")';
@@ -55,7 +75,7 @@ export function generateValidationSchema(attributes: Attribute[]) {
       }
 
       // Handle boolean-specific validations
-      if (getYupType(attr) === 'boolean') {
+      if (yupType === 'boolean') {
         if (attr.validations.isTrue) schema += '.isTrue("Must be true")';
         if (attr.validations.isFalse) schema += '.isFalse("Must be false")';
       }
@@ -80,7 +100,7 @@ export function generateValidationSchema(attributes: Attribute[]) {
 
       // Handle min/max validations based on type
       if (attr.validations.min !== undefined || attr.validations.max !== undefined) {
-        const type = getYupType(attr);
+        const type = yupType;
         if (type === 'string') {
           if (attr.validations.min !== undefined) {
             schema += `.min(${attr.validations.min}, "Must be at least ${attr.validations.min} characters")`;
@@ -127,11 +147,20 @@ function getYupType(attr: Attribute): string {
   const inputType = attr.inputType.toLowerCase();
   const dataType = attr.dataType.toLowerCase();
   
+  // Handle checkbox as array when it has options
+  if (inputType === 'checkbox' && Array.isArray(attr.options) && attr.options.length > 0) {
+    return 'array';
+  }
+  
+  // Single checkbox without options is boolean
+  if (inputType === 'checkbox') {
+    return 'boolean';
+  }
+  
   // Always treat number input type as number regardless of dataType
   if (inputType === 'number') return 'number';
   
   // Handle other special input types
-  if (inputType === 'checkbox') return 'boolean';
   if (inputType === 'datetime-local' || inputType === 'date') return 'date';
   
   // Then handle data types

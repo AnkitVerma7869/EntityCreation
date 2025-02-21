@@ -1,15 +1,30 @@
 import { Entity } from '../../../../interfaces/types';
 
 export function generateListPage(config: Entity): string {
+  // Filter out password fields from attributes
+  const displayableAttributes = config.attributes.filter(attr => 
+    !attr.name.toLowerCase().includes('password') && 
+    attr.inputType.toLowerCase() !== 'password'
+  );
+
   return `
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import { use${config.entityName}Store } from '@/store/${config.entityName.toLowerCase()}Store';
-import { Eye, Trash2, Search, Plus } from 'lucide-react';
+import { Edit, Trash2, Search, Plus, X } from 'lucide-react';
 import { DataGrid, GridColDef, GridOverlay, gridClasses, GridToolbar } from '@mui/x-data-grid';
 import Box from '@mui/material/Box';
+import DeleteConfirmationModal from '@/components/models/DeleteConfirmationModal';
+
+// Helper function to format column headers
+function formatFieldLabel(name: string): string {
+  return name
+    .split(/[_\\s]+/)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
     
 export default function ${config.entityName}ListPage() {
     const router = useRouter();
@@ -28,6 +43,8 @@ export default function ${config.entityName}ListPage() {
     const [pageSize, setPageSize] = useState(10);
     const [sortField, setSortField] = useState('created_at');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [recordToDelete, setRecordToDelete] = useState<string | null>(null);
 
     useEffect(() => {
       fetchRecords({
@@ -43,9 +60,19 @@ export default function ${config.entityName}ListPage() {
       router.push(\`/${config.entityName.toLowerCase()}/edit/\${id}\`);
     };
 
-    const handleDelete = async (id: string) => {
-      if (window.confirm('Are you sure you want to delete this record?')) {
-        await deleteRecord(id);
+    const openDeleteModal = (id: string) => {
+      setRecordToDelete(id);
+      setIsDeleteModalOpen(true);
+    };
+
+    const closeDeleteModal = () => {
+      setRecordToDelete(null);
+      setIsDeleteModalOpen(false);
+    };
+
+    const handleDelete = async () => {
+      if (recordToDelete) {
+        await deleteRecord(recordToDelete);
         fetchRecords({
           page,
           limit: pageSize,
@@ -53,80 +80,97 @@ export default function ${config.entityName}ListPage() {
           orderBy: sortOrder,
           search: searchTerm
         });
+        closeDeleteModal();
       }
     };
 
-      const handleSearch = () => {
-        setPage(1);
-        fetchRecords({
-          search: searchTerm,
-          page: 1,
-          limit: pageSize,
-          sortBy: sortField,
-          orderBy: sortOrder
-        });
-      };
+    const handleSearch = () => {
+      setPage(1);
+      fetchRecords({
+        search: searchTerm,
+        page: 1,
+        limit: pageSize,
+        sortBy: sortField,
+        orderBy: sortOrder
+      });
+    };
 
-      const CustomNoRowsOverlay = () => (
-        <GridOverlay>
-          <div className="text-center py-4">
-            {error ? (
-              <p className="text-danger">{error}</p>
-            ) : (
-              <p className="text-meta-1">No records found for the selected criteria</p>
-            )}
+    const CustomNoRowsOverlay = () => (
+      <GridOverlay>
+        <div className="text-center py-4">
+          {error ? (
+            <p className="text-danger">{error}</p>
+          ) : (
+            <p className="text-meta-1">No records found for the selected criteria</p>
+          )}
+        </div>
+      </GridOverlay>
+    );
+
+    const columns: GridColDef[] = [
+      ${displayableAttributes.map((attr, index) => `{
+        field: '${attr.name.replace(/\s+/g, '_')}',
+        headerName: \`\${formatFieldLabel('${attr.name}')}\`,
+        flex: 1,
+        ${index === 0 ? `
+        renderCell: (params) => (
+          <div
+            className="cursor-pointer text-primary hover:underline"
+            onClick={() => router.push(\`/${config.entityName.toLowerCase()}/\${params.row.id}\`)}
+          >
+            {params.value}
           </div>
-        </GridOverlay>
-      );
+        ),
+        ` : ''}
+        ${attr.dataType.toLowerCase() === 'number' ? `
+        type: 'number',
+        align: 'right',
+        headerAlign: 'right',
+        ` : ''}
+        ${attr.dataType.toLowerCase() === 'boolean' ? `
+        type: 'boolean',
+        ` : ''}
+        ${attr.dataType.toLowerCase() === 'date' ? `
+        type: 'date',
+        valueFormatter: (params) => {
+          if (!params.value) return '';
+          return formatDateTime(params.value); // Format the date and time
+        },
+        ` : ''}
+      }`).join(',')}
+      ,{
+        field: 'actions',
+        headerName: 'Actions',
+        width: 100,
+        sortable: false,
+        filterable: false,
+        disableColumnMenu: true,
+        renderCell: (params) => (
+          <div className="flex items-center space-x-3.5">
+            <button
+              onClick={() => handleEdit(params.row.id)}
+              className="hover:text-primary"
+            >
+              <Edit size={18} />
+            </button>
+            <button
+              onClick={() => openDeleteModal(params.row.id)}
+              className="hover:text-danger"
+            >
+              <Trash2 size={18} />
+            </button>
+          </div>
+        )
+      }
+    ];
 
-      const columns: GridColDef[] = [
-        ${config.attributes.map(attr => `{
-          field: '${attr.name.replace(/\s+/g, '_')}',
-          headerName: '${attr.name}',
-          flex: 1,
-          ${attr.dataType.toLowerCase() === 'number' ? `
-          type: 'number',
-          align: 'right',
-          headerAlign: 'right',
-          ` : ''}
-          ${attr.dataType.toLowerCase() === 'boolean' ? `
-          type: 'boolean',
-          ` : ''}
-          ${attr.dataType.toLowerCase() === 'date' ? `
-          type: 'date',
-          valueFormatter: (params) => {
-            if (!params.value) return '';
-            return formatDateTime(params.value); // Format the date and time
-          },
-          ` : ''}
-        }`).join(',')}
-        ,{
-          field: 'actions',
-          headerName: 'Actions',
-          width: 100,
-          sortable: false,
-          filterable: false,
-          disableColumnMenu: true,
-          renderCell: (params) => (
-            <div className="flex items-center space-x-3.5">
-              <button
-                onClick={() => handleEdit(params.row.id)}
-                className="hover:text-primary"
-              >
-                <Eye size={18} />
-              </button>
-              <button
-                onClick={() => handleDelete(params.row.id)}
-                className="hover:text-danger"
-              >
-                <Trash2 size={18} />
-              </button>
-            </div>
-          )
-        }
-      ];
-
-      return (
+    return (
+      <>
+        <DeleteConfirmationModal 
+          isOpen={isDeleteModalOpen}
+          onClose={closeDeleteModal}
+          onConfirm={handleDelete}
+        />
         <DefaultLayout>
           <div className="p-2">
             <div className="flex flex-col gap-9">
@@ -201,7 +245,8 @@ export default function ${config.entityName}ListPage() {
             </div>
           </div>
         </DefaultLayout>
-      );
-    }
-  `;
+      </>
+    );
+  }
+`
 } 

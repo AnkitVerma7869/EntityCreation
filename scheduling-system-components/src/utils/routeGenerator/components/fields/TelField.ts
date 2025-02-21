@@ -6,16 +6,24 @@ export function generateTelField(attr: Attribute, fieldName: string) {
       <label className="mb-1 block text-sm font-medium text-black dark:text-white">
         ${attr.name} ${attr.validations?.required ? '<span className="text-meta-1">*</span>' : ''}
       </label>
-      <input
-        type="tel"
-        {...register("${fieldName}")}
-        placeholder="${attr.config?.placeholder || `Enter ${attr.name.toLowerCase()}`}"
-        pattern="${attr.validations?.pattern || '[0-9]{10}'}"
-        className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+      <PhoneNumberInput
+        name="${fieldName}"
+        control={control}
+        onValueChange={(value) => {
+          // Update the form value with phone and country code
+          setValue('${fieldName}', value.phone);
+          setValue('countryCode_${fieldName}', value.countryCode);
+        }}
+        disabled={${attr.config?.disabled || false}}
       />
       {errors.${fieldName} && (
         <p className="mt-1 text-sm text-meta-1">{errors.${fieldName}?.message}</p>
       )}
     </div>
   `;
-} 
+}
+
+// Add this to the imports section of the form page
+export const telFieldImports = `
+import PhoneNumberInput from '@/components/PhoneNumberInput';
+`; 

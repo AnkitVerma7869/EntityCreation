@@ -118,14 +118,14 @@ export async function saveEntity(entity: Entity): Promise<{message: string, succ
     };
     await generateTableRoutes(config);
 
-  if ('error' in responseData) {
-    throw new Error(responseData.error.message);
-  }
+    if ('error' in responseData) {
+      throw new Error(responseData.error.message);
+    }
     
     console.log('Routes generated successfully for:', entity.entityName);
   } catch (error) {
     console.error('Error generating routes:', error);
-    throw new Error('Entity saved but failed to generate routes');
+    throw new Error(error instanceof Error ? error.message : 'Unknown error');
   }
 
   return {
