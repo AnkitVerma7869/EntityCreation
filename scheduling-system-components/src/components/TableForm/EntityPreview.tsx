@@ -65,9 +65,10 @@ export default function EntityPreview({
         showToast("Please add at least one attribute", 'error');
         return;
       }
-
+       
       // If validation passes, proceed with save
       handleSaveEntity();
+
     } catch (error) {
       if (error instanceof Error) {
         showToast(error.message, 'error');

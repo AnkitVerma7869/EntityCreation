@@ -7,7 +7,7 @@ var validationSchemaGenerator_1 = require("../../utils/validationSchemaGenerator
 function generateCreatePage(config) {
     var packages = (0, packageManager_1.generatePackageImports)(config).packages;
     // Generate dynamic imports based on packages
-    var dynamicImports = "\n    import { useEffect } from 'react';\n    import { useRouter } from 'next/navigation';\n    import { useForm, Controller } from 'react-hook-form';\n    import { yupResolver } from '@hookform/resolvers/yup';\n    import * as yup from 'yup';\n    import DefaultLayout from \"@/components/Layouts/DefaultLayout\";\n    import DatePickerOneRequired from '@/components/FormElements/DatePickerOneRequired';\n    import { use".concat(config.entityName, "Store } from '@/store/").concat(config.entityName.toLowerCase(), "Store';\n    ");
+    var dynamicImports = "\n    import { useEffect } from 'react';\n    import { useRouter } from 'next/navigation';\n    import { useForm, Controller } from 'react-hook-form';\n    import { yupResolver } from '@hookform/resolvers/yup';\n    import * as yup from 'yup';\n    import DefaultLayout from \"@/components/Layouts/DefaultLayout\";\n    import DatePickerOneRequired from '@/components/FormElements/DatePickerOneRequired';\n    import PhoneNumberInput from '@/components/PhoneNumberInput/index'\n    import { use".concat(config.entityName, "Store } from '@/store/").concat(config.entityName.toLowerCase(), "Store';\n    ");
     var dateColumns = config.attributes
         .filter(function (attr) { return ['date', 'datetime', 'timestamp', 'time', 'datetime-local']
         .some(function (type) { return attr.dataType.toLowerCase().includes(type); }); })

@@ -6,7 +6,7 @@ import { initialAttributeState, fetchEntityConfig, saveEntity } from "../../util
 import EntitySetup from "./EntitySetup";
 import EntityPreview from "./EntityPreview";
 import EntityRoutes from "./EntityRoutes";
-
+import { useRouter } from 'next/navigation';
 // Custom toast function to ensure only one toast at a time
 const showToast = (message: string, type: 'success' | 'error') => {
   // Dismiss all existing toasts first
@@ -50,7 +50,7 @@ export default function TableForm() {
   const [isCustomEntity, setIsCustomEntity] = useState(false);
   const [selectedEntity, setSelectedEntity] = useState("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-
+  const router = useRouter();
   // Load initial configuration data
   useEffect(() => {
     const loadConfig = async () => {
@@ -107,6 +107,7 @@ export default function TableForm() {
       const response = await saveEntity(entity);
       showToast(response.message, 'success');
       resetForm();
+      router.push(`/${trimmedEntityName}`);
     } catch (error: any) {
       showToast(error.message || "Failed to save entity. Please try again.", 'error');
     }

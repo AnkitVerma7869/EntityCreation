@@ -83,7 +83,7 @@ export function generateEntityStore(config: Entity) {
       handleRichTextChange: (field: string, content: string) => void;
       
       // API Actions
-      fetchRecords: (params?: Partial<ListParams>) => Promise<boolean>;
+      fetchRecords: (params?: Partial<ListParams>) => Promise<any[]>;
       fetchRecord: (id: string) => Promise<any>;
       createRecord: (data: any) => Promise<boolean>;
       updateRecord: (id: string, data: any) => Promise<boolean>;
@@ -190,21 +190,19 @@ export function generateEntityStore(config: Entity) {
                 throw new Error(data.message || 'Failed to fetch records');
               }
               
+              const records = data.success?.data?.result || [];
+              
               set({ 
-                records: data.success?.data?.result || [],
                 totalPages: data.success?.data?.totalPages || 0,
                 currentPage: data.success?.data?.currentPage || 1,
                 totalRecords: data.success?.data?.totalRecords || 0,
                 error: null 
               });
               
-              return true;
+              return records;
             } catch (error: any) {
-              set({ 
-                error: error.message,
-                records: []
-              });
-              return false;
+              set({ error: error.message });
+              return [];
             } finally {
               set({ loading: false });
             }

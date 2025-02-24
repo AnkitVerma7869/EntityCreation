@@ -6,6 +6,10 @@ export function generateListPage(config: Entity): string {
     !attr.name.toLowerCase().includes('password') && 
     attr.inputType.toLowerCase() !== 'password'
   );
+  const dateColumns = config.attributes
+    .filter(attr => ['date', 'datetime', 'timestamp', 'time', 'datetime-local']
+      .some(type => attr.dataType.toLowerCase().includes(type)))
+    .map(attr => `'${attr.name}'`);
 
   return `
 'use client';
@@ -29,7 +33,6 @@ function formatFieldLabel(name: string): string {
 export default function ${config.entityName}ListPage() {
     const router = useRouter();
     const { 
-      records, 
       loading, 
       error, 
       fetchRecords, 
@@ -37,7 +40,8 @@ export default function ${config.entityName}ListPage() {
       listParams,
       totalRecords 
     } = use${config.entityName}Store();
-      
+    
+    const [records, setRecords] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
@@ -46,14 +50,45 @@ export default function ${config.entityName}ListPage() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [recordToDelete, setRecordToDelete] = useState<string | null>(null);
 
-    useEffect(() => {
-      fetchRecords({
-        page,
-        limit: pageSize,
-        sortBy: sortField,
-        orderBy: sortOrder,
-        search: searchTerm
+    const formatDateTime = (inputDate) => {
+      if (!inputDate) return "";
+      const date = new Date(inputDate.replace(" ", "T")); // Convert "YYYY-MM-DD HH:mm" to ISO format
+      return date.toLocaleString("en-US", {
+        month: "2-digit",
+        day: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true
       });
+    };
+
+    const DateFormatColumns = [${dateColumns.join(', ')}];
+
+    useEffect(() => {
+      const fetchData = async () => {
+        const fetchedRecords = await fetchRecords({
+          page,
+          limit: pageSize,
+          sortBy: sortField,
+          orderBy: sortOrder,
+          search: searchTerm
+        });
+
+        const formattedRecords = fetchedRecords.map(record => {
+          const formattedRecord = { ...record };
+          DateFormatColumns.forEach(columnName => {
+            if (formattedRecord[columnName]) {
+              formattedRecord[columnName] = formatDateTime(formattedRecord[columnName]);
+            }
+          });
+          return formattedRecord;
+        });
+
+        setRecords(formattedRecords);
+      };
+
+      fetchData();
     }, [page, pageSize, sortField, sortOrder, searchTerm]);
 
     const handleEdit = (id: string) => {
@@ -134,7 +169,7 @@ export default function ${config.entityName}ListPage() {
         type: 'date',
         valueFormatter: (params) => {
           if (!params.value) return '';
-          return formatDateTime(params.value); // Format the date and time
+          return formatDateTime(params.value);
         },
         ` : ''}
       }`).join(',')}

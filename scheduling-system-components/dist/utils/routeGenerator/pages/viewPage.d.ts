@@ -1,2 +1,2 @@
 import { Entity } from '../../../interfaces/types';
-export declare function generateViewPage(config: Entity): string;
+export declare function generateViewPageWrapper(config: Entity): string;

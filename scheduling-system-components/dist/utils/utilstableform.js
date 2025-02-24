@@ -158,7 +158,7 @@ function saveEntity(entity) {
                 case 5:
                     error_1 = _a.sent();
                     console.error('Error generating routes:', error_1);
-                    throw new Error('Entity saved but failed to generate routes');
+                    throw new Error(error_1 instanceof Error ? error_1.message : 'Unknown error');
                 case 6: return [2 /*return*/, {
                         message: responseData.success.message,
                         success: true

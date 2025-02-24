@@ -81,6 +81,7 @@ var utilstableform_1 = require("../../utils/utilstableform");
 var EntitySetup_1 = __importDefault(require("./EntitySetup"));
 var EntityPreview_1 = __importDefault(require("./EntityPreview"));
 var EntityRoutes_1 = __importDefault(require("./EntityRoutes"));
+var navigation_1 = require("next/navigation");
 // Custom toast function to ensure only one toast at a time
 var showToast = function (message, type) {
     // Dismiss all existing toasts first
@@ -119,6 +120,7 @@ function TableForm() {
     var _f = (0, react_1.useState)(false), isCustomEntity = _f[0], setIsCustomEntity = _f[1];
     var _g = (0, react_1.useState)(""), selectedEntity = _g[0], setSelectedEntity = _g[1];
     var _h = (0, react_1.useState)(null), editingIndex = _h[0], setEditingIndex = _h[1];
+    var router = (0, navigation_1.useRouter)();
     // Load initial configuration data
     (0, react_1.useEffect)(function () {
         var loadConfig = function () { return __awaiter(_this, void 0, void 0, function () {
@@ -186,6 +188,7 @@ function TableForm() {
                     response = _a.sent();
                     showToast(response.message, 'success');
                     resetForm();
+                    router.push("/".concat(trimmedEntityName));
                     return [3 /*break*/, 4];
                 case 3:
                     error_2 = _a.sent();

@@ -3,14 +3,30 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateValidationSchema = generateValidationSchema;
 function generateValidationSchema(attributes) {
     return attributes.map(function (attr) {
+        var _a, _b, _c;
         var fieldName = attr.name.replace(/\s+/g, '_');
-        // Start with the type declaration and typeError
-        var schema = "".concat(fieldName, ": yup.").concat(getYupType(attr), "()");
+        var yupType = getYupType(attr);
+        // Start with the type declaration
+        var schema = "".concat(fieldName, ": yup.").concat(yupType, "()");
+        // For checkbox with options, add validation for array of strings
+        if (attr.inputType.toLowerCase() === 'checkbox' && Array.isArray(attr.options) && attr.options.length > 0) {
+            schema = "".concat(fieldName, ": yup.array().of(yup.string())");
+            if ((_a = attr.validations) === null || _a === void 0 ? void 0 : _a.required) {
+                schema += '.min(1, "Please select at least one option")';
+            }
+            if (((_b = attr.validations) === null || _b === void 0 ? void 0 : _b.min) !== undefined) {
+                schema += ".min(".concat(attr.validations.min, ", \"Please select at least ").concat(attr.validations.min, " options\")");
+            }
+            if (((_c = attr.validations) === null || _c === void 0 ? void 0 : _c.max) !== undefined) {
+                schema += ".max(".concat(attr.validations.max, ", \"Please select at most ").concat(attr.validations.max, " options\")");
+            }
+            return schema;
+        }
         // Add typeError based on the field type
-        if (getYupType(attr) === 'number') {
+        if (yupType === 'number') {
             schema += ".typeError(\"".concat(attr.name, " must be a number\")");
         }
-        else if (getYupType(attr) === 'date') {
+        else if (yupType === 'date') {
             schema += ".typeError(\"".concat(attr.name, " must be a valid date\")");
         }
         if (attr.validations) {
@@ -25,7 +41,7 @@ function generateValidationSchema(attributes) {
                 schema += '.nullable()';
             }
             // Handle string-specific validations
-            if (getYupType(attr) === 'string') {
+            if (yupType === 'string') {
                 if (attr.validations.trim)
                     schema += '.trim()';
                 if (attr.validations.lowercase)
@@ -43,7 +59,7 @@ function generateValidationSchema(attributes) {
                 }
             }
             // Handle number-specific validations
-            if (getYupType(attr) === 'number') {
+            if (yupType === 'number') {
                 if (attr.validations.integer)
                     schema += '.integer("Must be an integer")';
                 if (attr.validations.positive)
@@ -58,7 +74,7 @@ function generateValidationSchema(attributes) {
                 }
             }
             // Handle boolean-specific validations
-            if (getYupType(attr) === 'boolean') {
+            if (yupType === 'boolean') {
                 if (attr.validations.isTrue)
                     schema += '.isTrue("Must be true")';
                 if (attr.validations.isFalse)
@@ -82,7 +98,7 @@ function generateValidationSchema(attributes) {
             }
             // Handle min/max validations based on type
             if (attr.validations.min !== undefined || attr.validations.max !== undefined) {
-                var type = getYupType(attr);
+                var type = yupType;
                 if (type === 'string') {
                     if (attr.validations.min !== undefined) {
                         schema += ".min(".concat(attr.validations.min, ", \"Must be at least ").concat(attr.validations.min, " characters\")");
@@ -124,12 +140,18 @@ function getYupType(attr) {
     var _a;
     var inputType = attr.inputType.toLowerCase();
     var dataType = attr.dataType.toLowerCase();
+    // Handle checkbox as array when it has options
+    if (inputType === 'checkbox' && Array.isArray(attr.options) && attr.options.length > 0) {
+        return 'array';
+    }
+    // Single checkbox without options is boolean
+    if (inputType === 'checkbox') {
+        return 'boolean';
+    }
     // Always treat number input type as number regardless of dataType
     if (inputType === 'number')
         return 'number';
     // Handle other special input types
-    if (inputType === 'checkbox')
-        return 'boolean';
     if (inputType === 'datetime-local' || inputType === 'date')
         return 'date';
     // Then handle data types

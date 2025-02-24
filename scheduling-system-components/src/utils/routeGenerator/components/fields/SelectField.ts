@@ -1,4 +1,6 @@
 import { Attribute } from '../../../../interfaces/types';
+import { Controller } from 'react-hook-form';
+import Select from 'react-select';
 
 export function generateSelectField(attr: Attribute, fieldName: string) {
   const isMultiple = attr.config?.multiple || false;
@@ -8,19 +10,32 @@ export function generateSelectField(attr: Attribute, fieldName: string) {
       <label className="mb-1 block text-sm font-medium text-black dark:text-white">
         ${attr.name} ${attr.validations?.required ? '<span className="text-meta-1">*</span>' : ''}
       </label>
-      <select
-        {...register("${fieldName}")}
-        className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-        multiple={${isMultiple}}
-      >
-        <option value="">Select ${attr.name}</option>
-        ${(attr.options || []).map(opt => `
-          <option value="${opt.value}">${opt.label}</option>
-        `).join('')}
-      </select>
+      <Controller
+        name="${fieldName}"
+        control={control}
+        render={({ field }) => (
+          <Select
+            {...field}
+            isMulti={${isMultiple}}
+            options={[
+              ${(attr.options || []).map(opt => `
+                { value: "${opt.value}", label: "${opt.label || opt.value}" }
+              `).join(',')}
+            ]}
+            className="react-select"
+            classNamePrefix="select"
+            placeholder="Select ${attr.name}"
+            isClearable
+          />
+        )}
+      />
       {errors.${fieldName} && (
         <p className="mt-1 text-sm text-meta-1">{errors.${fieldName}?.message}</p>
       )}
     </div>
   `;
-} 
+}
+
+export const selectFieldImports = `
+import Select from 'react-select';
+`; 

@@ -15,6 +15,7 @@ export function generateEditPage(config: Entity): string {
     import DefaultLayout from "@/components/Layouts/DefaultLayout";
     import DatePickerOneRequired from '@/components/FormElements/DatePickerOneRequired';
     import { use${config.entityName}Store } from '@/store/${config.entityName.toLowerCase()}Store';
+    import PhoneNumberInput from '@/components/PhoneNumberInput/index'
     `;
 
   const dateColumns = config.attributes
