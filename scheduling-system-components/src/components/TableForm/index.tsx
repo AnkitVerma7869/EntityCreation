@@ -107,7 +107,7 @@ export default function TableForm() {
       const response = await saveEntity(entity);
       showToast(response.message, 'success');
       resetForm();
-      router.push(`/${trimmedEntityName}`);
+      router.push(`/${trimmedEntityName.toLowerCase()}`);
     } catch (error: any) {
       showToast(error.message || "Failed to save entity. Please try again.", 'error');
     }

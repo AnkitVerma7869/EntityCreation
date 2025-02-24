@@ -107,15 +107,24 @@ export default function ${config.entityName}ListPage() {
 
     const handleDelete = async () => {
       if (recordToDelete) {
-        await deleteRecord(recordToDelete);
-        fetchRecords({
-          page,
-          limit: pageSize,
-          sortBy: sortField,
-          orderBy: sortOrder,
-          search: searchTerm
-        });
-        closeDeleteModal();
+        try {
+          await deleteRecord(recordToDelete);
+          // First update local state for immediate feedback
+          setRecords(prevRecords => prevRecords.filter(record => record.id !== recordToDelete));
+          // Then fetch fresh data from server
+          await fetchRecords({
+            page,
+            limit: pageSize,
+            sortBy: sortField,
+            orderBy: sortOrder,
+            search: searchTerm
+          });
+          // Close modal after everything is done
+          closeDeleteModal();
+        } catch (error) {
+          console.error('Error deleting record:', error);
+          // Optionally add error handling UI feedback here
+        }
       }
     };
 

@@ -188,7 +188,7 @@ function TableForm() {
                     response = _a.sent();
                     showToast(response.message, 'success');
                     resetForm();
-                    router.push("/".concat(trimmedEntityName));
+                    router.push("/".concat(trimmedEntityName.toLowerCase()));
                     return [3 /*break*/, 4];
                 case 3:
                     error_2 = _a.sent();
