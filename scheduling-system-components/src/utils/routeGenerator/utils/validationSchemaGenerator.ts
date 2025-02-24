@@ -1,12 +1,19 @@
 import { Attribute } from '../../../interfaces/types';
 
 export function generateValidationSchema(attributes: Attribute[]) {
-  return attributes.map(attr => {
+  let schemaFields = attributes.map(attr => {
     const fieldName = attr.name.replace(/\s+/g, '_');
     const yupType = getYupType(attr);
     
     // Start with the type declaration
     let schema = `${fieldName}: yup.${yupType}()`;
+
+    // Special handling for telephone fields
+    if (attr.inputType.toLowerCase() === 'tel') {
+      // Add the country code field schema
+      const countryCodeSchema = `countryCode_${fieldName}: yup.string()`;
+      schema = `${schema},\n${countryCodeSchema}`;
+    }
 
     // For checkbox with options, add validation for array of strings
     if (attr.inputType.toLowerCase() === 'checkbox' && Array.isArray(attr.options) && attr.options.length > 0) {
@@ -141,6 +148,8 @@ export function generateValidationSchema(attributes: Attribute[]) {
     console.log('Generated schema for', attr.name, ':', schema);
     return schema;
   }).join(',\n');
+
+  return schemaFields;
 }
 
 function getYupType(attr: Attribute): string {
@@ -175,6 +184,11 @@ function getYupType(attr: Attribute): string {
   }
   if (dataType === 'array' || attr.validations?.isArray) {
     return 'array';
+  }
+  
+  // Handle select input type
+  if (inputType === 'select') {
+    return attr.config?.multiple ? 'array' : 'string';
   }
   
   // Default to string for all other types

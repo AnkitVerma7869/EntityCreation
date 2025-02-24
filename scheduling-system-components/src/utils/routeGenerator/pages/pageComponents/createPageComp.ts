@@ -16,7 +16,8 @@ export function generateCreatePage(config: Entity): string {
     import * as yup from 'yup';
     import DefaultLayout from "@/components/Layouts/DefaultLayout";
     import DatePickerOneRequired from '@/components/FormElements/DatePickerOneRequired';
-    import PhoneNumberInput from '@/components/PhoneNumberInput/index'
+    import PhoneNumberInput from '@/components/PhoneNumberInput/index';
+    import Select from 'react-select';
     import { use${config.entityName}Store } from '@/store/${config.entityName.toLowerCase()}Store';
     `;
     const dateColumns = config.attributes

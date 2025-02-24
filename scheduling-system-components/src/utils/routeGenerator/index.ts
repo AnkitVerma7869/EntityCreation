@@ -19,7 +19,7 @@ export async function generateTableRoutes(config: Entity) {
       }
     };
 
-    console.log('calling generate-routes inside routeGenerator.ts:');
+
     // Send routes to the API for file creation
     const response = await fetch('/api/generate-routes', {
       method: 'POST',

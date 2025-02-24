@@ -13,9 +13,18 @@ export function generateSelectField(attr: Attribute, fieldName: string) {
       <Controller
         name="${fieldName}"
         control={control}
-        render={({ field }) => (
+        render={({ field: { onChange, value, ...field } }) => (
           <Select
             {...field}
+            value={${isMultiple} 
+              ? (Array.isArray(value) ? value.map(v => ({ value: v, label: v })) : [])
+              : value ? { value, label: value } : null
+            }
+            onChange={(option) => {
+              ${isMultiple}
+                ? onChange(option ? option.map((item) => item.value) : [])
+                : onChange(option ? option.value : null)
+            }}
             isMulti={${isMultiple}}
             options={[
               ${(attr.options || []).map(opt => `
