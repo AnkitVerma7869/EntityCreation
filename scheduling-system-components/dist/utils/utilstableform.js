@@ -136,10 +136,13 @@ function saveEntity(entity) {
                         })];
                 case 1:
                     response = _a.sent();
-                    console.log('Response:', response);
                     return [4 /*yield*/, response.json()];
                 case 2:
                     responseData = _a.sent();
+                    // Check if response contains error
+                    if ('error' in responseData) {
+                        throw new Error(responseData.error.message);
+                    }
                     _a.label = 3;
                 case 3:
                     _a.trys.push([3, 5, , 6]);
@@ -150,9 +153,6 @@ function saveEntity(entity) {
                     return [4 /*yield*/, (0, routeGenerator_1.generateTableRoutes)(config)];
                 case 4:
                     _a.sent();
-                    if ('error' in responseData) {
-                        throw new Error(responseData.error.message);
-                    }
                     console.log('Routes generated successfully for:', entity.entityName);
                     return [3 /*break*/, 6];
                 case 5:

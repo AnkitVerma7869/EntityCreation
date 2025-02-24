@@ -104,13 +104,14 @@ export async function saveEntity(entity: Entity): Promise<{message: string, succ
     body: JSON.stringify(transformedEntity),
   });
 
-  console.log('Response:', response);
   
   const responseData: ApiResponse = await response.json();
 
   // Check if response contains error
+  if ('error' in responseData) {
+    throw new Error(responseData.error.message);
+  }
  
-  
   try {
     const config = {
       entityName: entity.entityName,
@@ -118,9 +119,7 @@ export async function saveEntity(entity: Entity): Promise<{message: string, succ
     };
     await generateTableRoutes(config);
 
-    if ('error' in responseData) {
-      throw new Error(responseData.error.message);
-    }
+    
     
     console.log('Routes generated successfully for:', entity.entityName);
   } catch (error) {
