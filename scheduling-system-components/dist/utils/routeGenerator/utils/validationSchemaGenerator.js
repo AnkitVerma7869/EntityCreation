@@ -2,12 +2,18 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateValidationSchema = generateValidationSchema;
 function generateValidationSchema(attributes) {
-    return attributes.map(function (attr) {
+    var schemaFields = attributes.map(function (attr) {
         var _a, _b, _c;
         var fieldName = attr.name.replace(/\s+/g, '_');
         var yupType = getYupType(attr);
         // Start with the type declaration
         var schema = "".concat(fieldName, ": yup.").concat(yupType, "()");
+        // Special handling for telephone fields
+        if (attr.inputType.toLowerCase() === 'tel') {
+            // Add the country code field schema
+            var countryCodeSchema = "countryCode_".concat(fieldName, ": yup.string()");
+            schema = "".concat(schema, ",\n").concat(countryCodeSchema);
+        }
         // For checkbox with options, add validation for array of strings
         if (attr.inputType.toLowerCase() === 'checkbox' && Array.isArray(attr.options) && attr.options.length > 0) {
             schema = "".concat(fieldName, ": yup.array().of(yup.string())");
@@ -135,9 +141,10 @@ function generateValidationSchema(attributes) {
         console.log('Generated schema for', attr.name, ':', schema);
         return schema;
     }).join(',\n');
+    return schemaFields;
 }
 function getYupType(attr) {
-    var _a;
+    var _a, _b;
     var inputType = attr.inputType.toLowerCase();
     var dataType = attr.dataType.toLowerCase();
     // Handle checkbox as array when it has options
@@ -166,6 +173,10 @@ function getYupType(attr) {
     }
     if (dataType === 'array' || ((_a = attr.validations) === null || _a === void 0 ? void 0 : _a.isArray)) {
         return 'array';
+    }
+    // Handle select input type
+    if (inputType === 'select') {
+        return ((_b = attr.config) === null || _b === void 0 ? void 0 : _b.multiple) ? 'array' : 'string';
     }
     // Default to string for all other types
     return 'string';
