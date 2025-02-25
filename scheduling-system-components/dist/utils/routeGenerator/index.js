@@ -60,7 +60,6 @@ function generateTableRoutes(config) {
                             _a["".concat(config.entityName.toLowerCase(), "Store.ts")] = (0, storeGenerator_1.generateEntityStore)(config),
                             _a)
                     };
-                    console.log('calling generate-routes inside routeGenerator.ts:');
                     return [4 /*yield*/, fetch('/api/generate-routes', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
