@@ -66,37 +66,46 @@ export async function saveEntity(entity: Entity): Promise<{message: string, succ
   // Transform entity data to match API requirements
   const transformedEntity = {
     entityName: entity.entityName,
-    attributes: entity.attributes.map(attr => ({
-      attributeName: attr.name,
-      inputType: attr.inputType,
-      dataType: attr.dataType.toLowerCase(),
-      size: attr.size,
-      precision: attr.precision,
-      constraints: attr.constraints,
-      defaultValue: attr.defaultValue || "",
-      options: attr.options,
-      isMultiSelect: attr.isMultiSelect,
-      isEditable: attr.isEditable,
-      sortable: attr.sortable,
-      enumValues: attr.dataType.toLowerCase() === 'enum' ? 
-        attr.options?.map(opt => typeof opt === 'string' ? opt : opt.value) : 
-        undefined,
-      validations: {
-        ...attr.validations,
-        required: attr.validations.required || 
-                 attr.constraints?.includes('not null') || 
-                 attr.constraints?.includes('primary key') || 
-                 false
-      }
-    }))
+    attributes: entity.attributes.map(attr => {
+      // Convert gender input type to radio
+      const inputType = attr.inputType === 'gender' ? 'radio' : attr.inputType;
+      const isRadioType = inputType === 'radio';
+      
+      return {
+        attributeName: attr.name,
+        inputType: inputType,
+        dataType: attr.dataType.toLowerCase(),
+        size: attr.size,
+        precision: attr.precision,
+        constraints: attr.constraints,
+        defaultValue: attr.defaultValue || "",
+        options: attr.inputType === 'gender' ? [
+          { value: "male", label: "male" },
+          { value: "female", label: "female" },
+          { value: "others", label: "others" }
+        ] : attr.options,
+        isMultiSelect: isRadioType ? false : attr.isMultiSelect, // Radio buttons are never multi-select
+        isEditable: attr.isEditable !== undefined ? attr.isEditable : true,
+        sortable: attr.sortable !== undefined ? attr.sortable : true,
+        enumValues: attr.dataType.toLowerCase() === 'enum' ? 
+          (attr.inputType === 'gender' ? ['male', 'female', 'others'] : 
+            attr.options?.map(opt => typeof opt === 'string' ? opt : opt.value)) : 
+          undefined,
+        validations: {
+          ...attr.validations,
+          required: attr.validations.required || 
+                   attr.constraints?.includes('not null') || 
+                   attr.constraints?.includes('primary key') || 
+                   false
+        }
+      };
+    })
   };
 
   console.log('Saving Entity:', transformedEntity);
  
-
-  
   // Send POST request to API
-   const response = await fetch(`${API_URL}/api/v1/entity/create`, {
+  const response = await fetch(`${API_URL}/api/v1/entity/create`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json', 
@@ -107,9 +116,6 @@ export async function saveEntity(entity: Entity): Promise<{message: string, succ
   console.log('Response:', response);
   
   const responseData: ApiResponse = await response.json();
-
-  // Check if response contains error
- 
   
   try {
     const config = {
@@ -132,6 +138,6 @@ export async function saveEntity(entity: Entity): Promise<{message: string, succ
     message: responseData.success.message,
     success: true
   };
- } 
+} 
 
 

@@ -156,12 +156,12 @@ export default function EntitySetup({
         precision: null,
         options: [],
         validations: {},
-        isMultiSelect: false // Default to single select
+        isMultiSelect: false
       });
       setIsMultiSelect(false);
     } else if (configData.inputTypes[inputType]) {
-      // For other input types, use the config data
-      const { dataType, size, precision, options = [] } = configData.inputTypes[inputType];
+      // For all input types including gender, use the config data
+      const { dataType, size, precision, options = [], isDataTypeFixed } = configData.inputTypes[inputType];
       const formattedOptions = Array.isArray(options) 
         ? options.map(opt => ({ 
             value: typeof opt === 'string' ? opt : opt.value,
@@ -173,11 +173,12 @@ export default function EntitySetup({
       setCurrentAttribute({
         ...currentAttribute,
         inputType,
-        dataType,
+        dataType: isDataTypeFixed ? dataType : currentAttribute.dataType,
         size: size || null,
         precision: precision || null,
         options: formattedOptions,
-        validations: {}
+        validations: {},
+        isMultiSelect: inputType === 'select' ? false : undefined
       });
     }
   };
@@ -323,6 +324,11 @@ export default function EntitySetup({
   const handleDataTypeChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     setErrors({}); 
     const newDataType = e.target.value.toLowerCase();
+    
+    // If current input type is gender, prevent data type change
+    if (selectedInputType === 'gender') {
+      return;
+    }
     
     try {
       await dataTypeSchema.validate(newDataType);
@@ -583,7 +589,8 @@ export default function EntitySetup({
               <select
                 value={currentAttribute.dataType}
                 onChange={handleDataTypeChange}
-                disabled={['select', 'radio', 'checkbox'].includes(selectedInputType)}
+                disabled={['select', 'radio', 'checkbox', 'gender'].includes(selectedInputType) || 
+                         (selectedInputType && configData.inputTypes[selectedInputType]?.isDataTypeFixed)}
                 className={`w-full rounded border-[1.5px] ${
                   errors.dataType ? 'border-meta-1' : 'border-stroke'
                 } bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-not-allowed disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary`}

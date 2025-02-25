@@ -89,6 +89,8 @@ function generateSingleField(attr: Attribute, fieldName: string): string {
       return generateTimeField(formattedAttr, formattedFieldName);
     case 'textarea':
       return generateTextAreaField(formattedAttr, formattedFieldName);
+    case 'gender':
+      return generateRadioField(formattedAttr, formattedFieldName);
     default:
       return generateTextField(formattedAttr, formattedFieldName);
   }
