@@ -18,7 +18,9 @@ export const initialAttributeState: Attribute = {
   constraints: [],
   defaultValue: null,
   validations: { required: false },
-  inputType: 'text'
+  inputType: 'text',
+  isReadOnly: false,
+  displayInList: true,
 };
 
 // Fetch entity configuration from JSON file
@@ -97,7 +99,9 @@ export async function saveEntity(entity: Entity): Promise<{message: string, succ
                    attr.constraints?.includes('not null') || 
                    attr.constraints?.includes('primary key') || 
                    false
-        }
+        },
+        isReadOnly: attr.isReadOnly || false,
+        displayInList: attr.displayInList !== false,
       };
     })
   };
@@ -126,8 +130,6 @@ export async function saveEntity(entity: Entity): Promise<{message: string, succ
       attributes: entity.attributes
     };
     await generateTableRoutes(config);
-
-    
     
     console.log('Routes generated successfully for:', entity.entityName);
   } catch (error) {
@@ -136,8 +138,8 @@ export async function saveEntity(entity: Entity): Promise<{message: string, succ
   }
 
   return {
-    message: `${entity.entityName} Entity saved successfully`,
-    success: true
+   message: responseData.success.message,
+   success: true
   };
 } 
 

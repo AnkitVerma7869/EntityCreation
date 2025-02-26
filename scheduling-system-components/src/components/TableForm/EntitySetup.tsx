@@ -597,8 +597,14 @@ export default function EntitySetup({
               </label>
               <select
                 value={currentAttribute.dataType}
+<<<<<<< HEAD
                 onChange={handleDataTypeChange}               
                 disabled={isDataTypeDisabled}
+=======
+                onChange={handleDataTypeChange}
+                disabled={Boolean(['select', 'radio', 'checkbox', 'gender'].includes(selectedInputType)) || 
+                  Boolean(selectedInputType && configData.inputTypes[selectedInputType]?.isDataTypeFixed)}
+>>>>>>> Yash_EntityCreation
                 className={`w-full rounded border-[1.5px] ${
                   errors.dataType ? 'border-meta-1' : 'border-stroke'
                 } bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-not-allowed disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary`}
