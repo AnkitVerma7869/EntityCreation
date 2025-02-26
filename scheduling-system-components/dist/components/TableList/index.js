@@ -59,6 +59,8 @@ function TablesList(_a) {
         page: 0,
     }), paginationModel = _d[0], setPaginationModel = _d[1];
     var _e = (0, react_1.useState)(true), loading = _e[0], setLoading = _e[1];
+    // API endpoint from environment variables
+    var API_URL = process.env.NEXT_PUBLIC_API_URL_ENDPOINT;
     /**
      * Handles row click events by navigating to the detailed view of the selected table
      */
@@ -77,12 +79,13 @@ function TablesList(_a) {
                     case 0:
                         _a.trys.push([0, 3, 4, 5]);
                         setLoading(true);
-                        return [4 /*yield*/, fetch('/api/tables')];
+                        return [4 /*yield*/, fetch("".concat(API_URL, "/api/v1/entity/all-entities"))];
                     case 1:
                         response = _a.sent();
                         return [4 /*yield*/, response.json()];
                     case 2:
                         data = _a.sent();
+                        console.log("data", data);
                         dynamicColumns = [
                             {
                                 field: 'id',
@@ -91,36 +94,29 @@ function TablesList(_a) {
                                 filterable: true,
                             },
                             {
-                                field: 'entityName',
-                                headerName: 'Entity Name',
+                                field: 'name',
+                                headerName: 'Table Name',
                                 flex: 1,
                                 filterable: true,
                                 sortable: true,
                             },
                             {
-                                field: 'totalFields',
+                                field: 'numberofcolumn',
                                 headerName: 'Total Fields',
                                 width: 120,
                                 filterable: true,
                                 sortable: true,
-                            },
-                            {
-                                field: 'attributes',
-                                headerName: 'Attributes',
-                                flex: 2,
-                                filterable: true,
-                                sortable: true,
-                                renderCell: function (params) { return ((0, jsx_runtime_1.jsx)("div", { className: "overflow-hidden text-ellipsis", children: params.value })); },
                             }
                         ];
                         setColumns(dynamicColumns);
-                        formattedTables = data.tables.map(function (table, index) { return ({
-                            id: index + 1,
-                            entityName: table.entityName,
-                            totalFields: table.attributes.length,
-                            attributes: table.attributes.map(function (attr) { return "".concat(attr.name, " (").concat(attr.dataType, ")"); }).join(', '),
-                        }); });
-                        setTables(formattedTables);
+                        if (data.success && Array.isArray(data.success.data)) {
+                            formattedTables = data.success.data.map(function (table, index) { return ({
+                                id: index + 1,
+                                name: table.name,
+                                numberofcolumn: table.numberofcolumn
+                            }); });
+                            setTables(formattedTables);
+                        }
                         return [3 /*break*/, 5];
                     case 3:
                         error_1 = _a.sent();
@@ -134,8 +130,8 @@ function TablesList(_a) {
             });
         }); };
         fetchTables();
-    }, []);
-    return ((0, jsx_runtime_1.jsxs)("div", { className: "space-y-6", children: [(0, jsx_runtime_1.jsxs)("div", { className: "flex justify-between items-center mb-6", children: [(0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsx)("h2", { className: "text-2xl font-bold text-gray-800", children: "Available Tables" }), (0, jsx_runtime_1.jsx)("p", { className: "mt-2 text-sm text-gray-600", children: "Manage your database tables and their configurations" })] }), (0, jsx_runtime_1.jsx)("button", { onClick: function () { return router.push('/entities/create'); }, className: "px-4 py-2 bg-blue-500 text-white rounded", children: "Add New" })] }), (0, jsx_runtime_1.jsx)(material_1.Paper, { elevation: 2, className: "p-4", children: (0, jsx_runtime_1.jsx)(material_1.Box, { sx: { height: 400, width: '100%' }, children: (0, jsx_runtime_1.jsx)(x_data_grid_1.DataGrid, { rows: tables, columns: columns, paginationModel: paginationModel, onPaginationModelChange: setPaginationModel, pageSizeOptions: [5, 10, 25, 50], loading: loading, disableRowSelectionOnClick: true, onRowClick: handleRowClick, slots: { toolbar: x_data_grid_1.GridToolbar }, slotProps: {
+    }, [API_URL]);
+    return ((0, jsx_runtime_1.jsxs)("div", { className: "space-y-6", children: [(0, jsx_runtime_1.jsxs)("div", { className: "flex justify-between items-center mb-6", children: [(0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsx)("h2", { className: "text-2xl font-bold text-gray-800", children: "Available Tables" }), (0, jsx_runtime_1.jsx)("p", { className: "mt-2 text-sm text-gray-600", children: "Manage your database tables and their configurations" })] }), (0, jsx_runtime_1.jsx)("button", { onClick: function () { return router.push('/entities/create'); }, className: "px-4 py-2 bg-blue-500 text-white rounded", children: "Add New" })] }), (0, jsx_runtime_1.jsx)(material_1.Paper, { elevation: 2, className: "p-4", children: (0, jsx_runtime_1.jsx)(material_1.Box, { sx: { height: 400, width: '100%' }, children: (0, jsx_runtime_1.jsx)(x_data_grid_1.DataGrid, { rows: tables, columns: columns, paginationModel: paginationModel, onPaginationModelChange: setPaginationModel, pageSizeOptions: [5, 10, 25, 50], loading: false, disableRowSelectionOnClick: true, onRowClick: handleRowClick, slots: { toolbar: x_data_grid_1.GridToolbar }, slotProps: {
                             toolbar: {
                                 showQuickFilter: true,
                                 quickFilterProps: { debounceMs: 500 },

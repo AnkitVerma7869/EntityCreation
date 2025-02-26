@@ -82,6 +82,7 @@ var EntitySetup_1 = __importDefault(require("./EntitySetup"));
 var EntityPreview_1 = __importDefault(require("./EntityPreview"));
 var EntityRoutes_1 = __importDefault(require("./EntityRoutes"));
 var navigation_1 = require("next/navigation");
+var lucide_react_1 = require("lucide-react");
 // Custom toast function to ensure only one toast at a time
 var showToast = function (message, type) {
     // Dismiss all existing toasts first
@@ -102,6 +103,8 @@ var showToast = function (message, type) {
 };
 // Loading component shown while fetching initial data
 var LoadingState = function () { return ((0, jsx_runtime_1.jsx)("div", { className: "flex items-center justify-center min-h-screen", children: (0, jsx_runtime_1.jsx)("div", { className: "text-lg", children: "Loading..." }) })); };
+// Add FullPageLoader component
+var FullPageLoader = function () { return ((0, jsx_runtime_1.jsx)("div", { className: "fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center", children: (0, jsx_runtime_1.jsxs)("div", { className: "bg-white rounded-lg p-8 flex flex-col items-center space-y-3 shadow-lg", children: [(0, jsx_runtime_1.jsx)(lucide_react_1.Loader2, { className: "h-8 w-8 animate-spin text-primary" }), (0, jsx_runtime_1.jsx)("p", { className: "text-primary font-medium", children: "Saving Entity..." })] }) })); };
 function TableForm() {
     var _this = this;
     // Configuration state
@@ -120,6 +123,7 @@ function TableForm() {
     var _f = (0, react_1.useState)(false), isCustomEntity = _f[0], setIsCustomEntity = _f[1];
     var _g = (0, react_1.useState)(""), selectedEntity = _g[0], setSelectedEntity = _g[1];
     var _h = (0, react_1.useState)(null), editingIndex = _h[0], setEditingIndex = _h[1];
+    var _j = (0, react_1.useState)(false), isSaving = _j[0], setIsSaving = _j[1];
     var router = (0, navigation_1.useRouter)();
     // Load initial configuration data
     (0, react_1.useEffect)(function () {
@@ -180,23 +184,27 @@ function TableForm() {
                         entityName: trimmedEntityName,
                         attributes: attributes
                     };
+                    setIsSaving(true);
                     _a.label = 1;
                 case 1:
-                    _a.trys.push([1, 3, , 4]);
+                    _a.trys.push([1, 3, 4, 5]);
                     return [4 /*yield*/, (0, utilstableform_1.saveEntity)(entity)];
                 case 2:
                     response = _a.sent();
                     showToast(response.message, 'success');
                     resetForm();
                     router.push("/".concat(trimmedEntityName.toLowerCase()));
-                    return [3 /*break*/, 4];
+                    return [3 /*break*/, 5];
                 case 3:
                     error_2 = _a.sent();
                     showToast(error_2.message || "Failed to save entity. Please try again.", 'error');
-                    return [3 /*break*/, 4];
-                case 4: return [2 /*return*/];
+                    return [3 /*break*/, 5];
+                case 4:
+                    setIsSaving(false);
+                    return [7 /*endfinally*/];
+                case 5: return [2 /*return*/];
             }
         });
     }); };
-    return ((0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsx)(react_hot_toast_1.Toaster, {}), (0, jsx_runtime_1.jsxs)("div", { className: "grid grid-cols-12 gap-4", children: [(0, jsx_runtime_1.jsx)("div", { className: "col-span-4", children: (0, jsx_runtime_1.jsx)(EntitySetup_1.default, { configData: configData, entityName: entityName, setEntityName: setEntityName, attributes: attributes, setAttributes: setAttributes, currentAttribute: currentAttribute, setCurrentAttribute: setCurrentAttribute, isCustomEntity: isCustomEntity, setIsCustomEntity: setIsCustomEntity, selectedEntity: selectedEntity, setSelectedEntity: setSelectedEntity, editingIndex: editingIndex, setEditingIndex: setEditingIndex, handleSaveEntity: handleSaveEntity, resetForm: resetForm, showToast: showToast }) }), (0, jsx_runtime_1.jsxs)("div", { className: "col-span-8 space-y-4", children: [(0, jsx_runtime_1.jsx)(EntityPreview_1.default, { attributes: attributes, setAttributes: setAttributes, setCurrentAttribute: setCurrentAttribute, handleSaveEntity: handleSaveEntity, resetForm: resetForm, setEditingIndex: setEditingIndex, entityName: entityName, showToast: showToast }), (0, jsx_runtime_1.jsx)(EntityRoutes_1.default, { entityName: entityName })] })] })] }));
+    return ((0, jsx_runtime_1.jsxs)("div", { children: [isSaving && (0, jsx_runtime_1.jsx)(FullPageLoader, {}), (0, jsx_runtime_1.jsx)(react_hot_toast_1.Toaster, {}), (0, jsx_runtime_1.jsxs)("div", { className: "grid grid-cols-12 gap-4", children: [(0, jsx_runtime_1.jsx)("div", { className: "col-span-4", children: (0, jsx_runtime_1.jsx)(EntitySetup_1.default, { configData: configData, entityName: entityName, setEntityName: setEntityName, attributes: attributes, setAttributes: setAttributes, currentAttribute: currentAttribute, setCurrentAttribute: setCurrentAttribute, isCustomEntity: isCustomEntity, setIsCustomEntity: setIsCustomEntity, selectedEntity: selectedEntity, setSelectedEntity: setSelectedEntity, editingIndex: editingIndex, setEditingIndex: setEditingIndex, handleSaveEntity: handleSaveEntity, resetForm: resetForm, showToast: showToast }) }), (0, jsx_runtime_1.jsxs)("div", { className: "col-span-8 space-y-4", children: [(0, jsx_runtime_1.jsx)(EntityPreview_1.default, { attributes: attributes, setAttributes: setAttributes, setCurrentAttribute: setCurrentAttribute, handleSaveEntity: handleSaveEntity, resetForm: resetForm, setEditingIndex: setEditingIndex, entityName: entityName, showToast: showToast, isSaving: isSaving }), (0, jsx_runtime_1.jsx)(EntityRoutes_1.default, { entityName: entityName })] })] })] }));
 }

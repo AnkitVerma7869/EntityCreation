@@ -69,7 +69,7 @@ function formatFieldName(name) {
         .replace(/^_+|_+$/g, '')
         .toLowerCase();
 }
-function generateSingleField(attr, fieldName) {
+function generateSingleField(attr, fieldName, defaultValue) {
     // Format the label for display (e.g., "First Name")
     var fieldLabel = formatFieldLabel(attr.name);
     // Format the field name for form handling (e.g., "first_name")
@@ -77,55 +77,59 @@ function generateSingleField(attr, fieldName) {
     // Create a new attribute with formatted names
     var formattedAttr = __assign(__assign({}, attr), { name: fieldLabel // Use formatted label for display
      });
+    // Convert defaultValue to string to handle null case
+    var stringDefaultValue = (defaultValue === null || defaultValue === void 0 ? void 0 : defaultValue.toString()) || '';
     switch (attr.inputType.toLowerCase() || attr.dataType.toLowerCase()) {
         case 'date':
-            return (0, DateField_1.generateDateField)(formattedAttr, formattedFieldName);
+            return (0, DateField_1.generateDateField)(formattedAttr, formattedFieldName, stringDefaultValue);
         case 'datetime-local':
-            return (0, DateTimeField_1.generateDateTimeField)(formattedAttr, formattedFieldName);
+            return (0, DateTimeField_1.generateDateTimeField)(formattedAttr, formattedFieldName, stringDefaultValue);
         case 'select':
         case 'multiselect':
-            return (0, SelectField_1.generateSelectField)(formattedAttr, formattedFieldName);
+            return (0, SelectField_1.generateSelectField)(formattedAttr, formattedFieldName, stringDefaultValue);
         case 'rich-text':
-            return (0, RichTextField_1.generateRichTextField)(formattedAttr, formattedFieldName);
+            return (0, RichTextField_1.generateRichTextField)(formattedAttr, formattedFieldName, stringDefaultValue);
         case 'file':
-            return (0, FileField_1.generateFileField)(formattedAttr, formattedFieldName);
+            return (0, FileField_1.generateFileField)(formattedAttr, formattedFieldName, stringDefaultValue);
         case 'email':
-            return (0, EmailField_1.generateEmailField)(formattedAttr, formattedFieldName);
+            return (0, EmailField_1.generateEmailField)(formattedAttr, formattedFieldName, stringDefaultValue);
         case 'password':
-            return (0, PasswordField_1.generatePasswordField)(formattedAttr, formattedFieldName);
+            return (0, PasswordField_1.generatePasswordField)(formattedAttr, formattedFieldName, stringDefaultValue);
         case 'checkbox':
-            return (0, CheckboxField_1.generateCheckboxField)(formattedAttr, formattedFieldName);
+            return (0, CheckboxField_1.generateCheckboxField)(formattedAttr, formattedFieldName, stringDefaultValue);
         case 'radio':
-            return (0, RadioField_1.generateRadioField)(formattedAttr, formattedFieldName);
+            return (0, RadioField_1.generateRadioField)(formattedAttr, formattedFieldName, stringDefaultValue);
         case 'tel':
-            return (0, TelField_1.generateTelField)(formattedAttr, formattedFieldName);
+            return (0, TelField_1.generateTelField)(formattedAttr, formattedFieldName, stringDefaultValue);
         case 'url':
-            return (0, UrlField_1.generateUrlField)(formattedAttr, formattedFieldName);
+            return (0, UrlField_1.generateUrlField)(formattedAttr, formattedFieldName, stringDefaultValue);
         case 'color':
-            return (0, ColorField_1.generateColorField)(formattedAttr, formattedFieldName);
+            return (0, ColorField_1.generateColorField)(formattedAttr, formattedFieldName, stringDefaultValue);
         case 'range':
-            return (0, RangeField_1.generateRangeField)(formattedAttr, formattedFieldName);
+            return (0, RangeField_1.generateRangeField)(formattedAttr, formattedFieldName, stringDefaultValue);
         case 'search':
-            return (0, SearchField_1.generateSearchField)(formattedAttr, formattedFieldName);
+            return (0, SearchField_1.generateSearchField)(formattedAttr, formattedFieldName, stringDefaultValue);
         case 'hidden':
-            return (0, HiddenField_1.generateHiddenField)(formattedAttr, formattedFieldName);
+            return (0, HiddenField_1.generateHiddenField)(formattedAttr, formattedFieldName, stringDefaultValue);
         case 'time':
-            return (0, TimeField_1.generateTimeField)(formattedAttr, formattedFieldName);
+            return (0, TimeField_1.generateTimeField)(formattedAttr, formattedFieldName, stringDefaultValue);
         case 'textarea':
-            return (0, TextAreaField_1.generateTextAreaField)(formattedAttr, formattedFieldName);
+            return (0, TextAreaField_1.generateTextAreaField)(formattedAttr, formattedFieldName, stringDefaultValue);
         case 'gender':
-            return (0, RadioField_1.generateRadioField)(formattedAttr, formattedFieldName);
+            return (0, RadioField_1.generateRadioField)(formattedAttr, formattedFieldName, stringDefaultValue);
         default:
-            return (0, TextField_1.generateTextField)(formattedAttr, formattedFieldName);
+            return (0, TextField_1.generateTextField)(formattedAttr, formattedFieldName, stringDefaultValue);
     }
 }
 function generateField(entity) {
     var fields = entity.attributes.map(function (attr) {
         var fieldName = attr.name;
-        return generateSingleField(attr, fieldName);
+        var defaultValue = attr.defaultValue;
+        return generateSingleField(attr, fieldName, defaultValue);
     });
-    // Group fields into pairs for two-column layout
+    // Create a typed array for pairedFields
     var pairedFields = [];
+    // Group fields into pairs for two-column layout
     for (var i = 0; i < fields.length; i += 2) {
         var pair = [fields[i]];
         if (i + 1 < fields.length) {

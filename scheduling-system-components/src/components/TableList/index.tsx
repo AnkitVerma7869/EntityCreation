@@ -80,7 +80,7 @@ export default function TablesList({ onCreateNew }: TableListProps) {
         setColumns(dynamicColumns);
 
         if (data.success && Array.isArray(data.success.data)) {
-          const formattedTables = data.success.data.map((table, index) => ({
+          const formattedTables = data.success.data.map((table: any, index: number) => ({
             id: index + 1,
             name: table.name,
             numberofcolumn: table.numberofcolumn
@@ -115,7 +115,7 @@ export default function TablesList({ onCreateNew }: TableListProps) {
         </button>
       </div>
 
-        {/* Data Grid section with MUI DataGrid component */}
+       
         <Paper elevation={2} className="p-4">
           <Box sx={{ height: 400, width: '100%' }}>
             <DataGrid

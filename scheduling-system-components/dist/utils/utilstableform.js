@@ -50,7 +50,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.initialAttributeState = exports.formatArrayToString = void 0;
 exports.fetchEntityConfig = fetchEntityConfig;
 exports.saveEntity = saveEntity;
-var routeGenerator_1 = require("../utils/routeGenerator");
+var routeGenerator_1 = require("./routeGenerator");
 // API endpoint from environment variables
 var API_URL = process.env.NEXT_PUBLIC_API_URL_ENDPOINT;
 // Helper function to convert array to comma-separated string
@@ -67,7 +67,9 @@ exports.initialAttributeState = {
     constraints: [],
     defaultValue: null,
     validations: { required: false },
-    inputType: ''
+    inputType: 'text',
+    isReadOnly: false,
+    displayInList: true,
 };
 // Fetch entity configuration from JSON file
 function fetchEntityConfig() {
@@ -130,7 +132,9 @@ function saveEntity(entity) {
                                 validations: __assign(__assign({}, attr.validations), { required: attr.validations.required ||
                                         ((_b = attr.constraints) === null || _b === void 0 ? void 0 : _b.includes('not null')) ||
                                         ((_c = attr.constraints) === null || _c === void 0 ? void 0 : _c.includes('primary key')) ||
-                                        false })
+                                        false }),
+                                isReadOnly: attr.isReadOnly || false,
+                                displayInList: attr.displayInList !== false,
                             };
                         })
                     };

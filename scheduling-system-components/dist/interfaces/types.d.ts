@@ -53,6 +53,8 @@ export interface Attribute {
         [key: string]: any;
     };
     isMultiSelect?: boolean;
+    isReadOnly?: boolean;
+    displayInList?: boolean;
 }
 export interface Entity {
     entityName: string;
