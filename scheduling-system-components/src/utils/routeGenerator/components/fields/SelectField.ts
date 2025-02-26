@@ -2,8 +2,12 @@ import { Attribute } from '../../../../interfaces/types';
 import { Controller } from 'react-hook-form';
 import Select from 'react-select';
 
-export function generateSelectField(attr: Attribute, fieldName: string) {
+export function generateSelectField(attr: Attribute, fieldName: string, defaultValue: string) {
   const isMultiple = attr.config?.multiple || false;
+  const defaultVal = defaultValue ? 
+    (isMultiple ? defaultValue.split(',').map(v => ({ value: v.trim(), label: v.trim() })) 
+                : { value: defaultValue, label: defaultValue })
+    : null;
   
   return `
     <div className="mb-4.5 w-full">
@@ -13,6 +17,7 @@ export function generateSelectField(attr: Attribute, fieldName: string) {
       <Controller
         name="${fieldName}"
         control={control}
+        defaultValue={${JSON.stringify(defaultVal)}}
         render={({ field: { onChange, value, ...field } }) => (
           <Select
             {...field}

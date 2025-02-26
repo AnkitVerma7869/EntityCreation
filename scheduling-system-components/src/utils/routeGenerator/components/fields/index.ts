@@ -41,7 +41,7 @@ function formatFieldName(name: string): string {
     .toLowerCase();
 }
 
-function generateSingleField(attr: Attribute, fieldName: string): string {
+function generateSingleField(attr: Attribute, fieldName: string, defaultValue: string | null): string {
   // Format the label for display (e.g., "First Name")
   const fieldLabel = formatFieldLabel(attr.name);
   // Format the field name for form handling (e.g., "first_name")
@@ -52,58 +52,64 @@ function generateSingleField(attr: Attribute, fieldName: string): string {
     ...attr,
     name: fieldLabel // Use formatted label for display
   };
+
+  // Convert defaultValue to string to handle null case
+  const stringDefaultValue = defaultValue?.toString() || '';
   
   switch (attr.inputType.toLowerCase() || attr.dataType.toLowerCase()) {
     case 'date':
-      return generateDateField(formattedAttr, formattedFieldName);
+      return generateDateField(formattedAttr, formattedFieldName, stringDefaultValue);
     case 'datetime-local':
-      return generateDateTimeField(formattedAttr, formattedFieldName);
+      return generateDateTimeField(formattedAttr, formattedFieldName, stringDefaultValue);
     case 'select':
     case 'multiselect':
-      return generateSelectField(formattedAttr, formattedFieldName);
+      return generateSelectField(formattedAttr, formattedFieldName, stringDefaultValue);
     case 'rich-text':
-      return generateRichTextField(formattedAttr, formattedFieldName);
+      return generateRichTextField(formattedAttr, formattedFieldName, stringDefaultValue);
     case 'file':
-      return generateFileField(formattedAttr, formattedFieldName);
+      return generateFileField(formattedAttr, formattedFieldName, stringDefaultValue);
     case 'email':
-      return generateEmailField(formattedAttr, formattedFieldName);
+      return generateEmailField(formattedAttr, formattedFieldName, stringDefaultValue);
     case 'password':
-      return generatePasswordField(formattedAttr, formattedFieldName);
+      return generatePasswordField(formattedAttr, formattedFieldName, stringDefaultValue);
     case 'checkbox':
-      return generateCheckboxField(formattedAttr, formattedFieldName);
+      return generateCheckboxField(formattedAttr, formattedFieldName, stringDefaultValue);
     case 'radio':
-      return generateRadioField(formattedAttr, formattedFieldName);
+      return generateRadioField(formattedAttr, formattedFieldName, stringDefaultValue);
     case 'tel':
-      return generateTelField(formattedAttr, formattedFieldName);
+      return generateTelField(formattedAttr, formattedFieldName, stringDefaultValue);
     case 'url':
-      return generateUrlField(formattedAttr, formattedFieldName);
+      return generateUrlField(formattedAttr, formattedFieldName, stringDefaultValue);
     case 'color':
-      return generateColorField(formattedAttr, formattedFieldName);
+      return generateColorField(formattedAttr, formattedFieldName, stringDefaultValue);
     case 'range':
-      return generateRangeField(formattedAttr, formattedFieldName);
+      return generateRangeField(formattedAttr, formattedFieldName, stringDefaultValue);
     case 'search':
-      return generateSearchField(formattedAttr, formattedFieldName);
+      return generateSearchField(formattedAttr, formattedFieldName, stringDefaultValue);
     case 'hidden':
-      return generateHiddenField(formattedAttr, formattedFieldName);
+      return generateHiddenField(formattedAttr, formattedFieldName, stringDefaultValue);
     case 'time':
-      return generateTimeField(formattedAttr, formattedFieldName);
+      return generateTimeField(formattedAttr, formattedFieldName, stringDefaultValue);
     case 'textarea':
-      return generateTextAreaField(formattedAttr, formattedFieldName);
+      return generateTextAreaField(formattedAttr, formattedFieldName, stringDefaultValue);
     case 'gender':
-      return generateRadioField(formattedAttr, formattedFieldName);
+      return generateRadioField(formattedAttr, formattedFieldName, stringDefaultValue);
     default:
-      return generateTextField(formattedAttr, formattedFieldName);
+      return generateTextField(formattedAttr, formattedFieldName, stringDefaultValue);
   }
 }
 
 export function generateField(entity: Entity): string {
   const fields = entity.attributes.map(attr => {
     const fieldName = attr.name;
-    return generateSingleField(attr, fieldName);
+    const defaultValue = attr.defaultValue;
+    return generateSingleField(attr, fieldName, defaultValue);
   });
 
+  // Create a typed array for pairedFields
+  const pairedFields: string[][] = [];
+  
   // Group fields into pairs for two-column layout
-  const pairedFields = [];
   for (let i = 0; i < fields.length; i += 2) {
     const pair = [fields[i]];
     if (i + 1 < fields.length) {

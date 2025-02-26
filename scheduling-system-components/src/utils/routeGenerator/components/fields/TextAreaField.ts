@@ -1,6 +1,6 @@
 import { Attribute } from '../../../../interfaces/types';
 
-export function generateTextAreaField(attr: Attribute, fieldName: string) {
+export function generateTextAreaField(attr: Attribute, fieldName: string, defaultValue: string) {
   return `
     <div>
       <label className="mb-1 block text-sm font-medium text-black dark:text-white">
@@ -8,6 +8,7 @@ export function generateTextAreaField(attr: Attribute, fieldName: string) {
       </label>
       <textarea
         {...register("${fieldName}")}
+        defaultValue="${defaultValue || ''}"
         rows="${attr.config?.rows || 4}"
         placeholder="${attr.config?.placeholder || `Enter ${attr.name.toLowerCase()}`}"
         className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"

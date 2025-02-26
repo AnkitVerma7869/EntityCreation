@@ -104,26 +104,34 @@ function saveEntity(entity) {
                         entityName: entity.entityName,
                         attributes: entity.attributes.map(function (attr) {
                             var _a, _b, _c;
-                            return ({
+                            // Convert gender input type to radio
+                            var inputType = attr.inputType === 'gender' ? 'radio' : attr.inputType;
+                            var isRadioType = inputType === 'radio';
+                            return {
                                 attributeName: attr.name,
-                                inputType: attr.inputType,
+                                inputType: inputType,
                                 dataType: attr.dataType.toLowerCase(),
                                 size: attr.size,
                                 precision: attr.precision,
                                 constraints: attr.constraints,
                                 defaultValue: attr.defaultValue || "",
-                                options: attr.options,
-                                isMultiSelect: attr.isMultiSelect,
-                                isEditable: attr.isEditable,
-                                sortable: attr.sortable,
+                                options: attr.inputType === 'gender' ? [
+                                    { value: "male", label: "male" },
+                                    { value: "female", label: "female" },
+                                    { value: "others", label: "others" }
+                                ] : attr.options,
+                                isMultiSelect: isRadioType ? false : attr.isMultiSelect, // Radio buttons are never multi-select
+                                isEditable: attr.isEditable !== undefined ? attr.isEditable : true,
+                                sortable: attr.sortable !== undefined ? attr.sortable : true,
                                 enumValues: attr.dataType.toLowerCase() === 'enum' ?
-                                    (_a = attr.options) === null || _a === void 0 ? void 0 : _a.map(function (opt) { return typeof opt === 'string' ? opt : opt.value; }) :
+                                    (attr.inputType === 'gender' ? ['male', 'female', 'others'] :
+                                        (_a = attr.options) === null || _a === void 0 ? void 0 : _a.map(function (opt) { return typeof opt === 'string' ? opt : opt.value; })) :
                                     undefined,
                                 validations: __assign(__assign({}, attr.validations), { required: attr.validations.required ||
                                         ((_b = attr.constraints) === null || _b === void 0 ? void 0 : _b.includes('not null')) ||
                                         ((_c = attr.constraints) === null || _c === void 0 ? void 0 : _c.includes('primary key')) ||
                                         false })
-                            });
+                            };
                         })
                     };
                     console.log('Saving Entity:', transformedEntity);

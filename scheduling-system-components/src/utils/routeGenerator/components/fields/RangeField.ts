@@ -1,6 +1,6 @@
 import { Attribute } from '../../../../interfaces/types';
 
-export function generateRangeField(attr: Attribute, fieldName: string) {
+export function generateRangeField(attr: Attribute, fieldName: string, defaultValue: string) {
   return `
     <div>
       <label className="mb-1 block text-sm font-medium text-black dark:text-white">
@@ -10,6 +10,7 @@ export function generateRangeField(attr: Attribute, fieldName: string) {
         <input
           type="range"
           {...register("${fieldName}")}
+          defaultValue="${defaultValue || attr.min || 0}"
           min="${attr.min || 0}"
           max="${attr.max || 100}"
           step="${attr.step || 1}"

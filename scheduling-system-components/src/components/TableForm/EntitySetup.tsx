@@ -106,6 +106,9 @@ export default function EntitySetup({
   // First, add a new state for select type
   const [isMultiSelect, setIsMultiSelect] = useState(false);
 
+  // Add this with other state declarations at the top
+  const [isDataTypeDisabled, setIsDataTypeDisabled] = useState(false);
+
   // Add handler for adding options
   const handleAddOption = async () => {
     if (newOption.trim()) {
@@ -140,46 +143,52 @@ export default function EntitySetup({
     });
   };
 
-  // Update handleInputTypeChange
   const handleInputTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const inputType = e.target.value;
     setSelectedInputType(inputType);
     setErrors({});
     setInputOptions([]);
-
-    if (['select', 'radio', 'checkbox'].includes(inputType)) {
-      setCurrentAttribute({
-        ...currentAttribute,
-        inputType,
-        dataType: 'enum',
-        size: null,
-        precision: null,
-        options: [],
-        validations: {},
-        isMultiSelect: false
-      });
-      setIsMultiSelect(false);
-    } else if (configData.inputTypes[inputType]) {
-      // For all input types including gender, use the config data
-      const { dataType, size, precision, options = [], isDataTypeFixed } = configData.inputTypes[inputType];
-      const formattedOptions = Array.isArray(options) 
-        ? options.map(opt => ({ 
-            value: typeof opt === 'string' ? opt : opt.value,
-            label: typeof opt === 'string' ? opt : opt.label 
-          }))
-        : [];
-      
-      setInputOptions(formattedOptions);
-      setCurrentAttribute({
-        ...currentAttribute,
-        inputType,
-        dataType: isDataTypeFixed ? dataType : currentAttribute.dataType,
-        size: size || null,
-        precision: precision || null,
-        options: formattedOptions,
-        validations: {},
-        isMultiSelect: inputType === 'select' ? false : undefined
-      });
+  
+    const inputTypeConfig = configData.inputTypes[inputType];
+    
+    if (inputTypeConfig) {
+      // For select/radio/checkbox types
+      if (['select', 'radio', 'checkbox'].includes(inputType)) {
+        setCurrentAttribute({
+          ...currentAttribute,
+          inputType,
+          dataType: 'enum',
+          size: null,
+          precision: null,
+          options: [],
+          validations: {},
+          isMultiSelect: false
+        });
+        setIsMultiSelect(false);
+      } else {
+        // For all other input types including gender
+        setCurrentAttribute({
+          ...currentAttribute,
+          inputType,
+          dataType: inputTypeConfig.dataType,  // Set dataType from config
+          size: inputTypeConfig.size || null,
+          precision: inputTypeConfig.precision || null,
+          options: inputTypeConfig.options || [],
+          validations: {},
+          isMultiSelect: undefined
+        });
+  
+        if (inputTypeConfig.options) {
+          setInputOptions(inputTypeConfig.options);
+        }
+      }
+  
+      // Handle dataType disabling
+      if (inputTypeConfig.isDataTypeFixed || ['select', 'radio', 'checkbox'].includes(inputType)) {
+        setIsDataTypeDisabled(true);
+      } else {
+        setIsDataTypeDisabled(false);
+      }
     }
   };
 
@@ -401,7 +410,7 @@ export default function EntitySetup({
       defaultValue: null,
       validations: {},
       options: [],
-      inputType: '',
+      inputType: 'text',
       isEditable: true,
       sortable: true
     });
@@ -563,13 +572,13 @@ export default function EntitySetup({
                 Input Type<span className="text-meta-1">*</span>
               </label>
               <select
-                value={selectedInputType}
+                value={selectedInputType || 'text'}
                 onChange={handleInputTypeChange}
                 className={`w-full rounded border-[1.5px] ${
                   errors.inputType ? 'border-meta-1' : 'border-stroke'
                 } bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary`}
               >
-                <option value="">Select input type</option>
+                <option value="text">Text</option>
                 {Object.entries(configData.inputTypes).map(([type, config]) => (
                   <option key={type} value={type}>
                     {type.charAt(0).toUpperCase() + type.slice(1)} ({config.htmlType})
@@ -588,9 +597,8 @@ export default function EntitySetup({
               </label>
               <select
                 value={currentAttribute.dataType}
-                onChange={handleDataTypeChange}
-                disabled={['select', 'radio', 'checkbox', 'gender'].includes(selectedInputType) || 
-                         (selectedInputType && configData.inputTypes[selectedInputType]?.isDataTypeFixed)}
+                onChange={handleDataTypeChange}               
+                disabled={isDataTypeDisabled}
                 className={`w-full rounded border-[1.5px] ${
                   errors.dataType ? 'border-meta-1' : 'border-stroke'
                 } bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-not-allowed disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary`}
@@ -601,7 +609,7 @@ export default function EntitySetup({
                     {type.charAt(0).toUpperCase() + type.slice(1).toLowerCase()}
                   </option>
                 ))}
-              </select>
+              </select> 
               {errors.dataType && (
                 <p className="text-meta-1 text-sm mt-1">{errors.dataType}</p>
               )}

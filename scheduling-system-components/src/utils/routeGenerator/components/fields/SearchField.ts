@@ -1,6 +1,6 @@
 import { Attribute } from '../../../../interfaces/types';
 
-export function generateSearchField(attr: Attribute, fieldName: string) {
+export function generateSearchField(attr: Attribute, fieldName: string, defaultValue: string) {
   return `
     <div>
       <label className="mb-1 block text-sm font-medium text-black dark:text-white">
@@ -10,6 +10,7 @@ export function generateSearchField(attr: Attribute, fieldName: string) {
         <input
           type="search"
           {...register("${fieldName}")}
+          defaultValue="${defaultValue || ''}"
           placeholder="${attr.config?.placeholder || `Search ${attr.name.toLowerCase()}`}"
           className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 pl-10 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
         />

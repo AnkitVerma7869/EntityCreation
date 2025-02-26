@@ -1,13 +1,16 @@
 import { Attribute } from '../../../../interfaces/types';
 
-export function generateDateField(attr: Attribute, fieldName: string) {
+export function generateDateField(attr: Attribute, fieldName: string, defaultValue: string) {
+  // Use current date if no default value is provided
+  const defaultDate = defaultValue || new Date().toISOString().split('T')[0];
+  
   return `
     <div className="mb-4.5 w-full">
       <label className="mb-1 block text-sm font-medium text-black dark:text-white">
         ${attr.name} ${attr.validations?.required ? '<span className="text-meta-1">*</span>' : ''}
       </label>
       <DatePickerOneRequired
-        defaultValue={watch("${fieldName}")}
+        defaultValue={new Date("${defaultDate}")}
         onChange={(selectedDates) => setValue("${fieldName}", selectedDates[0])}
         required={${attr.validations?.required ? 'true' : 'false'}}
         minDate={${attr.validations?.min ? `new Date("${attr.validations.min}")` : 'undefined'}}

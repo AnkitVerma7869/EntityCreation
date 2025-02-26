@@ -1,6 +1,6 @@
 import { Attribute } from '../../../../interfaces/types';
 
-export function generateTelField(attr: Attribute, fieldName: string) {
+export function generateTelField(attr: Attribute, fieldName: string, defaultValue: string) {
   return `
     <div>
       <label className="mb-1 block text-sm font-medium text-black dark:text-white">
@@ -9,6 +9,7 @@ export function generateTelField(attr: Attribute, fieldName: string) {
       <PhoneNumberInput
         name="${fieldName}"
         control={control}
+        defaultValue="${defaultValue || ''}"
         onValueChange={(value) => {
           // Extract only the numbers from the phone string
           const phoneDigits = value.phone.replace(/\D/g, '');

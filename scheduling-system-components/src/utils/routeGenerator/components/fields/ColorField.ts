@@ -1,6 +1,6 @@
 import { Attribute } from '../../../../interfaces/types';
 
-export function generateColorField(attr: Attribute, fieldName: string) {
+export function generateColorField(attr: Attribute, fieldName: string, defaultValue: string) {
   return `
     <div>
       <label className="mb-1 block text-sm font-medium text-black dark:text-white">
@@ -9,6 +9,7 @@ export function generateColorField(attr: Attribute, fieldName: string) {
       <input
         type="color"
         {...register("${fieldName}")}
+        defaultValue="${defaultValue || '#000000'}"
         className="h-10 w-full cursor-pointer rounded border-[1.5px] border-stroke bg-transparent outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
       />
       {errors.${fieldName} && (

@@ -113,6 +113,8 @@ function generateSingleField(attr, fieldName) {
             return (0, TimeField_1.generateTimeField)(formattedAttr, formattedFieldName);
         case 'textarea':
             return (0, TextAreaField_1.generateTextAreaField)(formattedAttr, formattedFieldName);
+        case 'gender':
+            return (0, RadioField_1.generateRadioField)(formattedAttr, formattedFieldName);
         default:
             return (0, TextField_1.generateTextField)(formattedAttr, formattedFieldName);
     }

@@ -1,5 +1,5 @@
 import { Attribute, ConfigData, Entity } from '../interfaces/types';
-import { generateTableRoutes } from '../utils/routeGenerator';
+import { generateTableRoutes } from './routeGenerator';
 
 // API endpoint from environment variables
 const API_URL = process.env.NEXT_PUBLIC_API_URL_ENDPOINT;
@@ -18,7 +18,7 @@ export const initialAttributeState: Attribute = {
   constraints: [],
   defaultValue: null,
   validations: { required: false },
-  inputType: ''
+  inputType: 'text'
 };
 
 // Fetch entity configuration from JSON file
@@ -104,7 +104,6 @@ export async function saveEntity(entity: Entity): Promise<{message: string, succ
 
   console.log('Saving Entity:', transformedEntity);
  
-  // Send POST request to API
   const response = await fetch(`${API_URL}/api/v1/entity/create`, {
     method: 'POST',
     headers: {
@@ -137,7 +136,7 @@ export async function saveEntity(entity: Entity): Promise<{message: string, succ
   }
 
   return {
-    message: responseData.success.message,
+    message: `${entity.entityName} Entity saved successfully`,
     success: true
   };
 } 

@@ -1,6 +1,7 @@
 import { Attribute } from '../../../../interfaces/types';
 
-export function generateCheckboxField(attr: Attribute, fieldName: string) {
+export function generateCheckboxField(attr: Attribute, fieldName: string, defaultValue: string) {
+  const defaultValues = defaultValue ? defaultValue.split(',').map(v => v.trim()) : [];
   return `
     <div>
       <label className="mb-1 block text-sm font-medium text-black dark:text-white">
@@ -11,14 +12,9 @@ export function generateCheckboxField(attr: Attribute, fieldName: string) {
           <label className="flex items-center min-w-[120px] text-sm font-medium text-black dark:text-white">
             <input
               type="checkbox"
-              {...register("${fieldName}", {
-                setValueAs: (value) => {
-                  const checkboxes = document.querySelectorAll('input[name="${fieldName}"]:checked');
-                  return Array.from(checkboxes).map(cb => (cb as HTMLInputElement).value);
-                }
-              })}
+              {...register("${fieldName}")}
               value="${option.value}"
-              defaultChecked={false}
+              defaultChecked={${defaultValues.includes(option.value) ? 'true' : 'false'}}
               className="mr-3 h-5 w-5 cursor-pointer rounded border-[1.5px] border-stroke bg-transparent outline-none focus:border-primary checked:border-primary checked:bg-primary dark:border-form-strokedark dark:bg-form-input"
             />
             ${option.label}
