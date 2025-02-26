@@ -14,6 +14,7 @@ interface EntityPreviewProps {
   setEditingIndex: React.Dispatch<React.SetStateAction<number | null>>;
   entityName: string;
   showToast: (message: string, type: 'success' | 'error') => void;
+  isSaving: boolean;  // Add this prop
 }
 
 export default function EntityPreview({
@@ -24,7 +25,8 @@ export default function EntityPreview({
   resetForm,
   setEditingIndex,
   entityName,
-  showToast
+  showToast,
+  isSaving
 }: EntityPreviewProps) {
   // Handle editing of an existing attribute
   const handleEditAttribute = (index: number) => {
@@ -93,10 +95,10 @@ export default function EntityPreview({
                 <th className="px-4 py-2 font-medium text-black dark:text-white whitespace-nowrap">
                   Attribute Name
                 </th>
-                <th className="px-4 py-2 font-medium text-black dark:text-white whitespace-nowrap">
+                <th className="px-3 py-2 font-medium text-black dark:text-white whitespace-nowrap">
                   Data Type
                 </th>
-                <th className="px-4 py-2 font-medium text-black dark:text-white whitespace-nowrap">
+                <th className="px-3 py-2 font-medium text-black dark:text-white whitespace-nowrap">
                   Constraints
                 </th>
                 <th className="px-2 py-2 font-medium text-black dark:text-white whitespace-nowrap">
@@ -104,6 +106,12 @@ export default function EntityPreview({
                 </th>
                 <th className="px-2 py-2 font-medium text-black dark:text-white whitespace-nowrap">
                   Sortable
+                </th>
+                <th className="px-2 py-2 font-medium text-black dark:text-white whitespace-nowrap">
+                  Visible
+                </th>
+                <th className="px-2 py-2 font-medium text-black dark:text-white whitespace-nowrap">
+                  Read Only
                 </th>
                 <th className="px-4 py-2 font-medium text-black dark:text-white whitespace-nowrap">
                   Actions
@@ -117,12 +125,12 @@ export default function EntityPreview({
                   <td className="border-b border-[#eee] px-4 py-3 dark:border-strokedark whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]">
                     {attr.name}
                   </td>
-                  <td className="border-b border-[#eee] px-4 py-3 dark:border-strokedark whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]">
+                  <td className="border-b border-[#eee] px-3 py-3 dark:border-strokedark whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]">
                     {attr.dataType}
                     {attr.size !== null && `(${attr.size})`}
                     {attr.precision !== null && attr.precision !== undefined && `(${attr.precision})`}
                   </td>
-                  <td className="border-b border-[#eee] px-4 py-3 dark:border-strokedark whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]">
+                  <td className="border-b border-[#eee] px-3 py-3 dark:border-strokedark whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]">
                     {formatArrayToString(attr.constraints)}
                   </td>
                   <td className="border-b border-[#eee] px-2 py-3 dark:border-strokedark text-center">
@@ -155,6 +163,36 @@ export default function EntityPreview({
                       className="form-checkbox h-4 w-4 text-primary rounded border-stroke dark:border-strokedark"
                     />
                   </td>
+                  <td className="border-b border-[#eee] px-2 py-3 dark:border-strokedark text-center">
+                    <input
+                      type="checkbox"
+                      checked={attr.displayInList !== false}
+                      onChange={(e) => {
+                        const updatedAttributes = [...attributes];
+                        updatedAttributes[index] = {
+                          ...attr,
+                          displayInList: e.target.checked
+                        };
+                        setAttributes(updatedAttributes);
+                      }}
+                      className="form-checkbox h-4 w-4 text-primary rounded border-stroke dark:border-strokedark"
+                    />
+                  </td>
+                  <td className="border-b border-[#eee] px-2 py-3 dark:border-strokedark text-center">
+                    <input
+                      type="checkbox"
+                      checked={attr.isReadOnly === true}
+                      onChange={(e) => {
+                        const updatedAttributes = [...attributes];
+                        updatedAttributes[index] = {
+                          ...attr,
+                          isReadOnly: e.target.checked
+                        };
+                        setAttributes(updatedAttributes);
+                      }}
+                      className="form-checkbox h-4 w-4 text-primary rounded border-stroke dark:border-strokedark"
+                    />
+                  </td>
                   <td className="border-b border-[#eee] px-4 py-3 dark:border-strokedark">
                     <div className="flex items-center space-x-2">
                       <button onClick={() => handleEditAttribute(index)}>
@@ -175,13 +213,15 @@ export default function EntityPreview({
         <div className="mt-4.5 flex flex-wrap gap-3">
           <button 
             onClick={handleSave}
-            className="inline-flex items-center justify-center rounded bg-primary px-6 py-2 text-center font-medium text-white hover:bg-opacity-90"
+            disabled={isSaving}
+            className="inline-flex items-center justify-center rounded bg-primary px-6 py-2 text-center font-medium text-white hover:bg-opacity-90 disabled:opacity-70"
           >
             Save Entity
           </button>
           <button 
             onClick={resetForm}
-            className="inline-flex items-center justify-center rounded btn btn-cancel px-6 py-2 text-center font-medium text-white hover:bg-opacity-90"
+            disabled={isSaving}
+            className="inline-flex items-center justify-center rounded btn btn-cancel px-6 py-2 text-center font-medium text-white hover:bg-opacity-90 disabled:opacity-70"
           >
             Cancel
           </button>

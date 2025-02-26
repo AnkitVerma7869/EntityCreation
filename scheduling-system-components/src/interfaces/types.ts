@@ -56,6 +56,8 @@ export interface Attribute {
     [key: string]: any; // Other config options
   };
   isMultiSelect?: boolean;
+  isReadOnly?: boolean;
+  displayInList?: boolean;  
 }
 
 // Interface for complete entity/table definition

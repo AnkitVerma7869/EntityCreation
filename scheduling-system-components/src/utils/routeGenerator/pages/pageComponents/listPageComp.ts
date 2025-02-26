@@ -1,10 +1,11 @@
 import { Entity } from '../../../../interfaces/types';
 
 export function generateListPage(config: Entity): string {
-  // Filter out password fields from attributes
+  // Filter out password fields and non-displayable columns from attributes
   const displayableAttributes = config.attributes.filter(attr => 
     !attr.name.toLowerCase().includes('password') && 
-    attr.inputType.toLowerCase() !== 'password'
+    attr.inputType.toLowerCase() !== 'password' &&
+    attr.displayInList !== false  // Only include columns marked for display
   );
   const dateColumns = config.attributes
     .filter(attr => ['date', 'datetime', 'timestamp', 'time', 'datetime-local']
@@ -156,6 +157,8 @@ export default function ${config.entityName}ListPage() {
         field: '${attr.name.replace(/\s+/g, '_')}',
         headerName: \`\${formatFieldLabel('${attr.name}')}\`,
         flex: 1,
+        sortable: ${attr.sortable !== false},
+        disableColumnMenu: true,
         ${index === 0 ? `
         renderCell: (params) => (
           <div

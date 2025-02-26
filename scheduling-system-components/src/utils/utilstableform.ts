@@ -1,4 +1,4 @@
-import { Attribute, ConfigData, Entity } from '../interfaces/types';
+import { Attribute, ConfigData, Entity } from '../interfaces/types'
 import { generateTableRoutes } from '../utils/routeGenerator';
 
 // API endpoint from environment variables
@@ -18,7 +18,9 @@ export const initialAttributeState: Attribute = {
   constraints: [],
   defaultValue: null,
   validations: { required: false },
-  inputType: ''
+  inputType: '',
+  isReadOnly: false,
+  displayInList: true,
 };
 
 // Fetch entity configuration from JSON file
@@ -97,14 +99,16 @@ export async function saveEntity(entity: Entity): Promise<{message: string, succ
                    attr.constraints?.includes('not null') || 
                    attr.constraints?.includes('primary key') || 
                    false
-        }
+        },
+        isReadOnly: attr.isReadOnly || false,
+        displayInList: attr.displayInList !== false,
       };
     })
   };
 
   console.log('Saving Entity:', transformedEntity);
  
-  // Send POST request to API
+  //  Temporarily skipping API call
   const response = await fetch(`${API_URL}/api/v1/entity/create`, {
     method: 'POST',
     headers: {
@@ -127,8 +131,6 @@ export async function saveEntity(entity: Entity): Promise<{message: string, succ
       attributes: entity.attributes
     };
     await generateTableRoutes(config);
-
-    
     
     console.log('Routes generated successfully for:', entity.entityName);
   } catch (error) {
@@ -137,8 +139,8 @@ export async function saveEntity(entity: Entity): Promise<{message: string, succ
   }
 
   return {
-    message: responseData.success.message,
-    success: true
+   message: responseData.success.message,
+   success: true
   };
 } 
 

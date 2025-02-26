@@ -589,8 +589,8 @@ export default function EntitySetup({
               <select
                 value={currentAttribute.dataType}
                 onChange={handleDataTypeChange}
-                disabled={['select', 'radio', 'checkbox', 'gender'].includes(selectedInputType) || 
-                         (selectedInputType && configData.inputTypes[selectedInputType]?.isDataTypeFixed)}
+                disabled={Boolean(['select', 'radio', 'checkbox', 'gender'].includes(selectedInputType)) || 
+                  Boolean(selectedInputType && configData.inputTypes[selectedInputType]?.isDataTypeFixed)}
                 className={`w-full rounded border-[1.5px] ${
                   errors.dataType ? 'border-meta-1' : 'border-stroke'
                 } bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-not-allowed disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary`}

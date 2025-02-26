@@ -30,6 +30,9 @@ export default function TablesList({ onCreateNew }: TableListProps) {
   });
   const [loading, setLoading] = useState(true);
 
+  // API endpoint from environment variables
+  const API_URL = process.env.NEXT_PUBLIC_API_URL_ENDPOINT;
+
   /**
    * Handles row click events by navigating to the detailed view of the selected table
    */
@@ -45,8 +48,10 @@ export default function TablesList({ onCreateNew }: TableListProps) {
     const fetchTables = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/tables');
+        const response = await fetch(`${API_URL}/api/v1/entity/all-entities`);
         const data = await response.json();
+
+        console.log("data", data);
         
         // Define columns for the data grid
         const dynamicColumns: GridColDef[] = [
@@ -57,44 +62,32 @@ export default function TablesList({ onCreateNew }: TableListProps) {
             filterable: true,
           },
           { 
-            field: 'entityName', 
-            headerName: 'Entity Name', 
+            field: 'name', 
+            headerName: 'Table Name', 
             flex: 1,
             filterable: true,
             sortable: true,
           },
           { 
-            field: 'totalFields', 
+            field: 'numberofcolumn', 
             headerName: 'Total Fields', 
             width: 120,
             filterable: true,
             sortable: true,
-          },
-          {
-            field: 'attributes',
-            headerName: 'Attributes',
-            flex: 2,
-            filterable: true,
-            sortable: true,
-            renderCell: (params) => (
-              <div className="overflow-hidden text-ellipsis">
-                {params.value}
-              </div>
-            ),
           }
         ];
         
         setColumns(dynamicColumns);
 
-        // Transform API data into the format expected by the data grid
-        const formattedTables = data.tables.map((table: Entity, index: number) => ({
-          id: index + 1,
-          entityName: table.entityName,
-          totalFields: table.attributes.length,
-          attributes: table.attributes.map(attr => `${attr.name} (${attr.dataType})`).join(', '),
-        }));
-        
-        setTables(formattedTables);
+        if (data.success && Array.isArray(data.success.data)) {
+          const formattedTables = data.success.data.map((table, index) => ({
+            id: index + 1,
+            name: table.name,
+            numberofcolumn: table.numberofcolumn
+          }));
+          
+          setTables(formattedTables);
+        }
       } catch (error) {
         console.error('Error fetching tables:', error);
       } finally {
@@ -103,7 +96,7 @@ export default function TablesList({ onCreateNew }: TableListProps) {
     };
 
     fetchTables();
-  }, []);
+  }, [API_URL]);
 
   return (
     <div className="space-y-6">
@@ -122,44 +115,44 @@ export default function TablesList({ onCreateNew }: TableListProps) {
         </button>
       </div>
 
-      {/* Data Grid section with MUI DataGrid component */}
-      <Paper elevation={2} className="p-4">
-        <Box sx={{ height: 400, width: '100%' }}>
-          <DataGrid
-            rows={tables}
-            columns={columns}
-            paginationModel={paginationModel}
-            onPaginationModelChange={setPaginationModel}
-            pageSizeOptions={[5, 10, 25, 50]}
-            loading={loading}
-            disableRowSelectionOnClick
-            onRowClick={handleRowClick}
-            slots={{ toolbar: GridToolbar }}
-            slotProps={{
-              toolbar: {
-                showQuickFilter: true,
-                quickFilterProps: { debounceMs: 500 },
-              },
-            }}
-            initialState={{
-              pagination: {
-                paginationModel: { pageSize: 5, page: 0 },
-              },
-              sorting: {
-                sortModel: [{ field: 'tableName', sort: 'asc' }],
-              },
-            }}
-            sx={{
-              '& .MuiDataGrid-row': {
-                cursor: 'pointer',
-                '&:hover': {
-                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
+        {/* Data Grid section with MUI DataGrid component */}
+        <Paper elevation={2} className="p-4">
+          <Box sx={{ height: 400, width: '100%' }}>
+            <DataGrid
+              rows={tables}
+              columns={columns}
+              paginationModel={paginationModel}
+              onPaginationModelChange={setPaginationModel}
+              pageSizeOptions={[5, 10, 25, 50]}
+              loading={false}
+              disableRowSelectionOnClick
+              onRowClick={handleRowClick}
+              slots={{ toolbar: GridToolbar }}
+              slotProps={{
+                toolbar: {
+                  showQuickFilter: true,
+                  quickFilterProps: { debounceMs: 500 },
                 },
-              },
-            }}
-          />
-        </Box>
-      </Paper>
-    </div>
+              }}
+              initialState={{
+                pagination: {
+                  paginationModel: { pageSize: 5, page: 0 },
+                },
+                sorting: {
+                  sortModel: [{ field: 'tableName', sort: 'asc' }],
+                },
+              }}
+              sx={{
+                '& .MuiDataGrid-row': {
+                  cursor: 'pointer',
+                  '&:hover': {
+                    backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                  },
+                },
+              }}
+            />
+          </Box>
+        </Paper>
+      </div>
   );
 } 
