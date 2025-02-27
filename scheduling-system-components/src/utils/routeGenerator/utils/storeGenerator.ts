@@ -1,6 +1,30 @@
 import { Entity, Attribute } from '../../../interfaces/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL_ENDPOINT;
+
+// Helper function to format entity name
+function formatEntityName(name: string): string {
+  return name
+    // Replace hyphens and spaces with underscores first
+    .replace(/[-\s]+/g, '_')
+    // Split by underscores
+    .split('_')
+    // Capitalize first letter of each word
+    .map((word, index) => {
+      const capitalized = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      // For camelCase, make first word start with lowercase
+      return index === 0 ? capitalized.toLowerCase() : capitalized;
+    })
+    // Join without any separator
+    .join('');
+}
+
+// Helper function to format field name for interface/state usage
+function formatFieldName(name: string): string {
+  // If name contains hyphen, wrap it in quotes
+  return name.includes('-') ? `'${name}'` : name;
+}
+
 function generateFieldState(attr: Attribute): string {
   switch (attr.inputType.toLowerCase()) {
     case 'date':
@@ -18,6 +42,9 @@ function generateFieldState(attr: Attribute): string {
 }
 
 export function generateEntityStore(config: Entity) {
+  // Format the entity name for use in identifiers
+  const formattedEntityName = formatEntityName(config.entityName);
+  
   // Filter out password fields
   const nonPasswordFields = config.attributes
     .filter(attr => 
@@ -41,11 +68,15 @@ export function generateEntityStore(config: Entity) {
       conditions: Record<string, any>;
     }
 
-    interface ${config.entityName}State {
+   
+  
+
+  
+    interface ${formattedEntityName}State {
       // Form Data
       formData: {
         ${config.attributes
-          .map(attr => `${attr.name.replace(/\s+/g, '_')}: ${
+          .map(attr => `${formatFieldName(attr.name.replace(/\s+/g, '_'))}: ${
             attr.inputType.toLowerCase() === 'date' ? 'Date | null' :
             attr.inputType.toLowerCase() === 'file' ? 'File[]' :
             attr.inputType.toLowerCase() === 'select' && attr.config?.multiple ? 'string[]' :
@@ -70,7 +101,7 @@ export function generateEntityStore(config: Entity) {
       totalRecords: number;
       
       // Actions
-      setFormData: (data: Partial<${config.entityName}State['formData']>) => void;
+      setFormData: (data: Partial<${formattedEntityName}State['formData']>) => void;
       resetForm: () => void;
       setError: (error: string | null) => void;
       setSuccess: (message: string | null) => void;
@@ -90,13 +121,13 @@ export function generateEntityStore(config: Entity) {
       deleteRecord: (id: string) => Promise<boolean>;
     }
 
-    export const use${config.entityName}Store = create<${config.entityName}State>()(
+    export const use${formattedEntityName}Store = create<${formattedEntityName}State>()(
       devtools(
         (set, get) => ({
           // Initial State
           formData: {
             ${config.attributes
-              .map(attr => `${attr.name.replace(/\s+/g, '_')}: ${generateFieldState(attr)}`)
+              .map(attr => `${formatFieldName(attr.name.replace(/\s+/g, '_'))}: ${generateFieldState(attr)}`)
               .join(',\n')}
           },
           loading: false,
@@ -126,7 +157,7 @@ export function generateEntityStore(config: Entity) {
           resetForm: () => set((state) => ({
             formData: {
               ${config.attributes
-                .map(attr => `${attr.name.replace(/\s+/g, '_')}: ${generateFieldState(attr)}`)
+                .map(attr => `${formatFieldName(attr.name.replace(/\s+/g, '_'))}: ${generateFieldState(attr)}`)
                 .join(',\n              ')}
             },
             error: null,
@@ -311,7 +342,7 @@ export function generateEntityStore(config: Entity) {
             }
           }
         }),
-        { name: \`${config.entityName}Store\` }
+        { name: \`${formattedEntityName}Store\` }
       )
     );
   `;

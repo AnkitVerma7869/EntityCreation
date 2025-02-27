@@ -3,21 +3,27 @@ import { Attribute } from '../../../interfaces/types';
 export function generateValidationSchema(attributes: Attribute[]) {
   let schemaFields = attributes.map(attr => {
     const fieldName = attr.name.replace(/\s+/g, '_');
+    function formatFieldName(name: string): string {
+      // If name contains hyphen, wrap it in quotes
+      return name.includes('-') ? `'${name}'` : name;
+    }
+
+    const formattedFieldName = formatFieldName(fieldName);
     const yupType = getYupType(attr);
     
     // Start with the type declaration
-    let schema = `${fieldName}: yup.${yupType}()`;
+    let schema = `${formattedFieldName}: yup.${yupType}()`;
 
     // Special handling for telephone fields
     if (attr.inputType.toLowerCase() === 'tel') {
       // Add the country code field schema
-      const countryCodeSchema = `countryCode_${fieldName}: yup.string()`;
+      const countryCodeSchema = `countryCode_${formattedFieldName}: yup.string()`;
       schema = `${schema},\n${countryCodeSchema}`;
     }
 
     // For checkbox with options, add validation for array of strings
     if (attr.inputType.toLowerCase() === 'checkbox' && Array.isArray(attr.options) && attr.options.length > 0) {
-      schema = `${fieldName}: yup.array().of(yup.string())`;
+      schema = `${formattedFieldName}: yup.array().of(yup.string())`;
       
       if (attr.validations?.required) {
         schema += '.min(1, "Please select at least one option")';

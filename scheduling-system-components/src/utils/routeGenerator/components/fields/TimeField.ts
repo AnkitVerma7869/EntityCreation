@@ -29,8 +29,8 @@ export function generateTimeField(attr: Attribute, fieldName: string, defaultVal
           }}
         />
       </div>
-      {errors.${fieldName} && (
-        <p className="mt-1 text-sm text-meta-1">{errors.${fieldName}?.message}</p>
+      {errors['${fieldName}'] && (
+        <p className="mt-1 text-sm text-meta-1">{errors['${fieldName}']?.message}</p>
       )}
     </div>
   `;

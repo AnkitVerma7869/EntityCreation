@@ -3,8 +3,21 @@ import { generatePackageImports } from '../../utils/packageManager';
 import { generateField } from '../../components/fields';
 import { generateValidationSchema } from '../../utils/validationSchemaGenerator';
 
+// Helper function to format entity name (keep it consistent with storeGenerator)
+function formatEntityName(name: string): string {
+  return name
+    .replace(/[-\s]+/g, '_')
+    .split('_')
+    .map((word, index) => {
+      const capitalized = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      return index === 0 ? capitalized.toLowerCase() : capitalized;
+    })
+    .join('');
+}
+
 export function generateEditPage(config: Entity): string {
   const { packages } = generatePackageImports(config);
+  const formattedEntityName = formatEntityName(config.entityName);
   
   const dynamicImports = `
     import { useEffect } from 'react';
@@ -14,7 +27,7 @@ export function generateEditPage(config: Entity): string {
     import * as yup from 'yup';
     import DefaultLayout from "@/components/Layouts/DefaultLayout";
     import DatePickerOneRequired from '@/components/FormElements/DatePickerOneRequired';
-    import { use${config.entityName}Store } from '@/store/${config.entityName.toLowerCase()}Store';
+    import { use${formattedEntityName}Store } from '@/store/${config.entityName.toLowerCase()}Store';
     import PhoneNumberInput from '@/components/PhoneNumberInput/index';
     import Select from 'react-select';
     `;
@@ -33,9 +46,9 @@ export function generateEditPage(config: Entity): string {
       ${generateValidationSchema(config.attributes)}
     });
 
-    export default function ${config.entityName}EditPage({ params }: { params: { id: string } }) {
+    export default function ${formattedEntityName}EditPage({ params }: { params: { id: string } }) {
       const router = useRouter();
-      const { loading, error, updateRecord, fetchRecord } = use${config.entityName}Store();
+      const { loading, error, updateRecord, fetchRecord } = use${formattedEntityName}Store();
       
       const { 
         register,
@@ -129,7 +142,7 @@ export function generateEditPage(config: Entity): string {
               <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
                 <div className="border-b border-stroke px-6.5 py-4 dark:border-strokedark">
                   <h3 className="font-medium text-black dark:text-white">
-                    Edit ${config.entityName}
+                    Edit ${formattedEntityName}
                   </h3>
                 </div>
 
