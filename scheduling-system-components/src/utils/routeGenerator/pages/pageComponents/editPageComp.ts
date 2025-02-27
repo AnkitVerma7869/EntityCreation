@@ -2,6 +2,8 @@ import { Attribute, Entity } from '../../../../interfaces/types';
 import { generatePackageImports } from '../../utils/packageManager';
 import { generateField } from '../../components/fields';
 import { generateValidationSchema } from '../../utils/validationSchemaGenerator';
+import { toast, Toaster } from 'react-hot-toast';
+
 
 // Helper function to format entity name (keep it consistent with storeGenerator)
 function formatEntityName(name: string): string {
@@ -30,6 +32,7 @@ export function generateEditPage(config: Entity): string {
     import { use${formattedEntityName}Store } from '@/store/${config.entityName.toLowerCase()}Store';
     import PhoneNumberInput from '@/components/PhoneNumberInput/index';
     import Select from 'react-select';
+    import { toast, Toaster } from 'react-hot-toast';
     `;
 
   const dateColumns = config.attributes
@@ -129,14 +132,50 @@ export function generateEditPage(config: Entity): string {
           }
         });
 
-        const success = await updateRecord(params.id, formattedData);
+        const { success, error } = await updateRecord(params.id, formattedData);
+        
         if (success) {
-          router.push('/${config.entityName.toLowerCase()}');
+          toast.success(success, {
+            duration: 2000,
+            position: 'top-right',
+          });
+          setTimeout(() => {
+            router.push('/${config.entityName.toLowerCase()}');
+          }, 2000);
+        } else if (error) {
+          toast.error(error, {
+            duration: 5000,
+            position: 'top-right',
+          });
         }
       };
 
       return (
         <DefaultLayout>
+          <Toaster 
+            position="top-right"
+            toastOptions={{
+              duration: 2000,
+              style: {
+                background: 'white',
+                color: 'black',
+              },
+              success: {
+                duration: 2000,
+                style: {
+                  background: 'white',
+                  color: 'black'
+                }
+              },
+              error: {
+                duration: 2000,
+                style: {
+                  background: 'white',
+                  color: 'black'
+                }
+              },
+            }} 
+          />
           <div className="p-2">
             <div className="flex flex-col gap-9">
               <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
@@ -148,7 +187,7 @@ export function generateEditPage(config: Entity): string {
 
                 <form onSubmit={handleSubmit(onSubmit)} noValidate>
                   <div className="p-6.5">
-                    ${generateField(config)}
+                    ${generateField(config, true)}
 
                     <div className="flex gap-4 justify-end mt-6">
                       <button

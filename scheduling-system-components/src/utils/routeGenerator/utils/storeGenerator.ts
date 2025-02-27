@@ -302,16 +302,41 @@ export function generateEntityStore(config: Entity) {
             try {
               const response = await fetch(\`${API_URL}/api/v1/${config.entityName.toLowerCase()}/\${id}\`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json'
+                },
                 body: JSON.stringify(data)
               });
               const result = await response.json();
-              if (!response.ok) throw new Error(result.error || 'Failed to update record');
-              set({ success: 'Record updated successfully' });
-              return true;
+              
+              if (result.success) {
+                // Handle successful response
+                const successMessage = result.success.message;
+                set({ 
+                  success: successMessage,
+                  error: null 
+                });
+                return { success: successMessage, error: null };
+              } else {
+                // Handle error response
+                const errorMessage = typeof result.error === 'object'
+                  ? result.error.message || JSON.stringify(result.error)
+                  : result.error || 'Failed to update record';
+                
+                set({ 
+                  error: errorMessage,
+                  success: null 
+                });
+                return { error: errorMessage, success: null };
+              }
             } catch (error: any) {
-              set({ error: error.message });
-              return false;
+              const errorMessage = error.message || 'An unexpected error occurred';
+              set({ 
+                error: errorMessage,
+                success: null 
+              });
+              return { error: errorMessage, success: null };
             } finally {
               set({ loading: false });
             }

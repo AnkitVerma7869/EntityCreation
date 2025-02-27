@@ -71,7 +71,6 @@ export default function EntitySetup({
     setErrors,
     handleEntitySelect,
     handleEntityNameChange,
-    handleAttributeNameChange,
     handleDefaultValueChange,
     handleConstraintsChange,
     handleValidationsChange,
@@ -112,6 +111,14 @@ export default function EntitySetup({
 
   // Add this state to track if options are editable
   const [isOptionsEditable, setIsOptionsEditable] = useState(true);
+
+  // Add reserved column names constant
+  const RESERVED_COLUMNS = ['created_at', 'updated_at', 'id'];
+
+  const handleAttributeNameChange = (e: React.ChangeEvent<HTMLInputElement>) => 
+    RESERVED_COLUMNS.includes(e.target.value.toLowerCase()) 
+      ? setErrors(prev => ({ ...prev, attributeName: `'${e.target.value}' is a reserved column name that will be auto-generated` })) 
+      : (setCurrentAttribute({ ...currentAttribute, name: e.target.value }), setErrors(prev => ({ ...prev, attributeName: undefined })));
 
   // Add handler for adding options
   const handleAddOption = async () => {
@@ -516,6 +523,19 @@ export default function EntitySetup({
       </div>
       
       <div className="p-6.5 space-y-4">
+        {/* Auto-generated columns info */}
+        <div className="flex items-center gap-3 bg-bodydark2/20 rounded-lg p-3 border border-primary/10">
+
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <span className="text-black dark:text-white">Reserved columns:</span>
+            {RESERVED_COLUMNS.map((col, index) => (
+              <code key={col} className="px-2 py-0.5 bg-primary/10 text-primary rounded font-mono text-xs">
+                {col}
+              </code>
+            ))}
+          </div>
+        </div>
+
         {/* Select Entity */}
         <div>
           <label className="mb-1 block text-sm font-medium text-black dark:text-white">

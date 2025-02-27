@@ -299,6 +299,8 @@ export default function ${formattedEntityName}ListPage() {
                       disableDensitySelector
                       disableRowSelectionOnClick
                       getRowId={(row) => row.id}
+                      sortingOrder={['desc', 'asc']}
+                      autoHeight
                     />
                   </Box>
                 </div>

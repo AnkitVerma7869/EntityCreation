@@ -1,6 +1,9 @@
 import { Attribute } from '../../../../interfaces/types';
 
 export function generateUrlField(attr: Attribute, fieldName: string, defaultValue: string) {
+  const isDisabled = attr.config?.disabled || false;
+  const className = `w-full rounded-r border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${attr.config?.className || ''}`;
+
   return `
     <div>
       <label className="mb-1 block text-sm font-medium text-black dark:text-white">
@@ -15,7 +18,8 @@ export function generateUrlField(attr: Attribute, fieldName: string, defaultValu
           {...register("${fieldName}")}
           defaultValue="${defaultValue || ''}"
           placeholder="${attr.config?.placeholder || 'example.com'}"
-          className="w-full rounded-r border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+          className="${className}"
+          ${isDisabled ? 'disabled' : ''}
         />
       </div>
        {errors['${fieldName}'] && (

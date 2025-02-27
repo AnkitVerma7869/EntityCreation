@@ -4,6 +4,7 @@ import Select from 'react-select';
 
 export function generateSelectField(attr: Attribute, fieldName: string, defaultValue: string) {
   const isMultiple = attr.config?.multiple || false;
+  const isDisabled = attr.config?.disabled || false;
   const defaultVal = defaultValue ? 
     (isMultiple ? defaultValue.split(',').map(v => ({ value: v.trim(), label: v.trim() })) 
                 : { value: defaultValue, label: defaultValue })
@@ -31,12 +32,13 @@ export function generateSelectField(attr: Attribute, fieldName: string, defaultV
                 : onChange(option ? option.value : null)
             }}
             isMulti={${isMultiple}}
+            isDisabled={${isDisabled}}
             options={[
               ${(attr.options || []).map(opt => `
                 { value: "${opt.value}", label: "${opt.label || opt.value}" }
               `).join(',')}
             ]}
-            className="react-select"
+            className={\`react-select ${attr.config?.className || ''}\`}
             classNamePrefix="select"
             placeholder="Select ${attr.name}"
             isClearable

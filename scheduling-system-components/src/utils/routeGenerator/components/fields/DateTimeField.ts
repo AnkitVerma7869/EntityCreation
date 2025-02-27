@@ -1,6 +1,9 @@
 import { Attribute } from '../../../../interfaces/types';
 
 export function generateDateTimeField(attr: Attribute, fieldName: string, defaultValue: string) {
+  const isDisabled = attr.config?.disabled || false;
+  const className = `w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary cursor-pointer ${attr.config?.className || ''}`;
+
   // Format current datetime to YYYY-MM-DDTHH:mm format
   const getCurrentDateTime = () => {
     const now = new Date();
@@ -23,8 +26,10 @@ export function generateDateTimeField(attr: Attribute, fieldName: string, defaul
       <div 
         className="relative cursor-pointer"
         onClick={() => {
-          const input = document.querySelector('#${fieldName}') as HTMLInputElement;
-          if (input) input.showPicker();
+          if (!${isDisabled}) {
+            const input = document.querySelector('#${fieldName}') as HTMLInputElement;
+            if (input) input.showPicker();
+          }
         }}
       >
         <input
@@ -32,7 +37,8 @@ export function generateDateTimeField(attr: Attribute, fieldName: string, defaul
           type="datetime-local"
           {...register("${fieldName}")}
           defaultValue="${defaultDateTime}"
-          className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary cursor-pointer"
+          className="${className}"
+          ${isDisabled ? 'disabled' : ''}
           ${attr.validations?.min ? `min="${attr.validations.min}"` : ''}
           ${attr.validations?.max ? `max="${attr.validations.max}"` : ''}
           onChange={(e) => {

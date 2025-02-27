@@ -1,6 +1,9 @@
 import { Attribute } from '../../../../interfaces/types';
 
 export function generateRangeField(attr: Attribute, fieldName: string, defaultValue: string) {
+  const isDisabled = attr.config?.disabled || false;
+  const className = `w-full cursor-pointer appearance-none rounded-lg bg-stroke outline-none dark:bg-form-strokedark [&::-webkit-slider-thumb]:h-[14px] [&::-webkit-slider-thumb]:w-[14px] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary ${attr.config?.className || ''}`;
+
   return `
     <div>
       <label className="mb-1 block text-sm font-medium text-black dark:text-white">
@@ -14,7 +17,8 @@ export function generateRangeField(attr: Attribute, fieldName: string, defaultVa
           min="${attr.min || 0}"
           max="${attr.max || 100}"
           step="${attr.step || 1}"
-          className="w-full cursor-pointer appearance-none rounded-lg bg-stroke outline-none dark:bg-form-strokedark [&::-webkit-slider-thumb]:h-[14px] [&::-webkit-slider-thumb]:w-[14px] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary"
+          className="${className}"
+          ${isDisabled ? 'disabled' : ''}
         />
         <span className="min-w-[45px] rounded-md border border-stroke px-2 py-1 text-sm font-medium text-black dark:border-form-strokedark dark:text-white">
           {watch("${fieldName}")}

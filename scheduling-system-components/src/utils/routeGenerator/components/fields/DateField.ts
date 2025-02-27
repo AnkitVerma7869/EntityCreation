@@ -1,6 +1,7 @@
 import { Attribute } from '../../../../interfaces/types';
 
 export function generateDateField(attr: Attribute, fieldName: string, defaultValue: string) {
+  const isDisabled = attr.config?.disabled || false;
   // Use current date if no default value is provided
   const defaultDate = defaultValue || new Date().toISOString().split('T')[0];
   
@@ -16,6 +17,8 @@ export function generateDateField(attr: Attribute, fieldName: string, defaultVal
         minDate={${attr.validations?.min ? `new Date("${attr.validations.min}")` : 'undefined'}}
         maxDate={${attr.validations?.max ? `new Date("${attr.validations.max}")` : 'undefined'}}
         labelClasses="hidden"
+        disabled={${isDisabled}}
+        className={${attr.config?.className ? `"${attr.config.className}"` : 'undefined'}}
       />
       {errors.${fieldName} && (
         <p className="mt-1 text-sm text-meta-1">{errors.${fieldName}?.message}</p>

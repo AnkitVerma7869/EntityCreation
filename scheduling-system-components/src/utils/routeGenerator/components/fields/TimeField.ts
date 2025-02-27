@@ -1,6 +1,9 @@
 import { Attribute } from '../../../../interfaces/types';
 
 export function generateTimeField(attr: Attribute, fieldName: string, defaultValue: string) {
+  const isDisabled = attr.config?.disabled || false;
+  const className = `w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary cursor-pointer ${attr.config?.className || ''}`;
+
   return `
     <div>
       <label className="mb-1 block text-sm font-medium text-black dark:text-white">
@@ -9,8 +12,10 @@ export function generateTimeField(attr: Attribute, fieldName: string, defaultVal
       <div 
         className="relative cursor-pointer"
         onClick={() => {
-          const input = document.querySelector('#${fieldName}') as HTMLInputElement;
-          if (input) input.showPicker();
+          if (!${isDisabled}) {
+            const input = document.querySelector('#${fieldName}') as HTMLInputElement;
+            if (input) input.showPicker();
+          }
         }}
       >  
         <input
@@ -18,10 +23,11 @@ export function generateTimeField(attr: Attribute, fieldName: string, defaultVal
           type="time"
           {...register("${fieldName}")}
           defaultValue="${defaultValue || ''}"
-          className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary cursor-pointer"
+          className="${className}"
           ${attr.config?.min ? `min="${attr.config.min}"` : ''}
           ${attr.config?.max ? `max="${attr.config.max}"` : ''}
           ${attr.config?.step ? `step="${attr.config.step}"` : ''}
+          ${isDisabled ? 'disabled' : ''}
           onChange={(e) => {
             if (e.target.value) {
               e.target.blur();

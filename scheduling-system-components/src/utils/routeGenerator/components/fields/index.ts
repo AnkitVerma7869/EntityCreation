@@ -36,11 +36,11 @@ function formatFieldName(name: string): string {
     
 }
 
-function generateSingleField(attr: Attribute, fieldName: string, defaultValue: string | null = null): string {
+function generateSingleField(attr: Attribute, fieldName: string, defaultValue: string | null = null, isEditPage: boolean = false): string {
   // Format the label for display (e.g., "First Name")
   const fieldLabel = formatFieldLabel(attr.name);
   
-  // Keep original field name structure but ensure it's valid
+  // Format the field name for form handling (e.g., "first_name")
   const formattedFieldName = formatFieldName(fieldName);
   
   // Create a new attribute with formatted names
@@ -52,23 +52,34 @@ function generateSingleField(attr: Attribute, fieldName: string, defaultValue: s
   // Handle defaultValue
   const defaultVal = defaultValue || attr.defaultValue || '';
 
-    // Check for predefined enum types first
-    if (attr.inputType.endsWith('_enum')) {
-      // All predefined enums use radio or select based on their config
-      switch (attr.inputType) {
-        case 'gender_enum':
-        case 'customer_type_enum':
-          return generateRadioField(formattedAttr, formattedFieldName, defaultVal);
-        case 'languages_enum':
-        case 'order_status_enum':
-        case 'programming_language_enum':
-        case 'status_enum':
-          return generateSelectField(formattedAttr, formattedFieldName, defaultVal);
-        default:
-          // For any new enum types, default to select
-          return generateSelectField(formattedAttr, formattedFieldName, defaultVal);
-      }
+  // isEditable only applies on edit page, isReadOnly applies everywhere
+  const isDisabled = (isEditPage && !attr.isEditable) || attr.isReadOnly;
+  const disabledClass = isDisabled ? 'cursor-not-allowed opacity-70' : '';
+
+  // Add these props to the attribute for use in field generators
+  formattedAttr.config = {
+    ...formattedAttr.config,
+    disabled: isDisabled,
+    className: `${formattedAttr.config?.className || ''} ${disabledClass}`.trim()
+  };
+
+  // Check for predefined enum types first
+  if (attr.inputType.endsWith('_enum')) {
+    // All predefined enums use radio or select based on their config
+    switch (attr.inputType) {
+      case 'gender_enum':
+      case 'customer_type_enum':
+        return generateRadioField(formattedAttr, formattedFieldName, defaultVal);
+      case 'languages_enum':
+      case 'order_status_enum':
+      case 'programming_language_enum':
+      case 'status_enum':
+        return generateSelectField(formattedAttr, formattedFieldName, defaultVal);
+      default:
+        // For any new enum types, default to select
+        return generateSelectField(formattedAttr, formattedFieldName, defaultVal);
     }
+  }
   
   switch (attr.inputType.toLowerCase() || attr.dataType.toLowerCase()) {
     case 'date':
@@ -109,13 +120,13 @@ function generateSingleField(attr: Attribute, fieldName: string, defaultValue: s
     case 'gender':
       return generateRadioField(formattedAttr, formattedFieldName, defaultVal);
     default:
-      return generateTextField(formattedAttr, formattedFieldName);
+      return generateTextField(formattedAttr, formattedFieldName, defaultVal);
   }
 }
 
-export function generateField(entity: Entity): string {
+export function generateField(entity: Entity, isEditPage: boolean = false): string {
   const fields = entity.attributes.map(attr => 
-    generateSingleField(attr, attr.name, attr.defaultValue || null)
+    generateSingleField(attr, attr.name, attr.defaultValue || null, isEditPage)
   );
 
   // Group fields into pairs for two-column layout
