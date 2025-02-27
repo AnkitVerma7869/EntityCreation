@@ -58,6 +58,7 @@ export interface Attribute {
   isMultiSelect?: boolean;
   isReadOnly?: boolean;
   displayInList?: boolean;  
+  enumType?: string;
 }
 
 // Interface for complete entity/table definition
@@ -83,6 +84,7 @@ export interface ConfigData {
       max?: number;
       step?: number;
       isDataTypeFixed?: boolean;
+      enumType?: string;
     }
   };      
 } 

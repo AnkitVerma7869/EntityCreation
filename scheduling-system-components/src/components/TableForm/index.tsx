@@ -2,7 +2,8 @@
 import { useState, useEffect } from "react";
 import toast , { Toaster } from 'react-hot-toast';
 import { Attribute, Entity, ConfigData } from "../../interfaces/types";
-import { initialAttributeState, fetchEntityConfig, saveEntity } from "../../utils/utilstableform";
+import { initialAttributeState, fetchEntityConfig, saveEntity} from "../../utils/utilstableform";
+import { generateTableRoutes } from '../../utils/routeGenerator';
 import EntitySetup from "./EntitySetup";
 import EntityPreview from "./EntityPreview";
 import EntityRoutes from "./EntityRoutes";
@@ -120,8 +121,9 @@ export default function TableForm() {
     try {
       const response = await saveEntity(entity);
       showToast(response.message, 'success');
+      await generateTableRoutes({ entityName: entity.entityName, attributes: entity.attributes });
       resetForm();
-      router.push(`/${trimmedEntityName.toLowerCase()}`);
+      router.push('/entities');
     } catch (error: any) {
       showToast(error.message || "Failed to save entity. Please try again.", 'error');
     } finally {

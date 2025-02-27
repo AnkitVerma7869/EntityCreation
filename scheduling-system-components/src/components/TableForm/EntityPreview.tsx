@@ -108,7 +108,7 @@ export default function EntityPreview({
                   Sortable
                 </th>
                 <th className="px-2 py-2 font-medium text-black dark:text-white whitespace-nowrap">
-                  Visible
+                  Display Grid
                 </th>
                 <th className="px-2 py-2 font-medium text-black dark:text-white whitespace-nowrap">
                   Read Only

@@ -51,8 +51,26 @@ function generateSingleField(attr: Attribute, fieldName: string, defaultValue: s
 
   // Handle defaultValue
   const defaultVal = defaultValue || attr.defaultValue || '';
+
+    // Check for predefined enum types first
+    if (attr.inputType.endsWith('_enum')) {
+      // All predefined enums use radio or select based on their config
+      switch (attr.inputType) {
+        case 'gender_enum':
+        case 'customer_type_enum':
+          return generateRadioField(formattedAttr, formattedFieldName, defaultVal);
+        case 'languages_enum':
+        case 'order_status_enum':
+        case 'programming_language_enum':
+        case 'status_enum':
+          return generateSelectField(formattedAttr, formattedFieldName, defaultVal);
+        default:
+          // For any new enum types, default to select
+          return generateSelectField(formattedAttr, formattedFieldName, defaultVal);
+      }
+    }
   
-  switch (attr.inputType.toLowerCase()) {
+  switch (attr.inputType.toLowerCase() || attr.dataType.toLowerCase()) {
     case 'date':
       return generateDateField(formattedAttr, formattedFieldName, defaultVal);
     case 'datetime-local':

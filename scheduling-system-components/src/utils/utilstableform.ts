@@ -65,10 +65,16 @@ type ApiResponse = ApiSuccessResponse | ApiErrorResponse;
  * @returns Promise<{message: string, success: boolean}> from the API
  */
 export async function saveEntity(entity: Entity): Promise<{message: string, success: boolean}> {
+  // Fetch config data
+  const configData = await fetchEntityConfig();
+  
   // Transform entity data to match API requirements
   const transformedEntity = {
     entityName: entity.entityName,
     attributes: entity.attributes.map(attr => {
+      // Get the input type configuration
+      const inputTypeConfig = configData?.inputTypes[attr.inputType];
+      
       // Convert gender input type to radio
       const inputType = attr.inputType === 'gender' ? 'radio' : attr.inputType;
       const isRadioType = inputType === 'radio';
@@ -86,9 +92,11 @@ export async function saveEntity(entity: Entity): Promise<{message: string, succ
           { value: "female", label: "female" },
           { value: "others", label: "others" }
         ] : attr.options,
-        isMultiSelect: isRadioType ? false : attr.isMultiSelect, // Radio buttons are never multi-select
+        isMultiSelect: isRadioType ? false : attr.isMultiSelect,
         isEditable: attr.isEditable !== undefined ? attr.isEditable : true,
         sortable: attr.sortable !== undefined ? attr.sortable : true,
+        // Add enumType to the transformed data
+        enumType: attr.inputType.endsWith('_enum') ? attr.inputType : undefined,
         enumValues: attr.dataType.toLowerCase() === 'enum' ? 
           (attr.inputType === 'gender' ? ['male', 'female', 'others'] : 
             attr.options?.map(opt => typeof opt === 'string' ? opt : opt.value)) : 
@@ -130,7 +138,6 @@ export async function saveEntity(entity: Entity): Promise<{message: string, succ
       attributes: entity.attributes
     };
     await generateTableRoutes(config);
-    
     console.log('Routes generated successfully for:', entity.entityName);
   } catch (error) {
     console.error('Error generating routes:', error);

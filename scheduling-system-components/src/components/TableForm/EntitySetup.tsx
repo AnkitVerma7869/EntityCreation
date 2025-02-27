@@ -27,6 +27,7 @@ interface EntitySetupProps {
         max?: number;
         step?: number;
         isDataTypeFixed?: boolean;
+        enumType?: string;
       }
     }
   };      
@@ -109,6 +110,9 @@ export default function EntitySetup({
   // Add this with other state declarations at the top
   const [isDataTypeDisabled, setIsDataTypeDisabled] = useState(false);
 
+  // Add this state to track if options are editable
+  const [isOptionsEditable, setIsOptionsEditable] = useState(true);
+
   // Add handler for adding options
   const handleAddOption = async () => {
     if (newOption.trim()) {
@@ -143,6 +147,7 @@ export default function EntitySetup({
     });
   };
 
+  // Update handleInputTypeChange to set options editability
   const handleInputTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const inputType = e.target.value;
     setSelectedInputType(inputType);
@@ -152,6 +157,10 @@ export default function EntitySetup({
     const inputTypeConfig = configData.inputTypes[inputType];
     
     if (inputTypeConfig) {
+      // Check if this is a predefined enum type
+      const isPredefinedEnum = inputType.endsWith('_enum');
+      setIsOptionsEditable(!isPredefinedEnum);
+
       // For select/radio/checkbox types
       if (['select', 'radio', 'checkbox'].includes(inputType)) {
         setCurrentAttribute({
@@ -166,16 +175,17 @@ export default function EntitySetup({
         });
         setIsMultiSelect(false);
       } else {
-        // For all other input types including gender
+        // For all other input types including predefined enums
         setCurrentAttribute({
           ...currentAttribute,
           inputType,
-          dataType: inputTypeConfig.dataType,  // Set dataType from config
+          dataType: inputTypeConfig.dataType,
           size: inputTypeConfig.size || null,
           precision: inputTypeConfig.precision || null,
           options: inputTypeConfig.options || [],
           validations: {},
-          isMultiSelect: undefined
+          isMultiSelect: undefined,
+          enumType: inputType.endsWith('_enum') ? inputType : undefined
         });
   
         if (inputTypeConfig.options) {
@@ -184,11 +194,7 @@ export default function EntitySetup({
       }
   
       // Handle dataType disabling
-      if (inputTypeConfig.isDataTypeFixed || ['select', 'radio', 'checkbox'].includes(inputType)) {
-        setIsDataTypeDisabled(true);
-      } else {
-        setIsDataTypeDisabled(false);
-      }
+      setIsDataTypeDisabled(inputTypeConfig.isDataTypeFixed || ['select', 'radio', 'checkbox'].includes(inputType));
     }
   };
 
@@ -397,20 +403,24 @@ export default function EntitySetup({
 
   // Update resetInputs to clear validation errors
   const resetInputs = () => {
-    setSelectedInputType('');
+    const defaultInputType = 'text';
+    const defaultConfig = configData.inputTypes[defaultInputType];
+    
+    setSelectedInputType(defaultInputType);
     setInputOptions([]);
     setNewOption('');
     clearValidationErrors();
+    setIsDataTypeDisabled(false);
     setCurrentAttribute({
       name: '',
-      dataType: '',
-      size: null,
-      precision: null,
+      dataType: defaultConfig.dataType,
+      size: defaultConfig.size || null,
+      precision: defaultConfig.precision || null,
       constraints: [],
       defaultValue: null,
       validations: {},
       options: [],
-      inputType: 'text',
+      inputType: defaultInputType,
       isEditable: true,
       sortable: true
     });
@@ -578,7 +588,7 @@ export default function EntitySetup({
                   errors.inputType ? 'border-meta-1' : 'border-stroke'
                 } bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary`}
               >
-                <option value="text">Text</option>
+                <option value="">Select input type</option>
                 {Object.entries(configData.inputTypes).map(([type, config]) => (
                   <option key={type} value={type}>
                     {type.charAt(0).toUpperCase() + type.slice(1)} ({config.htmlType})
@@ -652,27 +662,35 @@ export default function EntitySetup({
                 <label className="mb-1 block text-sm font-medium text-black dark:text-white">
                   Options <span className="text-meta-1">*</span>
                 </label>
-                <div className={`flex gap-2 ${errors.options ? 'border-meta-1' : ''}`}>
-                  <input
-                    type="text"
-                    value={newOption}
-                    onChange={(e) => {
-                      setNewOption(e.target.value);
-                      setErrors({});
-                    }}
-                    className={`flex-1 rounded border-[1.5px] ${
-                      errors.options ? 'border-meta-1' : 'border-stroke'
-                    } bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary`}
-                    placeholder="Enter option value"
-                  />
-                  <button
-                    onClick={handleAddOption}
-                    type="button"
-                    className="inline-flex items-center justify-center rounded bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-opacity-90"
-                  >
-                    Add Option
-                  </button>
-                </div>
+                {isOptionsEditable ? (
+                  // Show input and add button only if options are editable
+                  <div className={`flex gap-2 ${errors.options ? 'border-meta-1' : ''}`}>
+                    <input
+                      type="text"
+                      value={newOption}
+                      onChange={(e) => {
+                        setNewOption(e.target.value);
+                        setErrors({});
+                      }}
+                      className={`flex-1 rounded border-[1.5px] ${
+                        errors.options ? 'border-meta-1' : 'border-stroke'
+                      } bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary`}
+                      placeholder="Enter option value"
+                    />
+                    <button
+                      onClick={handleAddOption}
+                      type="button"
+                      className="inline-flex items-center justify-center rounded bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-opacity-90"
+                    >
+                      Add Option
+                    </button>
+                  </div>
+                ) : (
+                  // Show a message when using predefined enum
+                  <div className="text-sm text-gray-500 italic bg-gray-50 p-2 rounded">
+                    Using predefined options for {selectedInputType}
+                  </div>
+                )}
 
                 {/* Display options */}
                 {inputOptions.length > 0 && (
@@ -683,12 +701,14 @@ export default function EntitySetup({
                         className="px-2 py-1 text-xs bg-primary/10 text-primary rounded flex items-center gap-1"
                       >
                         {option.label}
-                        <button 
-                          onClick={() => handleRemoveOption(index)}
-                          className="ml-1 hover:text-meta-1"
-                        >
-                          <X size={14} />
-                        </button>
+                        {isOptionsEditable && (
+                          <button 
+                            onClick={() => handleRemoveOption(index)}
+                            className="ml-1 hover:text-meta-1"
+                          >
+                            <X size={14} />
+                          </button>
+                        )}
                       </span>
                     ))}
                   </div>
