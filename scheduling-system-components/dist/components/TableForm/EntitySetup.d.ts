@@ -15,6 +15,7 @@ interface EntitySetupProps {
                 max?: number;
                 step?: number;
                 isDataTypeFixed?: boolean;
+                enumType?: string;
             };
         };
     };

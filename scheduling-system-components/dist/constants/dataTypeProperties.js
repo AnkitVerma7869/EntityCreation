@@ -4,16 +4,16 @@ exports.disabledOptionClass = exports.precisionLimits = exports.maxSizes = expor
 // Helper to determine which data types need size/precision
 exports.dataTypeProperties = {
     // Character types with size
-    char: { needsSize: true, needsPrecision: false },
+    char: { needsSize: false, needsPrecision: false },
     varchar: { needsSize: true, needsPrecision: false },
     text: { needsSize: false, needsPrecision: false },
     // Numeric types with precision
-    decimal: { needsSize: false, needsPrecision: true },
+    decimal: { needsSize: true, needsPrecision: true },
     numeric: { needsSize: true, needsPrecision: true },
     // Time types with precision
-    timestamp: { needsSize: false, needsPrecision: true },
-    time: { needsSize: false, needsPrecision: true },
-    interval: { needsSize: false, needsPrecision: true },
+    timestamp: { needsSize: true, needsPrecision: false },
+    time: { needsSize: true, needsPrecision: false },
+    interval: { needsSize: true, needsPrecision: false },
     date: { needsSize: false, needsPrecision: false },
     // Fixed size numeric types
     smallint: { needsSize: false, needsPrecision: false },
@@ -42,11 +42,12 @@ exports.dataTypeProperties = {
     range: { needsSize: false, needsPrecision: false },
     composite: { needsSize: false, needsPrecision: false },
     tsquery: { needsSize: false, needsPrecision: false },
-    tsvector: { needsSize: false, needsPrecision: false }
+    tsvector: { needsSize: false, needsPrecision: false },
+    color: { needsSize: false, needsPrecision: false }
 };
 exports.maxSizes = {
     char: 255, // Maximum size for CHAR
-    varchar: 65535, // Maximum size for VARCHAR in most databases
+    varchar: 2147483647, // Maximum size for VARCHAR in most databases
 };
 exports.precisionLimits = {
     decimal: { min: 0, max: 1000 },

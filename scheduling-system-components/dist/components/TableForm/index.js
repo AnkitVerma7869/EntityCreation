@@ -78,6 +78,7 @@ var jsx_runtime_1 = require("react/jsx-runtime");
 var react_1 = require("react");
 var react_hot_toast_1 = __importStar(require("react-hot-toast"));
 var utilstableform_1 = require("../../utils/utilstableform");
+var routeGenerator_1 = require("../../utils/routeGenerator");
 var EntitySetup_1 = __importDefault(require("./EntitySetup"));
 var EntityPreview_1 = __importDefault(require("./EntityPreview"));
 var EntityRoutes_1 = __importDefault(require("./EntityRoutes"));
@@ -187,22 +188,25 @@ function TableForm() {
                     setIsSaving(true);
                     _a.label = 1;
                 case 1:
-                    _a.trys.push([1, 3, 4, 5]);
+                    _a.trys.push([1, 4, 5, 6]);
                     return [4 /*yield*/, (0, utilstableform_1.saveEntity)(entity)];
                 case 2:
                     response = _a.sent();
                     showToast(response.message, 'success');
-                    resetForm();
-                    router.push("/".concat(trimmedEntityName.toLowerCase()));
-                    return [3 /*break*/, 5];
+                    return [4 /*yield*/, (0, routeGenerator_1.generateTableRoutes)({ entityName: entity.entityName, attributes: entity.attributes })];
                 case 3:
+                    _a.sent();
+                    resetForm();
+                    router.push('/entities');
+                    return [3 /*break*/, 6];
+                case 4:
                     error_2 = _a.sent();
                     showToast(error_2.message || "Failed to save entity. Please try again.", 'error');
-                    return [3 /*break*/, 5];
-                case 4:
+                    return [3 /*break*/, 6];
+                case 5:
                     setIsSaving(false);
                     return [7 /*endfinally*/];
-                case 5: return [2 /*return*/];
+                case 6: return [2 /*return*/];
             }
         });
     }); };

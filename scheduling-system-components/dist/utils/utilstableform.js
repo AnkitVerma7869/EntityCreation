@@ -98,14 +98,18 @@ function fetchEntityConfig() {
  */
 function saveEntity(entity) {
     return __awaiter(this, void 0, void 0, function () {
-        var transformedEntity, response, responseData, config, error_1;
+        var configData, transformedEntity, response, responseData, config, error_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0:
+                case 0: return [4 /*yield*/, fetchEntityConfig()];
+                case 1:
+                    configData = _a.sent();
                     transformedEntity = {
                         entityName: entity.entityName,
                         attributes: entity.attributes.map(function (attr) {
                             var _a, _b, _c;
+                            // Get the input type configuration
+                            var inputTypeConfig = configData === null || configData === void 0 ? void 0 : configData.inputTypes[attr.inputType];
                             // Convert gender input type to radio
                             var inputType = attr.inputType === 'gender' ? 'radio' : attr.inputType;
                             var isRadioType = inputType === 'radio';
@@ -122,9 +126,11 @@ function saveEntity(entity) {
                                     { value: "female", label: "female" },
                                     { value: "others", label: "others" }
                                 ] : attr.options,
-                                isMultiSelect: isRadioType ? false : attr.isMultiSelect, // Radio buttons are never multi-select
+                                isMultiSelect: isRadioType ? false : attr.isMultiSelect,
                                 isEditable: attr.isEditable !== undefined ? attr.isEditable : true,
                                 sortable: attr.sortable !== undefined ? attr.sortable : true,
+                                // Add enumType to the transformed data
+                                enumType: attr.inputType.endsWith('_enum') ? attr.inputType : undefined,
                                 enumValues: attr.dataType.toLowerCase() === 'enum' ?
                                     (attr.inputType === 'gender' ? ['male', 'female', 'others'] :
                                         (_a = attr.options) === null || _a === void 0 ? void 0 : _a.map(function (opt) { return typeof opt === 'string' ? opt : opt.value; })) :
@@ -146,32 +152,32 @@ function saveEntity(entity) {
                             },
                             body: JSON.stringify(transformedEntity),
                         })];
-                case 1:
+                case 2:
                     response = _a.sent();
                     return [4 /*yield*/, response.json()];
-                case 2:
+                case 3:
                     responseData = _a.sent();
                     // Check if response contains error
                     if ('error' in responseData) {
                         throw new Error(responseData.error.message);
                     }
-                    _a.label = 3;
-                case 3:
-                    _a.trys.push([3, 5, , 6]);
+                    _a.label = 4;
+                case 4:
+                    _a.trys.push([4, 6, , 7]);
                     config = {
                         entityName: entity.entityName,
                         attributes: entity.attributes
                     };
                     return [4 /*yield*/, (0, routeGenerator_1.generateTableRoutes)(config)];
-                case 4:
+                case 5:
                     _a.sent();
                     console.log('Routes generated successfully for:', entity.entityName);
-                    return [3 /*break*/, 6];
-                case 5:
+                    return [3 /*break*/, 7];
+                case 6:
                     error_1 = _a.sent();
                     console.error('Error generating routes:', error_1);
                     throw new Error(error_1 instanceof Error ? error_1.message : 'Unknown error');
-                case 6: return [2 /*return*/, {
+                case 7: return [2 /*return*/, {
                         message: responseData.success.message,
                         success: true
                     }];

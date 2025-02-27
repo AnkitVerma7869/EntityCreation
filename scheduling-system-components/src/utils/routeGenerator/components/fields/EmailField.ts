@@ -17,8 +17,8 @@ export function generateEmailField(attr: Attribute, fieldName: string, defaultVa
         className="${className}"
         ${isDisabled ? 'disabled' : ''}
       />
-      {errors.${fieldName} && (
-        <p className="mt-1 text-sm text-meta-1">{errors.${fieldName}?.message}</p>
+      {errors['${fieldName}'] && (
+        <p className="mt-1 text-sm text-meta-1">{errors['${fieldName}']?.message}</p>
       )}
     </div>
   `;

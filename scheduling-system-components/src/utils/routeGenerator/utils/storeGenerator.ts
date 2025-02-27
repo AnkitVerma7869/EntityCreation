@@ -116,7 +116,7 @@ export function generateEntityStore(config: Entity) {
       // API Actions
       fetchRecords: (params?: Partial<ListParams>) => Promise<any[]>;
       fetchRecord: (id: string) => Promise<any>;
-      createRecord: (data: any) => Promise<boolean>;
+      createRecord: (data: any) => Promise<{ success: string; error: string | null }>;
       updateRecord: (id: string, data: any) => Promise<boolean>;
       deleteRecord: (id: string) => Promise<boolean>;
     }
@@ -276,22 +276,33 @@ export function generateEntityStore(config: Entity) {
 
               const result = await response.json();
               
-              if (!response.ok) {
-                throw new Error(result.error || 'Failed to create record');
+              if (result.success) {
+                // Handle successful response
+                const successMessage = result.success.message;
+                set({ 
+                  success: successMessage,
+                  error: null
+                });
+                return { success: successMessage, error: null };
+              } else {
+                // Handle error response
+                const errorMessage = typeof result.error === 'object' 
+                  ? result.error.message || JSON.stringify(result.error)
+                  : result.error || 'Failed to create record';
+                
+                set({ 
+                  error: errorMessage,
+                  success: null
+                });
+                return { error: errorMessage, success: null };
               }
-              
-              set({ 
-                success: 'Record created successfully',
-                error: null
-              });
-              
-              return true;
             } catch (error: any) {
+              const errorMessage = error.message || 'An unexpected error occurred';
               set({ 
-                error: error.message,
+                error: errorMessage,
                 success: null
               });
-              return false;
+              return { error: errorMessage, success: null };
             } finally {
               set({ loading: false });
             }
