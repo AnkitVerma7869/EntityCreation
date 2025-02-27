@@ -2,6 +2,7 @@ import { Entity } from '../../../../interfaces/types';
 import { generatePackageImports } from '../../utils/packageManager';
 import { generateField } from '../../components/fields';
 import { generateValidationSchema } from '../../utils/validationSchemaGenerator';
+import { toast } from 'react-hot-toast';
 
 // Helper function to format entity name (keep it consistent with storeGenerator)
 function formatEntityName(name: string): string {
@@ -42,7 +43,8 @@ export function generateCreatePage(config: Entity): string {
     import PhoneNumberInput from '@/components/PhoneNumberInput/index';
     import Select from 'react-select';
     import { use${formattedEntityName}Store } from '@/store/${config.entityName.toLowerCase()}Store';
-    `;
+    import { toast, Toaster } from 'react-hot-toast';
+  `;
     
   const dateColumns = config.attributes
     .filter(attr => ['date', 'datetime', 'timestamp', 'time', 'datetime-local']
@@ -103,14 +105,50 @@ export function generateCreatePage(config: Entity): string {
           }
         });
 
-        const success = await createRecord(formattedData);
+        const { success, error } = await createRecord(formattedData);
+        
         if (success) {
-          router.push('/${config.entityName.toLowerCase()}');
+          toast.success(success, {
+            duration: 2000,
+            position: 'top-right',
+          });
+          setTimeout(() => {
+            router.push('/${config.entityName.toLowerCase()}');
+          }, 2000);
+        } else if (error) {
+          toast.error(error, {
+            duration: 5000,
+            position: 'top-right',
+          });
         }
       };
 
       return (
         <DefaultLayout>
+          <Toaster 
+            position="top-right"
+            toastOptions={{
+              duration: 2000,
+              style: {
+                background: 'white',
+                color: 'black',
+              },
+              success: {
+                duration: 2000,
+                style: {
+                  background: 'white',
+                  color: 'black'
+                }
+              },
+              error: {
+                duration: 2000,
+                style: {
+                  background: 'white',
+                  color: 'black'
+                }
+              },
+            }} 
+          />
           <div className="p-2">
             <div className="flex flex-col gap-9">
               <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">

@@ -5,18 +5,23 @@ function generateValidationSchema(attributes) {
     var schemaFields = attributes.map(function (attr) {
         var _a, _b, _c;
         var fieldName = attr.name.replace(/\s+/g, '_');
+        function formatFieldName(name) {
+            // If name contains hyphen, wrap it in quotes
+            return name.includes('-') ? "'".concat(name, "'") : name;
+        }
+        var formattedFieldName = formatFieldName(fieldName);
         var yupType = getYupType(attr);
         // Start with the type declaration
-        var schema = "".concat(fieldName, ": yup.").concat(yupType, "()");
+        var schema = "".concat(formattedFieldName, ": yup.").concat(yupType, "()");
         // Special handling for telephone fields
         if (attr.inputType.toLowerCase() === 'tel') {
             // Add the country code field schema
-            var countryCodeSchema = "countryCode_".concat(fieldName, ": yup.string()");
+            var countryCodeSchema = "countryCode_".concat(formattedFieldName, ": yup.string()");
             schema = "".concat(schema, ",\n").concat(countryCodeSchema);
         }
         // For checkbox with options, add validation for array of strings
         if (attr.inputType.toLowerCase() === 'checkbox' && Array.isArray(attr.options) && attr.options.length > 0) {
-            schema = "".concat(fieldName, ": yup.array().of(yup.string())");
+            schema = "".concat(formattedFieldName, ": yup.array().of(yup.string())");
             if ((_a = attr.validations) === null || _a === void 0 ? void 0 : _a.required) {
                 schema += '.min(1, "Please select at least one option")';
             }

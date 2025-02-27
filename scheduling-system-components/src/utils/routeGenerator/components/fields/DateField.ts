@@ -17,8 +17,8 @@ export function generateDateField(attr: Attribute, fieldName: string, defaultVal
         maxDate={${attr.validations?.max ? `new Date("${attr.validations.max}")` : 'undefined'}}
         labelClasses="hidden"
       />
-      {errors.${fieldName} && (
-        <p className="mt-1 text-sm text-meta-1">{errors.${fieldName}?.message}</p>
+      {errors['${fieldName}'] && (
+        <p className="mt-1 text-sm text-meta-1">{errors['${fieldName}']?.message}</p>
       )}
     </div>
   `;
