@@ -3,9 +3,32 @@ import { generatePackageImports } from '../../utils/packageManager';
 import { generateField } from '../../components/fields';
 import { generateValidationSchema } from '../../utils/validationSchemaGenerator';
 
+// Helper function to format entity name (keep it consistent with storeGenerator)
+function formatEntityName(name: string): string {
+  return name
+    // Replace hyphens and spaces with underscores first
+    .replace(/[-\s]+/g, '_')
+    // Split by underscores
+    .split('_')
+    // Capitalize first letter of each word
+    .map((word, index) => {
+      const capitalized = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      // For camelCase, make first word start with lowercase
+      return index === 0 ? capitalized.toLowerCase() : capitalized;
+    })
+    // Join without any separator
+    .join('');
+}
+
+// Helper function to format field name for form registration
+function formatFieldName(name: string): string {
+  // Return the original name - React Hook Form will handle it properly
+  return name.replace(/\s+/g, '_');
+}
 
 export function generateCreatePage(config: Entity): string {
   const { packages } = generatePackageImports(config);
+  const formattedEntityName = formatEntityName(config.entityName);
   
   // Generate dynamic imports based on packages
   const dynamicImports = `
@@ -18,13 +41,13 @@ export function generateCreatePage(config: Entity): string {
     import DatePickerOneRequired from '@/components/FormElements/DatePickerOneRequired';
     import PhoneNumberInput from '@/components/PhoneNumberInput/index';
     import Select from 'react-select';
-    import { use${config.entityName}Store } from '@/store/${config.entityName.toLowerCase()}Store';
+    import { use${formattedEntityName}Store } from '@/store/${config.entityName.toLowerCase()}Store';
     `;
-    const dateColumns = config.attributes
+    
+  const dateColumns = config.attributes
     .filter(attr => ['date', 'datetime', 'timestamp', 'time', 'datetime-local']
       .some(type => attr.dataType.toLowerCase().includes(type)))
     .map(attr => `'${attr.name}'`);
-
 
   return `
     'use client';
@@ -35,9 +58,9 @@ export function generateCreatePage(config: Entity): string {
       ${generateValidationSchema(config.attributes)}
     });
 
-    export default function ${config.entityName}CreatePage() {
+    export default function ${formattedEntityName}CreatePage() {
       const router = useRouter();
-      const { loading, error, createRecord } = use${config.entityName}Store();
+      const { loading, error, createRecord } = use${formattedEntityName}Store();
       
       const { 
         register,
@@ -50,9 +73,7 @@ export function generateCreatePage(config: Entity): string {
         resolver: yupResolver(validationSchema)
       });
 
-    
-
-        const formatLocalToISOString = (date) => {
+      const formatLocalToISOString = (date) => {
         const pad = (num) => String(num).padStart(2, "0");
     
         const year = date.getFullYear();
@@ -76,8 +97,6 @@ export function generateCreatePage(config: Entity): string {
       const onSubmit = async (data: any) => {
         const formattedData = { ...data };
         
-        
-        
         DateFormatColumns.forEach(columnName => {
           if (formattedData[columnName]) {
             formattedData[columnName] = formatLocalToISOString(formattedData[columnName]);
@@ -97,7 +116,7 @@ export function generateCreatePage(config: Entity): string {
               <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
                 <div className="border-b border-stroke px-6.5 py-4 dark:border-strokedark">
                   <h3 className="font-medium text-black dark:text-white">
-                    Create ${config.entityName}
+                    Create ${formattedEntityName}
                   </h3>
                 </div>
 

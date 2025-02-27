@@ -18,33 +18,29 @@ import { generateHiddenField } from './HiddenField';
 import { generateTimeField } from './TimeField';
 import { generateTextAreaField } from './TextAreaField';
 
-// Helper function to format field labels (e.g., "first_name" to "First Name")
+// Helper function to format field labels for display
 function formatFieldLabel(name: string): string {
   return name
-    // Split by underscore and space
-    .split(/[_\s]+/)
-    // Capitalize first letter of each word
+    .split(/[_\s-]+/)  // Split by underscore, space, and hyphen
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    // Join with space
     .join(' ');
 }
 
-// Helper function to format field names for form handling (keeps original format but ensures valid identifier)
+// Helper function to format field names for form handling
 function formatFieldName(name: string): string {
+  // Keep original name but ensure it's a valid identifier
+  // This preserves hyphenated names for proper form handling
   return name
-    // Replace any invalid characters with underscore
-    .replace(/[^a-zA-Z0-9_]/g, '_')
-    // Remove multiple consecutive underscores
-    .replace(/_+/g, '_')
-    // Remove leading/trailing underscores
-    .replace(/^_+|_+$/g, '')
-    .toLowerCase();
+    .trim()
+    .replace(/\s+/g, '-')  // Replace spaces with hyphens
+    
 }
 
-function generateSingleField(attr: Attribute, fieldName: string, defaultValue: string | null): string {
+function generateSingleField(attr: Attribute, fieldName: string, defaultValue: string | null = null): string {
   // Format the label for display (e.g., "First Name")
   const fieldLabel = formatFieldLabel(attr.name);
-  // Format the field name for form handling (e.g., "first_name")
+  
+  // Keep original field name structure but ensure it's valid
   const formattedFieldName = formatFieldName(fieldName);
   
   // Create a new attribute with formatted names
@@ -53,65 +49,61 @@ function generateSingleField(attr: Attribute, fieldName: string, defaultValue: s
     name: fieldLabel // Use formatted label for display
   };
 
-  // Convert defaultValue to string to handle null case
-  const stringDefaultValue = defaultValue?.toString() || '';
+  // Handle defaultValue
+  const defaultVal = defaultValue || attr.defaultValue || '';
   
-  switch (attr.inputType.toLowerCase() || attr.dataType.toLowerCase()) {
+  switch (attr.inputType.toLowerCase()) {
     case 'date':
-      return generateDateField(formattedAttr, formattedFieldName, stringDefaultValue);
+      return generateDateField(formattedAttr, formattedFieldName, defaultVal);
     case 'datetime-local':
-      return generateDateTimeField(formattedAttr, formattedFieldName, stringDefaultValue);
+      return generateDateTimeField(formattedAttr, formattedFieldName, defaultVal);
     case 'select':
     case 'multiselect':
-      return generateSelectField(formattedAttr, formattedFieldName, stringDefaultValue);
+      return generateSelectField(formattedAttr, formattedFieldName, defaultVal);
     case 'rich-text':
-      return generateRichTextField(formattedAttr, formattedFieldName, stringDefaultValue);
+      return generateRichTextField(formattedAttr, formattedFieldName, defaultVal);
     case 'file':
-      return generateFileField(formattedAttr, formattedFieldName, stringDefaultValue);
+      return generateFileField(formattedAttr, formattedFieldName, defaultVal);
     case 'email':
-      return generateEmailField(formattedAttr, formattedFieldName, stringDefaultValue);
+      return generateEmailField(formattedAttr, formattedFieldName, defaultVal);
     case 'password':
-      return generatePasswordField(formattedAttr, formattedFieldName, stringDefaultValue);
+      return generatePasswordField(formattedAttr, formattedFieldName, defaultVal);
     case 'checkbox':
-      return generateCheckboxField(formattedAttr, formattedFieldName, stringDefaultValue);
+      return generateCheckboxField(formattedAttr, formattedFieldName, defaultVal);
     case 'radio':
-      return generateRadioField(formattedAttr, formattedFieldName, stringDefaultValue);
+      return generateRadioField(formattedAttr, formattedFieldName, defaultVal);
     case 'tel':
-      return generateTelField(formattedAttr, formattedFieldName, stringDefaultValue);
+      return generateTelField(formattedAttr, formattedFieldName, defaultVal);
     case 'url':
-      return generateUrlField(formattedAttr, formattedFieldName, stringDefaultValue);
+      return generateUrlField(formattedAttr, formattedFieldName, defaultVal);
     case 'color':
-      return generateColorField(formattedAttr, formattedFieldName, stringDefaultValue);
+      return generateColorField(formattedAttr, formattedFieldName, defaultVal);
     case 'range':
-      return generateRangeField(formattedAttr, formattedFieldName, stringDefaultValue);
+      return generateRangeField(formattedAttr, formattedFieldName, defaultVal);
     case 'search':
-      return generateSearchField(formattedAttr, formattedFieldName, stringDefaultValue);
+      return generateSearchField(formattedAttr, formattedFieldName, defaultVal);
     case 'hidden':
-      return generateHiddenField(formattedAttr, formattedFieldName, stringDefaultValue);
+      return generateHiddenField(formattedAttr, formattedFieldName, defaultVal);
     case 'time':
-      return generateTimeField(formattedAttr, formattedFieldName, stringDefaultValue);
+      return generateTimeField(formattedAttr, formattedFieldName, defaultVal);
     case 'textarea':
-      return generateTextAreaField(formattedAttr, formattedFieldName, stringDefaultValue);
+      return generateTextAreaField(formattedAttr, formattedFieldName, defaultVal);
     case 'gender':
-      return generateRadioField(formattedAttr, formattedFieldName, stringDefaultValue);
+      return generateRadioField(formattedAttr, formattedFieldName, defaultVal);
     default:
-      return generateTextField(formattedAttr, formattedFieldName, stringDefaultValue);
+      return generateTextField(formattedAttr, formattedFieldName);
   }
 }
 
 export function generateField(entity: Entity): string {
-  const fields = entity.attributes.map(attr => {
-    const fieldName = attr.name;
-    const defaultValue = attr.defaultValue;
-    return generateSingleField(attr, fieldName, defaultValue);
-  });
+  const fields = entity.attributes.map(attr => 
+    generateSingleField(attr, attr.name, attr.defaultValue || null)
+  );
 
-  // Create a typed array for pairedFields
-  const pairedFields: string[][] = [];
-  
   // Group fields into pairs for two-column layout
+  const pairedFields: string[][] = [];
   for (let i = 0; i < fields.length; i += 2) {
-    const pair = [fields[i]];
+    const pair: string[] = [fields[i]];
     if (i + 1 < fields.length) {
       pair.push(fields[i + 1]);
     }

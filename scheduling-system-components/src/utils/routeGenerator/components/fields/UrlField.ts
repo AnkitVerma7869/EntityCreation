@@ -18,8 +18,8 @@ export function generateUrlField(attr: Attribute, fieldName: string, defaultValu
           className="w-full rounded-r border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
         />
       </div>
-      {errors.${fieldName} && (
-        <p className="mt-1 text-sm text-meta-1">{errors.${fieldName}?.message}</p>
+       {errors['${fieldName}'] && (
+        <p className="mt-1 text-sm text-meta-1">{errors['${fieldName}']?.message}</p>
       )}
     </div>
   `;

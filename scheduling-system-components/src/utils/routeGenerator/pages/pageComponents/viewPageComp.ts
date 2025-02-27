@@ -1,7 +1,19 @@
 import { Entity } from '../../../../interfaces/types';
 
+// Helper function to format entity name (keep it consistent with storeGenerator)
+function formatEntityName(name: string): string {
+  return name
+    .replace(/[-\s]+/g, '_')
+    .split('_')
+    .map((word, index) => {
+      const capitalized = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      return index === 0 ? capitalized.toLowerCase() : capitalized;
+    })
+    .join('');
+}
+
 export function generateViewPage(config: Entity) {
- 
+  const formattedEntityName = formatEntityName(config.entityName);
 
   const dateColumns = config.attributes
   .filter(attr => ['date', 'datetime', 'timestamp', 'time', 'datetime-local']
@@ -14,7 +26,7 @@ export function generateViewPage(config: Entity) {
     import { useEffect, useState } from 'react';
     import { useRouter } from 'next/navigation';
     import DefaultLayout from "@/components/Layouts/DefaultLayout";
-    import { use${config.entityName}Store } from '@/store/${config.entityName.toLowerCase()}Store';
+    import { use${formattedEntityName}Store } from '@/store/${config.entityName.toLowerCase()}Store';
     import { ArrowLeft } from 'lucide-react';
 
     // Helper function to format field labels
@@ -25,9 +37,9 @@ export function generateViewPage(config: Entity) {
         .join(' ');
     }
 
-    export default function ${config.entityName}ViewPage({ params }: { params: { id: string } }) {
+    export default function ${formattedEntityName}ViewPage({ params }: { params: { id: string } }) {
       const router = useRouter();
-      const { loading, error, fetchRecord } = use${config.entityName}Store();
+      const { loading, error, fetchRecord } = use${formattedEntityName}Store();
       const [currentRecord, setCurrentRecord] = useState<any>(null);
       const DateFormatColumns = [${dateColumns.join(', ')}];
        
@@ -72,7 +84,7 @@ export function generateViewPage(config: Entity) {
                 <div className="border-b border-stroke px-6.5 py-4 dark:border-strokedark">
                   <div className="flex justify-between items-center">
                     <h3 className="text-xl font-bold text-black dark:text-white">
-                      ${config.entityName} Details
+                      ${formattedEntityName} Details
                     </h3>
                     <button
                       onClick={() => router.back()}
@@ -92,7 +104,7 @@ export function generateViewPage(config: Entity) {
                            ${attr.name.split(/[_\s]+/).map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')}
                         </h4>
                         <p className="text-base text-gray-600 dark:text-gray-400">
-                           {currentRecord.${attr.name.replace(/\s+/g, '_')}}
+                           {currentRecord['${attr.name.replace(/\s+/g, '-')}']}
                         </p>
                       </div>
                     `).join('')}

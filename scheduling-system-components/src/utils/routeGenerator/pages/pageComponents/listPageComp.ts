@@ -1,6 +1,20 @@
 import { Entity } from '../../../../interfaces/types';
 
+// Helper function to format entity name (keep it consistent with storeGenerator)
+function formatEntityName(name: string): string {
+  return name
+    .replace(/[-\s]+/g, '_')
+    .split('_')
+    .map((word, index) => {
+      const capitalized = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      return index === 0 ? capitalized.toLowerCase() : capitalized;
+    })
+    .join('');
+}
+
 export function generateListPage(config: Entity): string {
+  const formattedEntityName = formatEntityName(config.entityName);
+  
   // Filter out password fields and non-displayable columns from attributes
   const displayableAttributes = config.attributes.filter(attr => 
     !attr.name.toLowerCase().includes('password') && 
@@ -17,7 +31,7 @@ export function generateListPage(config: Entity): string {
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
-import { use${config.entityName}Store } from '@/store/${config.entityName.toLowerCase()}Store';
+import { use${formattedEntityName}Store } from '@/store/${config.entityName.toLowerCase()}Store';
 import { Edit, Trash2, Search, Plus, X } from 'lucide-react';
 import { DataGrid, GridColDef, GridOverlay, gridClasses, GridToolbar } from '@mui/x-data-grid';
 import Box from '@mui/material/Box';
@@ -31,7 +45,7 @@ function formatFieldLabel(name: string): string {
     .join(' ');
 }
     
-export default function ${config.entityName}ListPage() {
+export default function ${formattedEntityName}ListPage() {
     const router = useRouter();
     const { 
       loading, 
@@ -40,7 +54,7 @@ export default function ${config.entityName}ListPage() {
       deleteRecord, 
       listParams,
       totalRecords 
-    } = use${config.entityName}Store();
+    } = use${formattedEntityName}Store();
     
     const [records, setRecords] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -225,7 +239,7 @@ export default function ${config.entityName}ListPage() {
                 <div className="border-b border-stroke px-6.5 py-4 dark:border-strokedark">
                   <div className="flex justify-between items-center">
                     <h3 className="font-medium text-black dark:text-white">
-                      ${config.entityName} List
+                      ${formattedEntityName} List
                     </h3>
                     <div className="flex gap-4">
                       <button
