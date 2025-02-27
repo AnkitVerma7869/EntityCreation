@@ -52,9 +52,27 @@ function generateSingleField(attr: Attribute, fieldName: string, defaultValue: s
     ...attr,
     name: fieldLabel // Use formatted label for display
   };
-
+  
   // Convert defaultValue to string to handle null case
   const stringDefaultValue = defaultValue?.toString() || '';
+
+  // Check for predefined enum types first
+  if (attr.inputType.endsWith('_enum')) {
+    // All predefined enums use radio or select based on their config
+    switch (attr.inputType) {
+        case 'gender_enum':
+        case 'customer_type_enum':
+          return generateRadioField(formattedAttr, formattedFieldName, stringDefaultValue);
+        case 'languages_enum':
+        case 'order_status_enum':
+        case 'programming_language_enum':
+        case 'status_enum':
+          return generateSelectField(formattedAttr, formattedFieldName, stringDefaultValue);
+        default:
+          // For any new enum types, default to select
+          return generateSelectField(formattedAttr, formattedFieldName, stringDefaultValue);
+    }
+  }
   
   switch (attr.inputType.toLowerCase() || attr.dataType.toLowerCase()) {
     case 'date':

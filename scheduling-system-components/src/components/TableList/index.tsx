@@ -5,15 +5,43 @@ import {
   GridColDef,
   GridToolbar,
   GridPaginationModel,
-  GridRowParams
+  GridRowParams,
+  GridOverlay,
+  GridLoadingOverlay
 } from '@mui/x-data-grid';
 import { Box, Paper } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { Entity } from '../../interfaces/types';
+import { Loader2 } from 'lucide-react';
 
 interface TableListProps {
   onCreateNew?: () => void;
 }
+
+// Custom Loading Overlay with better visibility
+const CustomLoadingOverlay = () => (
+  <GridOverlay>
+    <div className="flex items-center justify-center h-full">
+      <div className="flex flex-col items-center space-y-3">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+        <p className="text-blue-600 font-medium">Loading Tables...</p>
+      </div>
+    </div>
+  </GridOverlay>
+);
+
+// Custom Error Overlay Component
+const CustomErrorOverlay = (props: { message: string | null }) => (
+  <GridOverlay>
+    <div className="text-center p-4">
+      <div className="text-red-600 font-semibold">
+        {props.message === 'Failed to fetch' 
+          ? 'Unable to connect to server. Please check your connection.'
+          : props.message}
+      </div>
+    </div>
+  </GridOverlay>
+);
 
 /**
  * TablesList Component
@@ -29,6 +57,7 @@ export default function TablesList({ onCreateNew }: TableListProps) {
     page: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   // API endpoint from environment variables
   const API_URL = process.env.NEXT_PUBLIC_API_URL_ENDPOINT;
@@ -37,7 +66,7 @@ export default function TablesList({ onCreateNew }: TableListProps) {
    * Handles row click events by navigating to the detailed view of the selected table
    */
   const handleRowClick = (params: GridRowParams) => {
-    const entityName = params.row.entityName.toLowerCase();
+    const entityName = params.row.name ? params.row.name.toLowerCase() : params.row.entityName.toLowerCase();
     router.push(`/${entityName}`);
   };
 
@@ -48,11 +77,30 @@ export default function TablesList({ onCreateNew }: TableListProps) {
     const fetchTables = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${API_URL}/api/v1/entity/all-entities`);
-        const data = await response.json();
-
-        console.log("data", data);
+        setApiError(null);
         
+        if (!API_URL) {
+          setApiError('API URL is not configured');
+          return;
+        }
+
+        const response = await fetch(`${API_URL}/api/v1/entity/all-entities`);
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          setApiError(errorData.message || 'Failed to fetch data');
+          setTables([]);
+          return;
+        }
+
+        const data = await response.json();
+        
+        if (data.error) {
+          setApiError(data.error);
+          setTables([]);
+          return;
+        }
+
         // Define columns for the data grid
         const dynamicColumns: GridColDef[] = [
           { 
@@ -67,6 +115,17 @@ export default function TablesList({ onCreateNew }: TableListProps) {
             flex: 1,
             filterable: true,
             sortable: true,
+            renderCell: (params) => (
+              <div 
+                className="text-blue-600 hover:text-blue-800 cursor-pointer"
+                onClick={() => {
+                  const entityName = params.row.name.toLowerCase();
+                  router.push(`/${entityName}`);
+                }}
+              >
+                {params.value}
+              </div>
+            )
           },
           { 
             field: 'numberofcolumn', 
@@ -90,6 +149,8 @@ export default function TablesList({ onCreateNew }: TableListProps) {
         }
       } catch (error) {
         console.error('Error fetching tables:', error);
+        setApiError('Failed to fetch');
+        setTables([]);
       } finally {
         setLoading(false);
       }
@@ -115,44 +176,59 @@ export default function TablesList({ onCreateNew }: TableListProps) {
         </button>
       </div>
 
-       
-        <Paper elevation={2} className="p-4">
-          <Box sx={{ height: 400, width: '100%' }}>
-            <DataGrid
-              rows={tables}
-              columns={columns}
-              paginationModel={paginationModel}
-              onPaginationModelChange={setPaginationModel}
-              pageSizeOptions={[5, 10, 25, 50]}
-              loading={false}
-              disableRowSelectionOnClick
-              onRowClick={handleRowClick}
-              slots={{ toolbar: GridToolbar }}
-              slotProps={{
-                toolbar: {
-                  showQuickFilter: true,
-                  quickFilterProps: { debounceMs: 500 },
+      <Paper elevation={2} className="p-4">
+        <Box sx={{ 
+          width: '100%', 
+          minHeight: '400px', 
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
+          <DataGrid
+            rows={tables}
+            columns={columns}
+            paginationModel={paginationModel}
+            onPaginationModelChange={setPaginationModel}
+            pageSizeOptions={[5, 10, 25, 50]}
+            loading={loading}
+            disableRowSelectionOnClick
+            autoHeight={!loading}
+            slots={{
+              toolbar: GridToolbar,
+              loadingOverlay: CustomLoadingOverlay,
+              noRowsOverlay: apiError ? () => <CustomErrorOverlay message={apiError} /> : undefined,
+            }}
+            slotProps={{
+              toolbar: {
+                showQuickFilter: true,
+                quickFilterProps: { debounceMs: 500 },
+              },
+            }}
+            initialState={{
+              pagination: {
+                paginationModel: { pageSize: 5, page: 0 },
+              },
+              sorting: {
+                sortModel: [{ field: 'id', sort: 'asc' }],
+              },
+            }}
+            sortingOrder={['asc', 'desc']}
+            disableColumnMenu
+            sx={{
+              '& .MuiDataGrid-row': {
+                cursor: 'pointer',
+                '&:hover': {
+                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
                 },
-              }}
-              initialState={{
-                pagination: {
-                  paginationModel: { pageSize: 5, page: 0 },
-                },
-                sorting: {
-                  sortModel: [{ field: 'tableName', sort: 'asc' }],
-                },
-              }}
-              sx={{
-                '& .MuiDataGrid-row': {
-                  cursor: 'pointer',
-                  '&:hover': {
-                    backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                  },
-                },
-              }}
-            />
-          </Box>
-        </Paper>
-      </div>
+              },
+              minHeight: '300px',
+              flex: 1,
+              '& .MuiDataGrid-main': {
+                minHeight: '300px'
+              }
+            }}
+          />
+        </Box>
+      </Paper>
+    </div>
   );
-} 
+}
