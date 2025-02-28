@@ -1,5 +1,17 @@
+/**
+ * DateTime Field Generator
+ * Generates HTML/JSX for datetime picker form fields
+ */
+
 import { Attribute } from '../../../../interfaces/types';
 
+/**
+ * Generates a datetime picker field component
+ * @param {Attribute} attr - Field attribute configuration
+ * @param {string} fieldName - Name of the form field
+ * @param {string} defaultValue - Default datetime value (ISO format)
+ * @returns {string} Generated datetime picker field JSX
+ */
 export function generateDateTimeField(attr: Attribute, fieldName: string, defaultValue: string) {
   const isDisabled = attr.config?.disabled || false;
   const className = `w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary cursor-pointer ${attr.config?.className || ''}`;

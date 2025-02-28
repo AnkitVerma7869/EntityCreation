@@ -4,8 +4,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var jsx_runtime_1 = require("react/jsx-runtime");
+/**
+ * Required Date Picker Component
+ * A customized date picker component that requires a single date selection
+ */
 var flatpickr_1 = __importDefault(require("flatpickr"));
 var react_1 = require("react");
+/**
+ * DatePickerOneRequired Component
+ * Renders a date picker with required date selection
+ */
 var DatePickerOneRequired = function (_a) {
     var defaultValue = _a.defaultValue, _b = _a.label, label = _b === void 0 ? "Date picker" : _b, onChange = _a.onChange, minDate = _a.minDate, _c = _a.maxDate, maxDate = _c === void 0 ? new Date(8640000000000000) : _c, _d = _a.required, required = _d === void 0 ? false : _d, _e = _a.labelClasses, labelClasses = _e === void 0 ? "mb-1 block text-sm font-medium text-black dark:text-white" : _e;
     var datepickerRef = (0, react_1.useRef)(null);

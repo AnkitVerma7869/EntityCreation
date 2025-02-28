@@ -1,3 +1,8 @@
+/**
+ * TableList Module
+ * Provides a data grid interface for managing and viewing database tables
+ */
+
 'use client';
 import React, { useState, useEffect } from 'react';
 import { 
@@ -14,11 +19,19 @@ import { useRouter } from 'next/navigation';
 import { Entity } from '../../interfaces/types';
 import { Loader2 } from 'lucide-react';
 
+/**
+ * Props interface for TableList component
+ * @interface TableListProps
+ */
 interface TableListProps {
-  onCreateNew?: () => void;
+  onCreateNew?: () => void;  // Optional callback when creating new table
 }
 
-// Custom Loading Overlay with better visibility
+/**
+ * Custom loading overlay component for the data grid
+ * Displays a spinning loader with loading message
+ * @returns {JSX.Element} Loading overlay component
+ */
 const CustomLoadingOverlay = () => (
   <GridOverlay>
     <div className="flex items-center justify-center h-full">
@@ -30,7 +43,13 @@ const CustomLoadingOverlay = () => (
   </GridOverlay>
 );
 
-// Custom Error Overlay Component
+/**
+ * Custom error overlay component for the data grid
+ * Displays error messages with appropriate formatting
+ * @param {Object} props - Component props
+ * @param {string | null} props.message - Error message to display
+ * @returns {JSX.Element} Error overlay component
+ */
 const CustomErrorOverlay = (props: { message: string | null }) => (
   <GridOverlay>
     <div className="text-center p-4">
@@ -47,8 +66,19 @@ const CustomErrorOverlay = (props: { message: string | null }) => (
  * TablesList Component
  * Displays a data grid of database tables with their properties and configurations.
  * Allows users to view, sort, filter and navigate to individual table details.
+ * 
+ * Features:
+ * - Pagination
+ * - Sorting
+ * - Filtering
+ * - Error handling
+ * - Loading states
+ * 
+ * @param {TableListProps} props - Component props
+ * @returns {JSX.Element} Rendered component
  */
 export default function TablesList({ onCreateNew }: TableListProps) {
+  // State management
   const router = useRouter();
   const [tables, setTables] = useState<Entity[]>([]);
   const [columns, setColumns] = useState<GridColDef[]>([]);
@@ -59,20 +89,23 @@ export default function TablesList({ onCreateNew }: TableListProps) {
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  // API endpoint from environment variables
+  // API configuration
   const API_URL = process.env.NEXT_PUBLIC_API_URL_ENDPOINT;
 
   /**
    * Handles row click events by navigating to the detailed view of the selected table
+   * @param {GridRowParams} params - Data grid row parameters
    */
   const handleRowClick = (params: GridRowParams) => {
     const entityName = params.row.name ? params.row.name.toLowerCase() : params.row.entityName.toLowerCase();
     router.push(`/${entityName}`);
   };
 
+  // Data fetching effect
   useEffect(() => {
     /**
      * Fetches table data from the API and formats it for display in the data grid
+     * Handles error states and data transformation
      */
     const fetchTables = async () => {
       try {

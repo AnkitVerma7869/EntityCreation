@@ -1,3 +1,9 @@
+/**
+ * TableForm Module
+ * Main form component for creating and editing database table entities.
+ * Provides a complete interface for entity management including setup, preview, and route generation.
+ */
+
 'use client';
 import { useState, useEffect } from "react";
 import toast , { Toaster } from 'react-hot-toast';
@@ -10,7 +16,21 @@ import EntityRoutes from "./EntityRoutes";
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 
-// Custom toast function to ensure only one toast at a time
+/**
+ * Props interface for TableForm component
+ * @interface TableFormProps
+ */
+interface TableFormProps {
+  initialData?: Entity;           // Initial entity data for editing mode
+  onSubmit?: (data: Entity) => void;  // Callback when form is submitted
+  mode?: 'create' | 'edit';      // Form mode
+}
+
+/**
+ * Displays toast notifications with consistent styling
+ * @param {string} message - Message to display in toast
+ * @param {'success' | 'error'} type - Type of toast notification
+ */
 const showToast = (message: string, type: 'success' | 'error') => {
   // Dismiss all existing toasts first
   toast.dismiss();
@@ -28,14 +48,20 @@ const showToast = (message: string, type: 'success' | 'error') => {
   }
 };
 
-// Loading component shown while fetching initial data
+/**
+ * Loading indicator component for initial data fetch
+ * @returns {JSX.Element} Loading spinner with message
+ */
 const LoadingState = () => (
   <div className="flex items-center justify-center min-h-screen">
     <div className="text-lg">Loading...</div>
   </div>
 );
 
-// Add FullPageLoader component
+/**
+ * Full-page loading overlay for save operations
+ * @returns {JSX.Element} Modal overlay with loading spinner
+ */
 const FullPageLoader = () => (
   <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center">
     <div className="bg-white rounded-lg p-8 flex flex-col items-center space-y-3 shadow-lg">
@@ -45,7 +71,20 @@ const FullPageLoader = () => (
   </div>
 );
 
-export default function TableForm() {
+/**
+ * TableForm Component
+ * Provides a multi-step form interface for creating and editing database tables.
+ * Features:
+ * - Entity configuration with custom attributes
+ * - Real-time preview of entity structure
+ * - API route generation
+ * - Validation and error handling
+ * - Loading states and feedback
+ * 
+ * @param {TableFormProps} props - Component props
+ * @returns {JSX.Element} Rendered component
+ */
+export default function TableForm({ initialData, onSubmit, mode = 'create' }: TableFormProps) {
   // Configuration state
   const [loading, setLoading] = useState(true);
   const [configData, setConfigData] = useState<ConfigData>({
@@ -65,7 +104,11 @@ export default function TableForm() {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const router = useRouter();
-  // Load initial configuration data
+
+  /**
+   * Loads initial configuration data on component mount
+   * Fetches entity types, data types, and validation rules
+   */
   useEffect(() => {
     const loadConfig = async () => {
       try {
@@ -82,12 +125,10 @@ export default function TableForm() {
     loadConfig();
   }, []);
 
-  // Show loading state while fetching config
-  if (loading) {
-    return <LoadingState />;
-  }
-
-  // Reset form to initial state
+  /**
+   * Resets form state to initial values
+   * Clears entity name, attributes, and selection states
+   */
   const resetForm = () => {
     setEntityName("");
     setAttributes([]);
@@ -96,7 +137,11 @@ export default function TableForm() {
     setSelectedEntity("");
   };
 
-  // Handle entity save operation
+  /**
+   * Handles entity save operation
+   * Validates required fields, saves entity, and generates routes
+   * @returns {Promise<void>}
+   */
   const handleSaveEntity = async () => {
     // Trim the entity name
     const trimmedEntityName = entityName.trim();
@@ -136,7 +181,7 @@ export default function TableForm() {
       {isSaving && <FullPageLoader />}
       <Toaster />
       <div className="grid grid-cols-12 gap-4">
-        {/* Left Column - Entity Setup Form - Now 5 columns */}
+        {/* Entity Setup Form - Left Column */}
         <div className="col-span-4">
           <EntitySetup
             configData={configData}
@@ -158,7 +203,7 @@ export default function TableForm() {
           />
         </div>
 
-        {/* Right Column - Preview and API Routes - Now 7 columns */}
+        {/* Preview and API Routes - Right Column */}
         <div className="col-span-8 space-y-4">
           <EntityPreview
             attributes={attributes}

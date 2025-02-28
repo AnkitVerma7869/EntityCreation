@@ -1,3 +1,11 @@
+/**
+ * Core Type Definitions
+ * Contains interfaces and types used throughout the application
+ */
+/**
+ * Defines validation rules for form fields
+ * @interface ValidationRule
+ */
 export interface ValidationRule {
     name: string;
     label: string;
@@ -12,6 +20,10 @@ export interface ValidationRule {
     pattern?: string;
     nullable?: boolean;
 }
+/**
+ * Groups validation rules by category
+ * @interface ValidationGroup
+ */
 export interface ValidationGroup {
     group: string;
     validations: ValidationRule[];
@@ -26,6 +38,10 @@ export interface ValidationRules {
     nullable?: boolean;
     [key: string]: any;
 }
+/**
+ * Defines attribute properties for table columns
+ * @interface Attribute
+ */
 export interface Attribute {
     name: string;
     dataType: string;

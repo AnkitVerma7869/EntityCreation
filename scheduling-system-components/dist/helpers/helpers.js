@@ -1,11 +1,15 @@
 "use strict";
+/**
+ * Helper Functions Module
+ * Contains utility functions used across the application
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.hasPrimaryKey = exports.isPrimaryKeyExists = exports.getNumericTypeCategory = exports.needsPrecision = exports.needsSizeValidation = void 0;
 var dataTypeProperties_1 = require("../constants/dataTypeProperties");
 /**
  * Checks if a given SQL data type requires size validation
- * @param dataType - The SQL data type to check (e.g., varchar, char)
- * @returns boolean indicating whether the type needs size validation
+ * @param {string} dataType - The SQL data type to check
+ * @returns {boolean} Whether the type needs size validation
  */
 var needsSizeValidation = function (dataType) {
     var _a, _b;
@@ -15,8 +19,8 @@ var needsSizeValidation = function (dataType) {
 exports.needsSizeValidation = needsSizeValidation;
 /**
  * Checks if a given SQL data type requires precision specification
- * @param dataType - The SQL data type to check (e.g., decimal, numeric)
- * @returns boolean indicating whether the type needs precision
+ * @param {string} dataType - The SQL data type to check
+ * @returns {boolean} Whether the type needs precision
  */
 var needsPrecision = function (dataType) {
     var _a, _b;
@@ -44,10 +48,10 @@ var getNumericTypeCategory = function (dataType) {
 };
 exports.getNumericTypeCategory = getNumericTypeCategory;
 /**
- * Checks if a primary key already exists in the attributes list, excluding the currently editing attribute
- * @param attributes - List of table attributes
- * @param editingIndex - Index of the attribute currently being edited (if any)
- * @returns boolean indicating whether a primary key exists in other attributes
+ * Checks if a primary key exists in the attribute list
+ * @param {Attribute[]} attributes - List of attributes to check
+ * @param {number | null} editingIndex - Index of attribute being edited (to exclude from check)
+ * @returns {boolean} Whether a primary key exists
  */
 var isPrimaryKeyExists = function (attributes, editingIndex) {
     return attributes.some(function (attr, idx) {

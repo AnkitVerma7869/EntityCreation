@@ -1,4 +1,8 @@
 "use strict";
+/**
+ * Validation Schemas Module
+ * Defines Yup validation schemas for entity and attribute validation
+ */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -37,7 +41,15 @@ exports.enumValuesSchema = exports.precisionSchema = exports.sizeSchema = export
 var yup = __importStar(require("yup"));
 var dataTypeProperties_1 = require("../constants/dataTypeProperties");
 var helpers_1 = require("../helpers/helpers");
-// Updated validation schema for entity name
+/**
+ * Schema for validating entity names
+ * Rules:
+ * - Required
+ * - No spaces allowed
+ * - Must start with letter or underscore
+ * - Must contain at least 2 letters
+ * - Length between 2-50 characters
+ */
 exports.entityNameSchema = yup.string()
     .required("Entity name is required")
     .transform(function (value) { return value === null || value === void 0 ? void 0 : value.trim(); })
@@ -50,7 +62,10 @@ exports.entityNameSchema = yup.string()
 })
     .min(2, "Entity name must be at least 2 characters")
     .max(50, "Entity name must not exceed 50 characters");
-// Updated validation schema for attribute name
+/**
+ * Schema for validating attribute names
+ * Similar rules to entity name but specific to column attributes
+ */
 exports.attributeNameSchema = yup.string()
     .required("Attribute name is required")
     .transform(function (value) { return value === null || value === void 0 ? void 0 : value.trim(); })
@@ -63,7 +78,10 @@ exports.attributeNameSchema = yup.string()
 })
     .min(2, "Attribute name must be at least 2 characters")
     .max(50, "Attribute name must not exceed 50 characters");
-// New schemas
+/**
+ * Schema for validating data types
+ * Ensures selected type exists in dataTypeProperties
+ */
 exports.dataTypeSchema = yup.string()
     .required("Data type is required")
     .test('valid-data-type', 'Invalid data type', function (value) {

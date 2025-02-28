@@ -1,7 +1,19 @@
+/**
+ * Select Field Generator
+ * Generates HTML/JSX for select/dropdown form fields using react-select
+ */
+
 import { Attribute } from '../../../../interfaces/types';
 import { Controller } from 'react-hook-form';
 import Select from 'react-select';
 
+/**
+ * Generates a select/dropdown field component
+ * @param {Attribute} attr - Field attribute configuration
+ * @param {string} fieldName - Name of the form field
+ * @param {string} defaultValue - Default selected value(s)
+ * @returns {string} Generated select field JSX
+ */
 export function generateSelectField(attr: Attribute, fieldName: string, defaultValue: string) {
   const isDisabled = attr.isReadOnly || !attr.isEditable;
   

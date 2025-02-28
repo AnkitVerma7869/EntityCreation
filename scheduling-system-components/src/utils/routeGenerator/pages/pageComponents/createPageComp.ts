@@ -1,10 +1,21 @@
+/**
+ * Create Page Component Generator
+ * Generates a React component for creating new entity records
+ */
+
 import { Entity } from '../../../../interfaces/types';
 import { generatePackageImports } from '../../utils/packageManager';
 import { generateField } from '../../components/fields';
 import { generateValidationSchema } from '../../utils/validationSchemaGenerator';
 import { toast } from 'react-hot-toast';
 
-// Helper function to format entity name (keep it consistent with storeGenerator)
+/**
+ * Formats an entity name to follow camelCase convention
+ * Example: "user_profile" -> "userProfile"
+ * 
+ * @param {string} name - Raw entity name
+ * @returns {string} Formatted camelCase name
+ */
 function formatEntityName(name: string): string {
   return name
     // Replace hyphens and spaces with underscores first
@@ -21,12 +32,32 @@ function formatEntityName(name: string): string {
     .join('');
 }
 
-// Helper function to format field name for form registration
+/**
+ * Formats a field name for React Hook Form registration
+ * Replaces spaces with underscores for valid JavaScript identifiers
+ * 
+ * @param {string} name - Raw field name
+ * @returns {string} Formatted field name
+ */
 function formatFieldName(name: string): string {
   // Return the original name - React Hook Form will handle it properly
   return name.replace(/\s+/g, '_');
 }
 
+/**
+ * Generates a complete create page component for an entity
+ * Includes form handling, validation, and API integration
+ * 
+ * Features:
+ * - Form validation using Yup
+ * - Date formatting for API submission
+ * - Toast notifications for feedback
+ * - Loading states
+ * - Navigation after successful creation
+ * 
+ * @param {Entity} config - Entity configuration
+ * @returns {string} Generated React component code
+ */
 export function generateCreatePage(config: Entity): string {
   const { packages } = generatePackageImports(config);
   const formattedEntityName = formatEntityName(config.entityName);
@@ -60,6 +91,10 @@ export function generateCreatePage(config: Entity): string {
       ${generateValidationSchema(config.attributes)}
     });
 
+    /**
+     * Create Page Component for ${formattedEntityName}
+     * Provides a form interface for creating new ${formattedEntityName} records
+     */
     export default function ${formattedEntityName}CreatePage() {
       const router = useRouter();
       const { loading, error, createRecord } = use${formattedEntityName}Store();
@@ -75,6 +110,10 @@ export function generateCreatePage(config: Entity): string {
         resolver: yupResolver(validationSchema)
       });
 
+      /**
+       * Formats a local date to ISO string with timezone
+       * Ensures consistent date format for API submission
+       */
       const formatLocalToISOString = (date) => {
         const pad = (num) => String(num).padStart(2, "0");
     
@@ -96,6 +135,10 @@ export function generateCreatePage(config: Entity): string {
 
       const DateFormatColumns = [${dateColumns.join(', ')}];
 
+      /**
+       * Form submission handler
+       * Formats dates and submits data to API
+       */
       const onSubmit = async (data: any) => {
         const formattedData = { ...data };
         
@@ -106,7 +149,7 @@ export function generateCreatePage(config: Entity): string {
         });
 
         const { success, error } = await createRecord(formattedData);
-        
+        toast.dismiss(); 
         if (success) {
           toast.success(success, {
             duration: 2000,

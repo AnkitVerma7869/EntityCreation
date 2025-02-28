@@ -1,6 +1,15 @@
 "use strict";
+/**
+ * Form Generator Module
+ * Generates React form components based on entity attributes
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateFormFields = generateFormFields;
+/**
+ * Generates a form field component based on attribute type
+ * @param {Attribute} attr - Field attribute configuration
+ * @returns {string} Generated JSX for the field component
+ */
 function generateFieldComponent(attr) {
     var _a;
     var fieldName = attr.name.replace(/\s+/g, '_');
@@ -19,6 +28,11 @@ function generateFieldComponent(attr) {
             return "\n        <TextField\n          type=\"".concat(getInputType(attr), "\"\n          label=\"").concat(attr.name, "\"\n          value={formData.").concat(fieldName, "}\n          onChange={(e) => setFormData({ ...formData, ").concat(fieldName, ": e.target.value })}\n          error={!!errors.").concat(fieldName, "}\n          helperText={errors.").concat(fieldName, "?.message}\n          ").concat(((_a = attr.validations) === null || _a === void 0 ? void 0 : _a.required) ? 'required' : '', "\n        />\n      ");
     }
 }
+/**
+ * Generates form fields and required imports for an entity
+ * @param {Attribute[]} attributes - List of entity attributes
+ * @returns {{ imports: string, fields: string }} Generated imports and field components
+ */
 function generateFormFields(attributes) {
     var imports = new Set();
     var fields = attributes.map(function (attr) {
@@ -47,6 +61,11 @@ function generateFormFields(attributes) {
         fields: fields
     };
 }
+/**
+ * Determines the HTML input type based on attribute data type
+ * @param {Attribute} attr - Field attribute configuration
+ * @returns {string} HTML input type
+ */
 function getInputType(attr) {
     switch (attr.dataType.toLowerCase()) {
         case 'number':

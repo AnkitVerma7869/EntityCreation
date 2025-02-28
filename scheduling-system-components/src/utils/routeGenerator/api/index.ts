@@ -1,9 +1,19 @@
+/**
+ * API Route Generator Module
+ * Generates Next.js API routes for CRUD operations on entities
+ */
+
 import { Entity } from '../../../interfaces/types';
 
 // Import core Next.js server components that will be needed in the API routes
 import { NextResponse } from 'next/server';
 
-// Base API generator function that all specific API generators will use
+/**
+ * Generates base API route template with common imports and utilities
+ * @param {Entity} config - Entity configuration
+ * @param {string} operation - Type of API operation (list, create, edit, etc.)
+ * @returns {string} Base API route template
+ */
 const generateBaseApi = (config: Entity, operation: string) => `
   import { NextResponse } from 'next/server';
   import fs from 'fs/promises';
@@ -12,7 +22,11 @@ const generateBaseApi = (config: Entity, operation: string) => `
   const getTablePath = () => path.join(process.cwd(), 'tables', '${config.entityName.toLowerCase()}.json');
 `;
 
-// Generate List API route
+/**
+ * Generates List API route for fetching all records
+ * @param {Entity} config - Entity configuration
+ * @returns {string} List API route implementation
+ */
 const generateListApi = (config: Entity) => `
   ${generateBaseApi(config, 'list')}
 
@@ -26,7 +40,11 @@ const generateListApi = (config: Entity) => `
   }
 `;
 
-// Generate Create API route
+/**
+ * Generates Create API route for adding new records
+ * @param {Entity} config - Entity configuration
+ * @returns {string} Create API route implementation
+ */
 const generateCreateApi = (config: Entity) => `
   ${generateBaseApi(config, 'create')}
 
@@ -102,6 +120,11 @@ const generateDeleteApi = (config: Entity) => `
   }
 `;
 
+/**
+ * Exports all API route generators as a single object
+ * @param {Entity} config - Entity configuration
+ * @returns {Object} Object containing all API route implementations
+ */
 export const generateApiRoutes = (config: Entity) => ({
   list: generateListApi(config),
   create: generateCreateApi(config),

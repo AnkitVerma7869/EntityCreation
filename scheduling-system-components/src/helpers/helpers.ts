@@ -1,10 +1,15 @@
+/**
+ * Helper Functions Module
+ * Contains utility functions used across the application
+ */
+
 import { Attribute } from "../interfaces/types";
 import { dataTypeProperties } from "../constants/dataTypeProperties";
 
 /**
  * Checks if a given SQL data type requires size validation
- * @param dataType - The SQL data type to check (e.g., varchar, char)
- * @returns boolean indicating whether the type needs size validation
+ * @param {string} dataType - The SQL data type to check
+ * @returns {boolean} Whether the type needs size validation
  */
 export const needsSizeValidation = (dataType: string): boolean => {
   const type = dataType.toLowerCase();
@@ -13,8 +18,8 @@ export const needsSizeValidation = (dataType: string): boolean => {
 
 /**
  * Checks if a given SQL data type requires precision specification
- * @param dataType - The SQL data type to check (e.g., decimal, numeric)
- * @returns boolean indicating whether the type needs precision
+ * @param {string} dataType - The SQL data type to check
+ * @returns {boolean} Whether the type needs precision
  */
 export const needsPrecision = (dataType: string): boolean => {
   const type = dataType.toLowerCase();
@@ -41,10 +46,10 @@ export const getNumericTypeCategory = (dataType: string): 'integer' | 'decimal' 
 };
 
 /**
- * Checks if a primary key already exists in the attributes list, excluding the currently editing attribute
- * @param attributes - List of table attributes
- * @param editingIndex - Index of the attribute currently being edited (if any)
- * @returns boolean indicating whether a primary key exists in other attributes
+ * Checks if a primary key exists in the attribute list
+ * @param {Attribute[]} attributes - List of attributes to check
+ * @param {number | null} editingIndex - Index of attribute being edited (to exclude from check)
+ * @returns {boolean} Whether a primary key exists
  */
 export const isPrimaryKeyExists = (attributes: Attribute[], editingIndex: number | null): boolean => {
   return attributes.some((attr, idx) => {

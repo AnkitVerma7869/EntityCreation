@@ -1,5 +1,17 @@
+/**
+ * Password Field Generator
+ * Generates HTML/JSX for password input form fields
+ */
+
 import { Attribute } from '../../../../interfaces/types';
 
+/**
+ * Generates a password input field component
+ * @param {Attribute} attr - Field attribute configuration
+ * @param {string} fieldName - Name of the form field
+ * @param {string} defaultValue - Default password value (usually empty)
+ * @returns {string} Generated password field JSX
+ */
 export function generatePasswordField(attr: Attribute, fieldName: string, defaultValue: string) {
   const isDisabled = attr.config?.disabled || false;
   const className = `w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${attr.config?.className || ''}`;

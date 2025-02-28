@@ -1,5 +1,17 @@
+/**
+ * Email Field Generator
+ * Generates HTML/JSX for email input form fields
+ */
+
 import { Attribute } from '../../../../interfaces/types';
 
+/**
+ * Generates an email input field component
+ * @param {Attribute} attr - Field attribute configuration
+ * @param {string} fieldName - Name of the form field
+ * @param {string} defaultValue - Default email value
+ * @returns {string} Generated email field JSX
+ */
 export function generateEmailField(attr: Attribute, fieldName: string, defaultValue: string) {
   const isDisabled = attr.config?.disabled || false;
   const className = `w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${attr.config?.className || ''}`;

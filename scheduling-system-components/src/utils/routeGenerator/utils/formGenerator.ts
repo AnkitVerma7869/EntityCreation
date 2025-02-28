@@ -1,5 +1,15 @@
+/**
+ * Form Generator Module
+ * Generates React form components based on entity attributes
+ */
+
 import { Attribute } from '../../../interfaces/types';
 
+/**
+ * Generates a form field component based on attribute type
+ * @param {Attribute} attr - Field attribute configuration
+ * @returns {string} Generated JSX for the field component
+ */
 function generateFieldComponent(attr: Attribute): string {
   const fieldName = attr.name.replace(/\s+/g, '_');
   
@@ -61,6 +71,11 @@ function generateFieldComponent(attr: Attribute): string {
   }
 }
 
+/**
+ * Generates form fields and required imports for an entity
+ * @param {Attribute[]} attributes - List of entity attributes
+ * @returns {{ imports: string, fields: string }} Generated imports and field components
+ */
 export function generateFormFields(attributes: Attribute[]) {
   const imports = new Set<string>();
   
@@ -97,6 +112,11 @@ export function generateFormFields(attributes: Attribute[]) {
   };
 }
 
+/**
+ * Determines the HTML input type based on attribute data type
+ * @param {Attribute} attr - Field attribute configuration
+ * @returns {string} HTML input type
+ */
 function getInputType(attr: Attribute): string {
   switch (attr.dataType.toLowerCase()) {
     case 'number':

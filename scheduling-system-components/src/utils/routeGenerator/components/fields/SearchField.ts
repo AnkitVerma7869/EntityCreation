@@ -1,5 +1,17 @@
+/**
+ * Search Field Generator
+ * Generates HTML/JSX for search input form fields with search icon
+ */
+
 import { Attribute } from '../../../../interfaces/types';
 
+/**
+ * Generates a search input field component
+ * @param {Attribute} attr - Field attribute configuration
+ * @param {string} fieldName - Name of the form field
+ * @param {string} defaultValue - Default search value
+ * @returns {string} Generated search field JSX with icon
+ */
 export function generateSearchField(attr: Attribute, fieldName: string, defaultValue: string) {
   const isDisabled = attr.config?.disabled || false;
   const className = `w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 pl-10 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${attr.config?.className || ''}`;

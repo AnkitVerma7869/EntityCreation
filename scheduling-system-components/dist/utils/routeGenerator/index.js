@@ -38,7 +38,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateTableRoutes = generateTableRoutes;
 var pages_1 = require("./pages");
-var api_1 = require("./api");
 var storeGenerator_1 = require("./utils/storeGenerator");
 /**
  * Generates and saves all necessary routes for a table
@@ -55,7 +54,6 @@ function generateTableRoutes(config) {
                     _b.trys.push([0, 3, , 4]);
                     routes = {
                         pages: (0, pages_1.generatePages)(config),
-                        api: (0, api_1.generateApiRoutes)(config),
                         store: (_a = {},
                             _a["".concat(config.entityName.toLowerCase(), "Store.ts")] = (0, storeGenerator_1.generateEntityStore)(config),
                             _a)

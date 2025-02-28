@@ -1,16 +1,31 @@
+/**
+ * Package Manager Module
+ * Manages package dependencies for generated components
+ */
+
 import { Entity, Attribute } from '../../../interfaces/types';
 
+/**
+ * Package configuration interface
+ * @interface PackageConfig
+ */
 interface PackageConfig {
-  name: string;
-  version: string;
-  isRequired: boolean;
-  dependencies?: string[];
+  name: string;          // Package name
+  version: string;       // Package version
+  isRequired: boolean;   // Whether package is required
+  dependencies?: string[]; // Optional package dependencies
 }
 
+/**
+ * Gets required packages based on field types
+ * @param {Attribute[]} attributes - List of entity attributes
+ * @returns {PackageConfig[]} List of required packages
+ */
 function getFieldSpecificPackages(attributes: Attribute[]): PackageConfig[] {
   const packages: PackageConfig[] = [];
 
   attributes.forEach(attr => {
+    // Add packages based on input/data type
     switch (attr.inputType.toLowerCase() || attr.dataType.toLowerCase()) {
       case 'date':
         packages.push({
@@ -55,7 +70,7 @@ function getFieldSpecificPackages(attributes: Attribute[]): PackageConfig[] {
         break;
     }
 
-    // Add validation specific packages
+    // Add validation packages if needed
     if (attr.validations) {
       if (attr.validations.required || attr.validations.pattern || attr.validations.min || attr.validations.max) {
         packages.push({
@@ -75,7 +90,13 @@ function getFieldSpecificPackages(attributes: Attribute[]): PackageConfig[] {
   return packages;
 }
 
+/**
+ * Generates package imports for an entity
+ * @param {Entity} config - Entity configuration
+ * @returns {{ packages: PackageConfig[], devPackages: PackageConfig[] }} Required packages and dev dependencies
+ */
 export function generatePackageImports(config: Entity) {
+  // Define base packages required for all entities
   const basePackages: Record<string, PackageConfig> = {
     // Core packages
     'react': {
@@ -134,7 +155,7 @@ export function generatePackageImports(config: Entity) {
   // Get field-specific packages
   const fieldPackages = getFieldSpecificPackages(config.attributes);
 
-  // Merge base packages with field-specific packages and their dependencies
+  // Merge base and field-specific packages
   fieldPackages.forEach(pkg => {
     if (!basePackages[pkg.name]) {
       basePackages[pkg.name] = pkg;

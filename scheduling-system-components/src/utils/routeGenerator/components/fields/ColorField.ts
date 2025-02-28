@@ -1,5 +1,17 @@
+/**
+ * Color Field Generator
+ * Generates HTML/JSX for color picker form fields
+ */
+
 import { Attribute } from '../../../../interfaces/types';
 
+/**
+ * Generates a color picker field component
+ * @param {Attribute} attr - Field attribute configuration
+ * @param {string} fieldName - Name of the form field
+ * @param {string} defaultValue - Default color value (hex format)
+ * @returns {string} Generated color picker field JSX
+ */
 export function generateColorField(attr: Attribute, fieldName: string, defaultValue: string) {
   const isDisabled = attr.config?.disabled || false;
   const className = `h-10 w-full cursor-pointer rounded border-[1.5px] border-stroke bg-transparent outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary ${attr.config?.className || ''}`;
