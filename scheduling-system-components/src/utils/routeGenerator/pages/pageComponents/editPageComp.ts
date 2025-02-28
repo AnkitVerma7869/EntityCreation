@@ -132,18 +132,18 @@ export function generateEditPage(config: Entity): string {
           }
         });
 
-        const success = await updateRecord(params.id, formattedData);
-        
-        if (success?.message) {
-          toast.success(success.message, {
+        const { success, error } = await updateRecord(params.id, formattedData);
+        toast.dismiss(); 
+        if (success) {
+          toast.success(success, {
             duration: 2000,
             position: 'top-right',
           });
           setTimeout(() => {
             router.push('/${config.entityName.toLowerCase()}');
           }, 2000);
-        } else if (error?.message) {
-          toast.error(error.message, {
+        } else if (error) {
+          toast.error(error, {
             duration: 5000,
             position: 'top-right',
           });

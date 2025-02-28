@@ -117,7 +117,7 @@ export function generateEntityStore(config: Entity) {
       fetchRecords: (params?: Partial<ListParams>) => Promise<any[]>;
       fetchRecord: (id: string) => Promise<any>;
       createRecord: (data: any) => Promise<{ success: string; error: string | null }>;
-      updateRecord: (id: string, data: any) => Promise<boolean>;
+      updateRecord: (id: string, data: any) => Promise<{ success: string | null; error: string | null }>;
       deleteRecord: (id: string) => Promise<boolean>;
     }
 

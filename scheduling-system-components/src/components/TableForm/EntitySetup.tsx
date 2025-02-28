@@ -113,7 +113,7 @@ export default function EntitySetup({
   const [isOptionsEditable, setIsOptionsEditable] = useState(true);
 
   // Add reserved column names constant
-  const RESERVED_COLUMNS = ['created_at', 'updated_at', 'id'];
+  const RESERVED_COLUMNS = ['id','created_at', 'updated_at'];
 
   const handleAttributeNameChange = (e: React.ChangeEvent<HTMLInputElement>) => 
     RESERVED_COLUMNS.includes(e.target.value.toLowerCase()) 
@@ -524,12 +524,13 @@ export default function EntitySetup({
       
       <div className="p-6.5 space-y-4">
         {/* Auto-generated columns info */}
-        <div className="flex items-center gap-3 bg-bodydark2/20 rounded-lg p-3 border border-primary/10">
-
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <span className="text-black dark:text-white">Reserved columns:</span>
+        <div className="flex flex-col bg-meta-9/30 dark:bg-boxdark-2 rounded-md p-2.5 border border-stroke dark:border-strokedark">
+          <div className="text-sm font-medium text-black dark:text-white mb-2">
+            Reserved columns:
+          </div>
+          <div className="flex items-center gap-2">
             {RESERVED_COLUMNS.map((col, index) => (
-              <code key={col} className="px-2 py-0.5 bg-primary/10 text-primary rounded font-mono text-xs">
+              <code key={col} className="inline-flex px-2.5 py-1 bg-white dark:bg-boxdark border border-stroke dark:border-strokedark rounded text-primary dark:text-white font-mono text-xs whitespace-nowrap shadow-sm">
                 {col}
               </code>
             ))}
