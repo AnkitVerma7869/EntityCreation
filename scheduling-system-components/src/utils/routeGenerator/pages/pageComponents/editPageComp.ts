@@ -2,7 +2,7 @@ import { Attribute, Entity } from '../../../../interfaces/types';
 import { generatePackageImports } from '../../utils/packageManager';
 import { generateField } from '../../components/fields';
 import { generateValidationSchema } from '../../utils/validationSchemaGenerator';
-import { toast, Toaster } from 'react-hot-toast';
+
 
 
 // Helper function to format entity name (keep it consistent with storeGenerator)
@@ -105,7 +105,7 @@ export function generateEditPage(config: Entity): string {
           try {
             const record = await fetchRecord(params.id);
             if (record) {
-              const formattedData = { ...record };
+              const { created_at, updated_at, ...formattedData } = record;
               
               DateFormatColumns.forEach(columnName => {
                 if (formattedData[columnName]) {
@@ -124,7 +124,7 @@ export function generateEditPage(config: Entity): string {
       }, [params.id, reset, fetchRecord]);
 
       const onSubmit = async (data) => {  
-        const formattedData = { ...data };
+        const { created_at, updated_at, ...formattedData } = { ...data };
         
         DateFormatColumns.forEach(columnName => {
           if (formattedData[columnName]) {
@@ -132,18 +132,18 @@ export function generateEditPage(config: Entity): string {
           }
         });
 
-        const { success, error } = await updateRecord(params.id, formattedData);
+        const success = await updateRecord(params.id, formattedData);
         
-        if (success) {
-          toast.success(success, {
+        if (success?.message) {
+          toast.success(success.message, {
             duration: 2000,
             position: 'top-right',
           });
           setTimeout(() => {
             router.push('/${config.entityName.toLowerCase()}');
           }, 2000);
-        } else if (error) {
-          toast.error(error, {
+        } else if (error?.message) {
+          toast.error(error.message, {
             duration: 5000,
             position: 'top-right',
           });

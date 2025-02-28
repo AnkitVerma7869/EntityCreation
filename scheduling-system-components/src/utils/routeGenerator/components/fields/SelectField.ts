@@ -3,12 +3,16 @@ import { Controller } from 'react-hook-form';
 import Select from 'react-select';
 
 export function generateSelectField(attr: Attribute, fieldName: string, defaultValue: string) {
-  const isMultiple = attr.config?.multiple || false;
-  const isDisabled = attr.config?.disabled || false;
-  const defaultVal = defaultValue ? 
-    (isMultiple ? defaultValue.split(',').map(v => ({ value: v.trim(), label: v.trim() })) 
-                : { value: defaultValue, label: defaultValue })
-    : null;
+  const isDisabled = attr.isReadOnly || !attr.isEditable;
+  
+  // Handle options based on their type
+  const optionsArray = attr.options || [];
+  const optionsString = optionsArray
+    .map(opt => {
+      const option = typeof opt === 'object' ? opt : { value: opt, label: opt };
+      return `{ value: "${option.value}", label: "${option.label || option.value}" }`;
+    })
+    .join(',\n              ');
   
   return `
     <div className="mb-4.5 w-full">
@@ -18,27 +22,18 @@ export function generateSelectField(attr: Attribute, fieldName: string, defaultV
       <Controller
         name="${fieldName}"
         control={control}
-        defaultValue={${JSON.stringify(defaultVal)}}
+        defaultValue={undefined}
         render={({ field: { onChange, value, ...field } }) => (
           <Select
             {...field}
-            value={${isMultiple} 
-              ? (Array.isArray(value) ? value.map(v => ({ value: v, label: v })) : [])
-              : value ? { value, label: value } : null
-            }
-            onChange={(option) => {
-              ${isMultiple}
-                ? onChange(option ? option.map((item) => item.value) : [])
-                : onChange(option ? option.value : null)
-            }}
-            isMulti={${isMultiple}}
+            value={value ? { value, label: value } : null}
+            onChange={(option) => onChange(option?.value)}
+            isMulti={${attr.isMultiSelect || false}}
             isDisabled={${isDisabled}}
             options={[
-              ${(attr.options || []).map(opt => `
-                { value: "${opt.value}", label: "${opt.label || opt.value}" }
-              `).join(',')}
+              ${optionsString}
             ]}
-            className={\`react-select ${attr.config?.className || ''}\`}
+            className={\`react-select \${${isDisabled} ? 'cursor-not-allowed opacity-70' : ''}\`}
             classNamePrefix="select"
             placeholder="Select ${attr.name}"
             isClearable

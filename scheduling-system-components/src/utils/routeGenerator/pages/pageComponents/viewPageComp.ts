@@ -87,12 +87,11 @@ export function generateViewPage(config: Entity) {
                       ${formattedEntityName} Details
                     </h3>
                     <button
-                      onClick={() => router.push(\`/${config.entityName.toLowerCase()}/edit/\${params.id}\`);
+                      onClick={() => router.push(\`/${config.entityName.toLowerCase()}/edit/\${params.id}\`)}
 
                       className="inline-flex items-center justify-center gap-2.5 rounded-md bg-primary px-6 py-2.5 text-center font-medium text-white hover:bg-opacity-90"
                     >
-                      <ArrowLeft size={20} />
-                      Back
+                      Edit
                     </button>
                   </div>
                 </div>
