@@ -1,6 +1,5 @@
 import { Entity } from '../../interfaces/types';
 import { generatePages } from './pages';
-import { generateApiRoutes } from './api';
 import { generateEntityStore } from './utils/storeGenerator';
 
 /**

@@ -1,31 +1,19 @@
-/**
- * Core Type Definitions
- * Contains interfaces and types used throughout the application
- */
-
-/**
- * Defines validation rules for form fields
- * @interface ValidationRule
- */
+// Interface for validation rules
 export interface ValidationRule {
-  name: string;          // Name of the validation rule
-  label: string;         // Display label for the rule
-  hasValue?: boolean;    // Whether rule requires a value
-  valueType?: 'string' | 'number' | 'date';  // Type of value expected
-  isArray?: boolean;     // Whether value should be an array
-  value?: any;          // Actual validation value
-  min?: number;         // Minimum value/length
-  max?: number;         // Maximum value/length
-  minLength?: number;   // Minimum string length
-  maxLength?: number;   // Maximum string length
-  pattern?: string;     // Regex pattern for validation
-  nullable?: boolean;   // Whether field can be null
+  name: string;
+  label: string;
+  hasValue?: boolean;
+  valueType?: 'string' | 'number' | 'date';
+  isArray?: boolean;
+  value?: any;
+  min?: number;
+  max?: number;
+  minLength?: number;
+  maxLength?: number;
+  pattern?: string;
+  nullable?: boolean;
 }
 
-/**
- * Groups validation rules by category
- * @interface ValidationGroup
- */
 export interface ValidationGroup {
   group: string;
   validations: ValidationRule[];
@@ -43,25 +31,22 @@ export interface ValidationRules {
   [key: string]: any;  // Allow additional validation rules
 }
 
-/**
- * Defines attribute properties for table columns
- * @interface Attribute
- */
+// Interface for table column attributes
 export interface Attribute {
-  name: string;          // Column name
-  dataType: string;      // SQL data type
-  inputType: string;     // HTML input type
-  size: number | null;   // Size for variable length types
-  precision: number | null;  // Precision for numeric types
-  constraints: string[]; // SQL constraints (PRIMARY KEY, NOT NULL, etc.)
-  defaultValue: string | null;  // Default value for the column
-  validations: ValidationRules;  // Form validation rules
-  options?: Array<{ value: string; label: string }>;  // Options for select/multiselect
+  name: string;          
+  dataType: string;   
+  inputType: string; 
+  size: number | null;   
+  precision: number | null; 
+  constraints: string[]; 
+  defaultValue: string | null; 
+  validations: ValidationRules; 
+  options?: Array<{ value: string; label: string }>;
   min?: number | null;
   max?: number | null;
   step?: number | null;
-  isEditable?: boolean;  // Whether field can be edited
-  sortable?: boolean;    // Whether column is sortable
+  isEditable?: boolean;
+  sortable?: boolean;  // Options for select/multiselect
   config?: {             // Additional configuration for specific input types
     accept?: string[];   // Accepted file types
     multiple?: boolean;  // Allow multiple selections

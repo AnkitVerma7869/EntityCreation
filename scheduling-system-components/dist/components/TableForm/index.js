@@ -1,9 +1,4 @@
 "use strict";
-/**
- * TableForm Module
- * Main form component for creating and editing database table entities.
- * Provides a complete interface for entity management including setup, preview, and route generation.
- */
 'use client';
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -89,11 +84,7 @@ var EntityPreview_1 = __importDefault(require("./EntityPreview"));
 var EntityRoutes_1 = __importDefault(require("./EntityRoutes"));
 var navigation_1 = require("next/navigation");
 var lucide_react_1 = require("lucide-react");
-/**
- * Displays toast notifications with consistent styling
- * @param {string} message - Message to display in toast
- * @param {'success' | 'error'} type - Type of toast notification
- */
+// Custom toast function to ensure only one toast at a time
 var showToast = function (message, type) {
     // Dismiss all existing toasts first
     react_hot_toast_1.default.dismiss();
@@ -111,54 +102,31 @@ var showToast = function (message, type) {
         });
     }
 };
-/**
- * Loading indicator component for initial data fetch
- * @returns {JSX.Element} Loading spinner with message
- */
+// Loading component shown while fetching initial data
 var LoadingState = function () { return ((0, jsx_runtime_1.jsx)("div", { className: "flex items-center justify-center min-h-screen", children: (0, jsx_runtime_1.jsx)("div", { className: "text-lg", children: "Loading..." }) })); };
-/**
- * Full-page loading overlay for save operations
- * @returns {JSX.Element} Modal overlay with loading spinner
- */
+// Add FullPageLoader component
 var FullPageLoader = function () { return ((0, jsx_runtime_1.jsx)("div", { className: "fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center", children: (0, jsx_runtime_1.jsxs)("div", { className: "bg-white rounded-lg p-8 flex flex-col items-center space-y-3 shadow-lg", children: [(0, jsx_runtime_1.jsx)(lucide_react_1.Loader2, { className: "h-8 w-8 animate-spin text-primary" }), (0, jsx_runtime_1.jsx)("p", { className: "text-primary font-medium", children: "Saving Entity..." })] }) })); };
-/**
- * TableForm Component
- * Provides a multi-step form interface for creating and editing database tables.
- * Features:
- * - Entity configuration with custom attributes
- * - Real-time preview of entity structure
- * - API route generation
- * - Validation and error handling
- * - Loading states and feedback
- *
- * @param {TableFormProps} props - Component props
- * @returns {JSX.Element} Rendered component
- */
-function TableForm(_a) {
+function TableForm() {
     var _this = this;
-    var initialData = _a.initialData, onSubmit = _a.onSubmit, _b = _a.mode, mode = _b === void 0 ? 'create' : _b;
     // Configuration state
-    var _c = (0, react_1.useState)(true), loading = _c[0], setLoading = _c[1];
-    var _d = (0, react_1.useState)({
+    var _a = (0, react_1.useState)(true), loading = _a[0], setLoading = _a[1];
+    var _b = (0, react_1.useState)({
         entities: {},
         dataTypes: [],
         constraints: [],
         validations: [],
         inputTypes: {}
-    }), configData = _d[0], setConfigData = _d[1];
+    }), configData = _b[0], setConfigData = _b[1];
     // Form state management
-    var _e = (0, react_1.useState)(""), entityName = _e[0], setEntityName = _e[1];
-    var _f = (0, react_1.useState)([]), attributes = _f[0], setAttributes = _f[1];
-    var _g = (0, react_1.useState)(utilstableform_1.initialAttributeState), currentAttribute = _g[0], setCurrentAttribute = _g[1];
-    var _h = (0, react_1.useState)(false), isCustomEntity = _h[0], setIsCustomEntity = _h[1];
-    var _j = (0, react_1.useState)(""), selectedEntity = _j[0], setSelectedEntity = _j[1];
-    var _k = (0, react_1.useState)(null), editingIndex = _k[0], setEditingIndex = _k[1];
-    var _l = (0, react_1.useState)(false), isSaving = _l[0], setIsSaving = _l[1];
+    var _c = (0, react_1.useState)(""), entityName = _c[0], setEntityName = _c[1];
+    var _d = (0, react_1.useState)([]), attributes = _d[0], setAttributes = _d[1];
+    var _e = (0, react_1.useState)(utilstableform_1.initialAttributeState), currentAttribute = _e[0], setCurrentAttribute = _e[1];
+    var _f = (0, react_1.useState)(false), isCustomEntity = _f[0], setIsCustomEntity = _f[1];
+    var _g = (0, react_1.useState)(""), selectedEntity = _g[0], setSelectedEntity = _g[1];
+    var _h = (0, react_1.useState)(null), editingIndex = _h[0], setEditingIndex = _h[1];
+    var _j = (0, react_1.useState)(false), isSaving = _j[0], setIsSaving = _j[1];
     var router = (0, navigation_1.useRouter)();
-    /**
-     * Loads initial configuration data on component mount
-     * Fetches entity types, data types, and validation rules
-     */
+    // Load initial configuration data
     (0, react_1.useEffect)(function () {
         var loadConfig = function () { return __awaiter(_this, void 0, void 0, function () {
             var data, error_1;
@@ -185,10 +153,11 @@ function TableForm(_a) {
         }); };
         loadConfig();
     }, []);
-    /**
-     * Resets form state to initial values
-     * Clears entity name, attributes, and selection states
-     */
+    // Show loading state while fetching config
+    if (loading) {
+        return (0, jsx_runtime_1.jsx)(LoadingState, {});
+    }
+    // Reset form to initial state
     var resetForm = function () {
         setEntityName("");
         setAttributes([]);
@@ -196,11 +165,7 @@ function TableForm(_a) {
         setIsCustomEntity(false);
         setSelectedEntity("");
     };
-    /**
-     * Handles entity save operation
-     * Validates required fields, saves entity, and generates routes
-     * @returns {Promise<void>}
-     */
+    // Handle entity save operation
     var handleSaveEntity = function () { return __awaiter(_this, void 0, void 0, function () {
         var trimmedEntityName, entity, response, error_2;
         return __generator(this, function (_a) {

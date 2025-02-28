@@ -143,7 +143,7 @@ function EntitySetup(_a) {
     // Add this state to track if options are editable
     var _l = (0, react_1.useState)(true), isOptionsEditable = _l[0], setIsOptionsEditable = _l[1];
     // Add reserved column names constant
-    var RESERVED_COLUMNS = ['created_at', 'updated_at', 'id'];
+    var RESERVED_COLUMNS = ['id', 'created_at', 'updated_at'];
     var handleAttributeNameChange = function (e) {
         return RESERVED_COLUMNS.includes(e.target.value.toLowerCase())
             ? setErrors(function (prev) { return (__assign(__assign({}, prev), { attributeName: "'".concat(e.target.value, "' is a reserved column name that will be auto-generated") })); })
