@@ -1,4 +1,12 @@
-// Helper to determine which data types need size/precision
+/**
+ * Data Type Properties Configuration
+ * Defines properties and constraints for different SQL data types
+ */
+
+/**
+ * Maps SQL data types to their size and precision requirements
+ * @type {Record<string, { needsSize: boolean; needsPrecision: boolean }>}
+ */
 export const dataTypeProperties: Record<string, { 
   needsSize: boolean; 
   needsPrecision: boolean;
@@ -49,11 +57,17 @@ export const dataTypeProperties: Record<string, {
   color: { needsSize: false, needsPrecision: false }
 };
 
+/**
+ * Maximum allowed sizes for variable-length data types
+ */
 export const maxSizes: Record<string, number> = {
   char: 255,        // Maximum size for CHAR
   varchar: 2147483647,   // Maximum size for VARCHAR in most databases
 };
 
+/**
+ * Precision limits for numeric and temporal data types
+ */
 export const precisionLimits: Record<string, { min: number; max: number }> = {
   decimal: { min: 0, max: 1000 },
   numeric: { min: 0, max: 1000 },

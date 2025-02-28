@@ -1,7 +1,14 @@
 "use strict";
+/**
+ * Data Type Properties Configuration
+ * Defines properties and constraints for different SQL data types
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.disabledOptionClass = exports.precisionLimits = exports.maxSizes = exports.dataTypeProperties = void 0;
-// Helper to determine which data types need size/precision
+/**
+ * Maps SQL data types to their size and precision requirements
+ * @type {Record<string, { needsSize: boolean; needsPrecision: boolean }>}
+ */
 exports.dataTypeProperties = {
     // Character types with size
     char: { needsSize: false, needsPrecision: false },
@@ -45,10 +52,16 @@ exports.dataTypeProperties = {
     tsvector: { needsSize: false, needsPrecision: false },
     color: { needsSize: false, needsPrecision: false }
 };
+/**
+ * Maximum allowed sizes for variable-length data types
+ */
 exports.maxSizes = {
     char: 255, // Maximum size for CHAR
     varchar: 2147483647, // Maximum size for VARCHAR in most databases
 };
+/**
+ * Precision limits for numeric and temporal data types
+ */
 exports.precisionLimits = {
     decimal: { min: 0, max: 1000 },
     numeric: { min: 0, max: 1000 },

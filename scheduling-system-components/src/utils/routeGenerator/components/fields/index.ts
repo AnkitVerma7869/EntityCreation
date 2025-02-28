@@ -1,3 +1,8 @@
+/**
+ * Form Field Generator Index
+ * Exports all field generators and helper functions for form generation
+ */
+
 import { Entity, Attribute } from '../../../../interfaces/types';
 import { generateDateField } from './DateField';
 import { generateSelectField } from './SelectField';
@@ -18,7 +23,12 @@ import { generateHiddenField } from './HiddenField';
 import { generateTimeField } from './TimeField';
 import { generateTextAreaField } from './TextAreaField';
 
-// Helper function to format field labels for display
+/**
+ * Formats field labels for display
+ * Converts snake_case or kebab-case to Title Case
+ * @param {string} name - Field name to format
+ * @returns {string} Formatted field label
+ */
 function formatFieldLabel(name: string): string {
   return name
     .split(/[_\s-]+/)  // Split by underscore, space, and hyphen
@@ -154,6 +164,7 @@ export function generateField(entity: Entity, isEditPage: boolean = false): stri
   `).join('\n');
 }
 
+// Export all field generators
 export {
   generateDateField,
   generateSelectField,

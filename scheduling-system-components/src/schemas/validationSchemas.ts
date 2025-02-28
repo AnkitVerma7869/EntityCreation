@@ -1,8 +1,21 @@
+/**
+ * Validation Schemas Module
+ * Defines Yup validation schemas for entity and attribute validation
+ */
+
 import * as yup from "yup";
 import { dataTypeProperties, maxSizes, precisionLimits } from '../constants/dataTypeProperties';
 import { needsSizeValidation, needsPrecision } from '../helpers/helpers'
 
-// Updated validation schema for entity name
+/**
+ * Schema for validating entity names
+ * Rules:
+ * - Required
+ * - No spaces allowed
+ * - Must start with letter or underscore
+ * - Must contain at least 2 letters
+ * - Length between 2-50 characters
+ */
 export const entityNameSchema = yup.string()
   .required("Entity name is required")
   .transform(value => value?.trim())
@@ -22,7 +35,10 @@ export const entityNameSchema = yup.string()
   .min(2, "Entity name must be at least 2 characters")
   .max(50, "Entity name must not exceed 50 characters");
 
-// Updated validation schema for attribute name
+/**
+ * Schema for validating attribute names
+ * Similar rules to entity name but specific to column attributes
+ */
 export const attributeNameSchema = yup.string()
   .required("Attribute name is required")
   .transform(value => value?.trim())
@@ -42,7 +58,10 @@ export const attributeNameSchema = yup.string()
   .min(2, "Attribute name must be at least 2 characters")
   .max(50, "Attribute name must not exceed 50 characters");
 
-// New schemas
+/**
+ * Schema for validating data types
+ * Ensures selected type exists in dataTypeProperties
+ */
 export const dataTypeSchema = yup.string()
   .required("Data type is required")
   .test('valid-data-type', 'Invalid data type', (value: string | undefined): boolean => 

@@ -1,6 +1,17 @@
+/**
+ * View Page Component Generator
+ * Generates a React component for displaying detailed entity record information
+ */
+
 import { Entity } from '../../../../interfaces/types';
 
-// Helper function to format entity name (keep it consistent with storeGenerator)
+/**
+ * Formats an entity name to follow camelCase convention
+ * Example: "user_profile" -> "userProfile"
+ * 
+ * @param {string} name - Raw entity name
+ * @returns {string} Formatted camelCase name
+ */
 function formatEntityName(name: string): string {
   return name
     .replace(/[-\s]+/g, '_')
@@ -12,14 +23,29 @@ function formatEntityName(name: string): string {
     .join('');
 }
 
+/**
+ * Generates a view page component for an entity
+ * Includes detailed record display and navigation
+ * 
+ * Features:
+ * - Detailed record view
+ * - Date formatting
+ * - Loading states
+ * - Error handling
+ * - Navigation to edit page
+ * - Responsive layout
+ * 
+ * @param {Entity} config - Entity configuration
+ * @returns {string} Generated React component code
+ */
 export function generateViewPage(config: Entity) {
   const formattedEntityName = formatEntityName(config.entityName);
 
+  // Extract date columns for special formatting
   const dateColumns = config.attributes
-  .filter(attr => ['date', 'datetime', 'timestamp', 'time', 'datetime-local']
-    .some(type => attr.dataType.toLowerCase().includes(type)))
-  .map(attr => `'${attr.name}'`);
-
+    .filter(attr => ['date', 'datetime', 'timestamp', 'time', 'datetime-local']
+      .some(type => attr.dataType.toLowerCase().includes(type)))
+    .map(attr => `'${attr.name}'`);
 
   return `
     'use client';
@@ -29,7 +55,13 @@ export function generateViewPage(config: Entity) {
     import { use${formattedEntityName}Store } from '@/store/${config.entityName.toLowerCase()}Store';
     import { ArrowLeft } from 'lucide-react';
 
-    // Helper function to format field labels
+    /**
+     * Formats a field name for display
+     * Example: "user_name" -> "User Name"
+     * 
+     * @param {string} name - Raw field name
+     * @returns {string} Formatted display name
+     */
     function formatFieldLabel(name: string): string {
       return name
         .split(/[_\\s]+/)
@@ -37,42 +69,59 @@ export function generateViewPage(config: Entity) {
         .join(' ');
     }
 
+    /**
+     * View Page Component for ${formattedEntityName}
+     * Displays detailed information for a single ${formattedEntityName} record
+     * 
+     * @param {Object} props - Component props
+     * @param {Object} props.params - Route parameters
+     * @param {string} props.params.id - Record ID to view
+     */
     export default function ${formattedEntityName}ViewPage({ params }: { params: { id: string } }) {
       const router = useRouter();
       const { loading, error, fetchRecord } = use${formattedEntityName}Store();
       const [currentRecord, setCurrentRecord] = useState<any>(null);
+      
+      // List of columns that need date formatting
       const DateFormatColumns = [${dateColumns.join(', ')}];
        
+      /**
+       * Formats date and time for display
+       * @param {string} inputDate - Raw date string
+       * @returns {string} Formatted date string
+       */
       const formatDateTime = (inputDate) => {
-      if (!inputDate) return "";
-      const date = new Date(inputDate.replace(" ", "T")); // Convert "YYYY-MM-DD HH:mm" to ISO format
-      return date.toLocaleString("en-US", {
-        month: "2-digit",
-        day: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true
-      });
-    };
+        if (!inputDate) return "";
+        const date = new Date(inputDate.replace(" ", "T")); 
+        return date.toLocaleString("en-US", {
+          month: "2-digit",
+          day: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true
+        });
+      };
 
-
-
+      /**
+       * Fetches and formats record data
+       * Handles date formatting for date fields
+       */
       useEffect(() => {
         const fetchData = async () => {
-        const record = await fetchRecord(params.id);
-        const formattedRecord = { ...record };
-       DateFormatColumns.forEach(columnName => {
-        if (formattedRecord[columnName]) {
-          formattedRecord[columnName] = formatDateTime(formattedRecord[columnName]);
-        }
-      });
+          const record = await fetchRecord(params.id);
+          const formattedRecord = { ...record };
+          DateFormatColumns.forEach(columnName => {
+            if (formattedRecord[columnName]) {
+              formattedRecord[columnName] = formatDateTime(formattedRecord[columnName]);
+            }
+          });
           setCurrentRecord(formattedRecord);
-      }
-      fetchData();
-      
+        }
+        fetchData();
       }, [params.id]);
 
+      // Loading and error states
       if (loading) return <div>Loading...</div>;
       if (!currentRecord) return <div>Record not found</div>;
 

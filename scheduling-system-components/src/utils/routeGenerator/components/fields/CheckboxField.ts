@@ -1,5 +1,17 @@
+/**
+ * Checkbox Field Generator
+ * Generates HTML/JSX for checkbox form fields
+ */
+
 import { Attribute } from '../../../../interfaces/types';
 
+/**
+ * Generates a checkbox field component
+ * @param {Attribute} attr - Field attribute configuration
+ * @param {string} fieldName - Name of the form field
+ * @param {string} defaultValue - Default checked values (comma-separated)
+ * @returns {string} Generated checkbox field JSX
+ */
 export function generateCheckboxField(attr: Attribute, fieldName: string, defaultValue: string) {
   const defaultValues = defaultValue ? defaultValue.split(',').map(v => v.trim()) : [];
   const isDisabled = attr.config?.disabled || false;

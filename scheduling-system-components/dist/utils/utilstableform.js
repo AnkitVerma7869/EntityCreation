@@ -1,4 +1,8 @@
 "use strict";
+/**
+ * Table Form Utilities Module
+ * Provides helper functions for handling entity configuration and API interactions
+ */
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -53,12 +57,21 @@ exports.saveEntity = saveEntity;
 var routeGenerator_1 = require("./routeGenerator");
 // API endpoint from environment variables
 var API_URL = process.env.NEXT_PUBLIC_API_URL_ENDPOINT;
-// Helper function to convert array to comma-separated string
+/**
+ * Converts an array to a comma-separated string
+ * Used for displaying array values in table cells
+ *
+ * @param {string[] | undefined} arr - Array to format
+ * @returns {string} Comma-separated string
+ */
 var formatArrayToString = function (arr) {
     return arr ? arr.join(', ') : '';
 };
 exports.formatArrayToString = formatArrayToString;
-// Initial state for a new attribute
+/**
+ * Default configuration for a new attribute
+ * Provides sensible defaults for all attribute properties
+ */
 exports.initialAttributeState = {
     name: "",
     dataType: "",
@@ -71,7 +84,13 @@ exports.initialAttributeState = {
     isReadOnly: false,
     displayInList: true,
 };
-// Fetch entity configuration from JSON file
+/**
+ * Fetches entity configuration from JSON file
+ * Contains input types, data types, and other configuration options
+ *
+ * @returns {Promise<ConfigData>} Entity configuration data
+ * @throws {Error} If fetch fails
+ */
 function fetchEntityConfig() {
     return __awaiter(this, void 0, void 0, function () {
         var response, data;
@@ -92,9 +111,18 @@ function fetchEntityConfig() {
     });
 }
 /**
- * Saves entity to backend API and generates corresponding routes
- * @param entity - The entity configuration to save
- * @returns Promise<{message: string, success: boolean}> from the API
+ * Saves entity configuration to backend API and generates corresponding routes
+ *
+ * Features:
+ * - Transforms entity data to match API requirements
+ * - Handles special input types (e.g., gender)
+ * - Sets up validations and constraints
+ * - Generates frontend routes
+ * - Provides error handling
+ *
+ * @param {Entity} entity - Entity configuration to save
+ * @returns {Promise<{message: string, success: boolean}>} API response
+ * @throws {Error} If API call or route generation fails
  */
 function saveEntity(entity) {
     return __awaiter(this, void 0, void 0, function () {
@@ -108,9 +136,9 @@ function saveEntity(entity) {
                         entityName: entity.entityName,
                         attributes: entity.attributes.map(function (attr) {
                             var _a, _b, _c;
-                            // Get the input type configuration
+                            // Get input type configuration
                             var inputTypeConfig = configData === null || configData === void 0 ? void 0 : configData.inputTypes[attr.inputType];
-                            // Convert gender input type to radio
+                            // Handle special input types
                             var inputType = attr.inputType === 'gender' ? 'radio' : attr.inputType;
                             var isRadioType = inputType === 'radio';
                             return {
@@ -144,6 +172,7 @@ function saveEntity(entity) {
                             };
                         })
                     };
+                    // Log transformed entity for debugging
                     console.log('Saving Entity:', transformedEntity);
                     return [4 /*yield*/, fetch("".concat(API_URL, "/api/v1/entity/create"), {
                             method: 'POST',
@@ -157,7 +186,7 @@ function saveEntity(entity) {
                     return [4 /*yield*/, response.json()];
                 case 3:
                     responseData = _a.sent();
-                    // Check if response contains error
+                    // Handle API errors
                     if ('error' in responseData) {
                         throw new Error(responseData.error.message);
                     }

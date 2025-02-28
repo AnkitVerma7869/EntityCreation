@@ -13,7 +13,6 @@ export async function generateTableRoutes(config: Entity) {
     // Generate all route contents
     const routes = {
       pages: generatePages(config),
-      api: generateApiRoutes(config),
       store: {
         [`${config.entityName.toLowerCase()}Store.ts`]: generateEntityStore(config)
       }

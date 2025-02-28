@@ -1,6 +1,17 @@
+/**
+ * List Page Component Generator
+ * Generates a React component for displaying and managing entity records in a data grid
+ */
+
 import { Entity } from '../../../../interfaces/types';
 
-// Helper function to format entity name (keep it consistent with storeGenerator)
+/**
+ * Formats an entity name to follow camelCase convention
+ * Example: "user_profile" -> "userProfile"
+ * 
+ * @param {string} name - Raw entity name
+ * @returns {string} Formatted camelCase name
+ */
 function formatEntityName(name: string): string {
   return name
     .replace(/[-\s]+/g, '_')
@@ -12,15 +23,33 @@ function formatEntityName(name: string): string {
     .join('');
 }
 
+/**
+ * Generates a list page component for an entity
+ * Includes data grid, search, pagination, sorting, and CRUD operations
+ * 
+ * Features:
+ * - Server-side pagination and sorting
+ * - Search functionality
+ * - Date formatting
+ * - Edit and delete actions
+ * - Responsive grid layout
+ * - Loading states
+ * - Error handling
+ * 
+ * @param {Entity} config - Entity configuration
+ * @returns {string} Generated React component code
+ */
 export function generateListPage(config: Entity): string {
   const formattedEntityName = formatEntityName(config.entityName);
   
-  // Filter out password fields and non-displayable columns from attributes
+  // Filter out sensitive and non-displayable fields
   const displayableAttributes = config.attributes.filter(attr => 
     !attr.name.toLowerCase().includes('password') && 
     attr.inputType.toLowerCase() !== 'password' &&
-    attr.displayInList !== false  // Only include columns marked for display
+    attr.displayInList !== false
   );
+
+  // Extract date columns for special formatting
   const dateColumns = config.attributes
     .filter(attr => ['date', 'datetime', 'timestamp', 'time', 'datetime-local']
       .some(type => attr.dataType.toLowerCase().includes(type)))
@@ -37,7 +66,13 @@ import { DataGrid, GridColDef, GridOverlay, gridClasses, GridToolbar } from '@mu
 import Box from '@mui/material/Box';
 import DeleteConfirmationModal from '@/components/models/DeleteConfirmationModal';
 
-// Helper function to format column headers
+/**
+ * Formats a field name for display in column headers
+ * Example: "user_name" -> "User Name"
+ * 
+ * @param {string} name - Raw field name
+ * @returns {string} Formatted display name
+ */
 function formatFieldLabel(name: string): string {
   return name
     .split(/[_\\s]+/)
@@ -45,6 +80,10 @@ function formatFieldLabel(name: string): string {
     .join(' ');
 }
     
+/**
+ * List Page Component for ${formattedEntityName}
+ * Provides a data grid interface for viewing and managing ${formattedEntityName} records
+ */
 export default function ${formattedEntityName}ListPage() {
     const router = useRouter();
     const { 
@@ -56,6 +95,7 @@ export default function ${formattedEntityName}ListPage() {
       totalRecords 
     } = use${formattedEntityName}Store();
     
+    // State management
     const [records, setRecords] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [page, setPage] = useState(1);
@@ -65,6 +105,11 @@ export default function ${formattedEntityName}ListPage() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [recordToDelete, setRecordToDelete] = useState<string | null>(null);
 
+    /**
+     * Formats date and time for display
+     * @param {string} inputDate - Raw date string
+     * @returns {string} Formatted date string
+     */
     const formatDateTime = (inputDate) => {
       if (!inputDate) return "";
       const date = new Date(inputDate.replace(" ", "T")); // Convert "YYYY-MM-DD HH:mm" to ISO format
@@ -78,8 +123,13 @@ export default function ${formattedEntityName}ListPage() {
       });
     };
 
+    // List of columns that need date formatting
     const DateFormatColumns = [${dateColumns.join(', ')}];
 
+    /**
+     * Fetches and formats records from the API
+     * Handles date formatting for date columns
+     */
     useEffect(() => {
       const fetchData = async () => {
         const fetchedRecords = await fetchRecords({
@@ -106,6 +156,10 @@ export default function ${formattedEntityName}ListPage() {
       fetchData();
     }, [page, pageSize, sortField, sortOrder, searchTerm]);
 
+    /**
+     * Navigation handler for editing records
+     * @param {string} id - Record ID to edit
+     */
     const handleEdit = (id: string) => {
       router.push(\`/${config.entityName.toLowerCase()}/edit/\${id}\`);
     };
@@ -154,6 +208,10 @@ export default function ${formattedEntityName}ListPage() {
       });
     };
 
+    /**
+     * Custom overlay component for empty grid state
+     * Displays error message or no records message
+     */
     const CustomNoRowsOverlay = () => (
       <GridOverlay>
         <div className="text-center py-4">
@@ -166,6 +224,10 @@ export default function ${formattedEntityName}ListPage() {
       </GridOverlay>
     );
 
+    /**
+     * Column definitions for the data grid
+     * Includes field configuration, formatting, and action buttons
+     */
     const columns: GridColDef[] = [
       ${displayableAttributes.map((attr, index) => `{
         field: '${attr.name.replace(/\s+/g, '_')}',

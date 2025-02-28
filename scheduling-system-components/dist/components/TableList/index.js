@@ -1,4 +1,8 @@
 "use strict";
+/**
+ * TableList Module
+ * Provides a data grid interface for managing and viewing database tables
+ */
 'use client';
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -44,9 +48,19 @@ var x_data_grid_1 = require("@mui/x-data-grid");
 var material_1 = require("@mui/material");
 var navigation_1 = require("next/navigation");
 var lucide_react_1 = require("lucide-react");
-// Custom Loading Overlay with better visibility
+/**
+ * Custom loading overlay component for the data grid
+ * Displays a spinning loader with loading message
+ * @returns {JSX.Element} Loading overlay component
+ */
 var CustomLoadingOverlay = function () { return ((0, jsx_runtime_1.jsx)(x_data_grid_1.GridOverlay, { children: (0, jsx_runtime_1.jsx)("div", { className: "flex items-center justify-center h-full", children: (0, jsx_runtime_1.jsxs)("div", { className: "flex flex-col items-center space-y-3", children: [(0, jsx_runtime_1.jsx)(lucide_react_1.Loader2, { className: "h-8 w-8 animate-spin text-blue-500" }), (0, jsx_runtime_1.jsx)("p", { className: "text-blue-600 font-medium", children: "Loading Tables..." })] }) }) })); };
-// Custom Error Overlay Component
+/**
+ * Custom error overlay component for the data grid
+ * Displays error messages with appropriate formatting
+ * @param {Object} props - Component props
+ * @param {string | null} props.message - Error message to display
+ * @returns {JSX.Element} Error overlay component
+ */
 var CustomErrorOverlay = function (props) { return ((0, jsx_runtime_1.jsx)(x_data_grid_1.GridOverlay, { children: (0, jsx_runtime_1.jsx)("div", { className: "text-center p-4", children: (0, jsx_runtime_1.jsx)("div", { className: "text-red-600 font-semibold", children: props.message === 'Failed to fetch'
                 ? 'Unable to connect to server. Please check your connection.'
                 : props.message }) }) })); };
@@ -54,10 +68,21 @@ var CustomErrorOverlay = function (props) { return ((0, jsx_runtime_1.jsx)(x_dat
  * TablesList Component
  * Displays a data grid of database tables with their properties and configurations.
  * Allows users to view, sort, filter and navigate to individual table details.
+ *
+ * Features:
+ * - Pagination
+ * - Sorting
+ * - Filtering
+ * - Error handling
+ * - Loading states
+ *
+ * @param {TableListProps} props - Component props
+ * @returns {JSX.Element} Rendered component
  */
 function TablesList(_a) {
     var _this = this;
     var onCreateNew = _a.onCreateNew;
+    // State management
     var router = (0, navigation_1.useRouter)();
     var _b = (0, react_1.useState)([]), tables = _b[0], setTables = _b[1];
     var _c = (0, react_1.useState)([]), columns = _c[0], setColumns = _c[1];
@@ -67,18 +92,21 @@ function TablesList(_a) {
     }), paginationModel = _d[0], setPaginationModel = _d[1];
     var _e = (0, react_1.useState)(true), loading = _e[0], setLoading = _e[1];
     var _f = (0, react_1.useState)(null), apiError = _f[0], setApiError = _f[1];
-    // API endpoint from environment variables
+    // API configuration
     var API_URL = process.env.NEXT_PUBLIC_API_URL_ENDPOINT;
     /**
      * Handles row click events by navigating to the detailed view of the selected table
+     * @param {GridRowParams} params - Data grid row parameters
      */
     var handleRowClick = function (params) {
         var entityName = params.row.name ? params.row.name.toLowerCase() : params.row.entityName.toLowerCase();
         router.push("/".concat(entityName));
     };
+    // Data fetching effect
     (0, react_1.useEffect)(function () {
         /**
          * Fetches table data from the API and formats it for display in the data grid
+         * Handles error states and data transformation
          */
         var fetchTables = function () { return __awaiter(_this, void 0, void 0, function () {
             var response, errorData, data, dynamicColumns, formattedTables, error_1;

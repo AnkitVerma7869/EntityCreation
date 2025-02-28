@@ -1,8 +1,19 @@
+/**
+ * Store Generator Module
+ * Generates Zustand store implementations for entity state management
+ */
+
 import { Entity, Attribute } from '../../../interfaces/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL_ENDPOINT;
 
-// Helper function to format entity name
+/**
+ * Formats an entity name to follow camelCase convention
+ * Example: "user_profile" -> "userProfile"
+ * 
+ * @param {string} name - Raw entity name
+ * @returns {string} Formatted camelCase name
+ */
 function formatEntityName(name: string): string {
   return name
     // Replace hyphens and spaces with underscores first
@@ -19,12 +30,23 @@ function formatEntityName(name: string): string {
     .join('');
 }
 
-// Helper function to format field name for interface/state usage
+/**
+ * Formats a field name for use in TypeScript interfaces and state
+ * Handles special characters by wrapping in quotes if needed
+ * 
+ * @param {string} name - Raw field name
+ * @returns {string} Formatted field name safe for TypeScript
+ */
 function formatFieldName(name: string): string {
-  // If name contains hyphen, wrap it in quotes
   return name.includes('-') ? `'${name}'` : name;
 }
 
+/**
+ * Generates initial state value for a field based on its input type
+ * 
+ * @param {Attribute} attr - Field attribute configuration
+ * @returns {string} Initial state value as string literal
+ */
 function generateFieldState(attr: Attribute): string {
   switch (attr.inputType.toLowerCase()) {
     case 'date':
@@ -41,6 +63,20 @@ function generateFieldState(attr: Attribute): string {
   }
 }
 
+/**
+ * Generates a complete Zustand store implementation for an entity
+ * 
+ * Features:
+ * - Type-safe state management
+ * - CRUD operations with error handling
+ * - Loading states and success/error messages
+ * - Pagination and sorting
+ * - Field change handlers for different input types
+ * - Form reset functionality
+ * 
+ * @param {Entity} config - Entity configuration
+ * @returns {string} Generated store implementation
+ */
 export function generateEntityStore(config: Entity) {
   // Format the entity name for use in identifiers
   const formattedEntityName = formatEntityName(config.entityName);
@@ -57,21 +93,23 @@ export function generateEntityStore(config: Entity) {
     import { create } from 'zustand';
     import { devtools } from 'zustand/middleware';
 
+    /**
+     * Parameters for list operations
+     */
     interface ListParams {
-      page: number;
-      limit: number;
-      sortBy: string;
-      orderBy: 'asc' | 'desc';
-      search: string;
-      searchFields: string[];
-      returnFields: string[];
-      conditions: Record<string, any>;
+      page: number;          // Current page number
+      limit: number;         // Items per page
+      sortBy: string;        // Field to sort by
+      orderBy: 'asc' | 'desc'; // Sort direction
+      search: string;        // Search query
+      searchFields: string[]; // Fields to search in
+      returnFields: string[]; // Fields to return
+      conditions: Record<string, any>; // Additional query conditions
     }
 
-   
-  
-
-  
+    /**
+     * State interface for ${formattedEntityName} store
+     */
     interface ${formattedEntityName}State {
       // Form Data
       formData: {
@@ -121,6 +159,10 @@ export function generateEntityStore(config: Entity) {
       deleteRecord: (id: string) => Promise<boolean>;
     }
 
+    /**
+     * Zustand store for ${formattedEntityName}
+     * Manages state and operations for ${formattedEntityName} entities
+     */
     export const use${formattedEntityName}Store = create<${formattedEntityName}State>()(
       devtools(
         (set, get) => ({
@@ -195,6 +237,11 @@ export function generateEntityStore(config: Entity) {
           })),
 
           // API Actions
+          /**
+           * Fetches records with pagination and filtering
+           * @param {Partial<ListParams>} params - Optional parameters for the query
+           * @returns {Promise<any[]>} List of records
+           */
           fetchRecords: async (params?: Partial<ListParams>) => {
             set({ loading: true, error: null });
             try {
@@ -239,6 +286,11 @@ export function generateEntityStore(config: Entity) {
             }
           },
 
+          /**
+           * Fetches a single record by ID
+           * @param {string} id - Record ID
+           * @returns {Promise<any>} Record data or null
+           */
           fetchRecord: async (id: string) => {
             set({ loading: true, error: null })
             try {
@@ -262,6 +314,11 @@ export function generateEntityStore(config: Entity) {
             }
           },
 
+          /**
+           * Creates a new record
+           * @param {any} data - Record data
+           * @returns {Promise<{ success: string; error: string | null }>} Result with success/error message
+           */
           createRecord: async (data: any) => {
             set({ loading: true, error: null });    
             try {
@@ -308,9 +365,16 @@ export function generateEntityStore(config: Entity) {
             }
           },
 
+          /**
+           * Updates an existing record
+           * @param {string} id - ID of record to update
+           * @param {any} data - Updated record data
+           * @returns {Promise<{ success: string; error: string | null }>} Result with success/error message
+           */
           updateRecord: async (id: string, data: any) => {
             set({ loading: true, error: null });
             try {
+              // Send PUT request to update endpoint
               const response = await fetch(\`${API_URL}/api/v1/${config.entityName.toLowerCase()}/\${id}\`, {
                 method: 'PUT',
                 headers: { 
@@ -342,6 +406,7 @@ export function generateEntityStore(config: Entity) {
                 return { error: errorMessage, success: null };
               }
             } catch (error: any) {
+              // Handle unexpected errors
               const errorMessage = error.message || 'An unexpected error occurred';
               set({ 
                 error: errorMessage,
@@ -353,9 +418,15 @@ export function generateEntityStore(config: Entity) {
             }
           },
 
+          /**
+           * Deletes an existing record
+           * @param {string} id - ID of record to delete
+           * @returns {Promise<boolean>} True if deletion was successful
+           */
           deleteRecord: async (id: string) => {
             set({ loading: true, error: null });
             try {
+              // Send DELETE request
               const response = await fetch(\`${API_URL}/api/v1/${config.entityName.toLowerCase()}/\${id}\`, {
                 method: 'DELETE',
                 headers: {
@@ -364,7 +435,11 @@ export function generateEntityStore(config: Entity) {
                 }
               });
               const result = await response.json();
+              
+              // Throw error if response not OK
               if (!response.ok) throw new Error(result.error || 'Failed to delete record');
+              
+              // Update local state by filtering out deleted record
               set((state) => ({
                 records: state.records.filter(record => record.id !== id),
                 success: 'Record deleted successfully'
@@ -384,6 +459,12 @@ export function generateEntityStore(config: Entity) {
   `;
 }
 
+/**
+ * Maps entity data types to TypeScript types
+ * 
+ * @param {Attribute} attr - Field attribute configuration
+ * @returns {string} TypeScript type name
+ */
 function getTypeScriptType(attr: Attribute): string {
   switch (attr.dataType.toLowerCase()) {
     case 'number':

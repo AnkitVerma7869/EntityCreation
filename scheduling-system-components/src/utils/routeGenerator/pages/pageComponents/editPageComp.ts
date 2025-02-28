@@ -1,11 +1,20 @@
+/**
+ * Edit Page Component Generator
+ * Generates React components for editing existing entity records
+ */
+
 import { Attribute, Entity } from '../../../../interfaces/types';
 import { generatePackageImports } from '../../utils/packageManager';
 import { generateField } from '../../components/fields';
 import { generateValidationSchema } from '../../utils/validationSchemaGenerator';
 
-
-
-// Helper function to format entity name (keep it consistent with storeGenerator)
+/**
+ * Formats an entity name to follow camelCase convention
+ * Example: "user_profile" -> "userProfile"
+ * 
+ * @param {string} name - Raw entity name
+ * @returns {string} Formatted camelCase name
+ */
 function formatEntityName(name: string): string {
   return name
     .replace(/[-\s]+/g, '_')
@@ -17,6 +26,21 @@ function formatEntityName(name: string): string {
     .join('');
 }
 
+/**
+ * Generates a complete edit page component for an entity
+ * Includes form handling, data fetching, validation, and API integration
+ * 
+ * Features:
+ * - Data fetching and population
+ * - Form validation using Yup
+ * - Date format conversion
+ * - Toast notifications
+ * - Loading states
+ * - Navigation after successful update
+ * 
+ * @param {Entity} config - Entity configuration
+ * @returns {string} Generated React component code
+ */
 export function generateEditPage(config: Entity): string {
   const { packages } = generatePackageImports(config);
   const formattedEntityName = formatEntityName(config.entityName);
@@ -45,10 +69,19 @@ export function generateEditPage(config: Entity): string {
     'use client';
     ${dynamicImports}
     
+    // Validation schema for form fields
     const validationSchema = yup.object({
       ${generateValidationSchema(config.attributes)}
     });
 
+    /**
+     * Edit Page Component for ${formattedEntityName}
+     * Provides a form interface for updating existing ${formattedEntityName} records
+     * 
+     * @param {Object} props - Component props
+     * @param {Object} props.params - Route parameters
+     * @param {string} props.params.id - Record ID to edit
+     */
     export default function ${formattedEntityName}EditPage({ params }: { params: { id: string } }) {
       const router = useRouter();
       const { loading, error, updateRecord, fetchRecord } = use${formattedEntityName}Store();
@@ -65,6 +98,11 @@ export function generateEditPage(config: Entity): string {
         resolver: yupResolver(validationSchema)
       });
 
+      /**
+       * Converts ISO date string to local date format
+       * @param {string} isoString - ISO formatted date string
+       * @returns {string} Local date string
+       */
       const convertToLocal = (isoString) => {
         if (!isoString) return "";
         const date = new Date(isoString);
@@ -79,6 +117,11 @@ export function generateEditPage(config: Entity): string {
         return \`\${year}-\${month}-\${day}T\${hours}:\${minutes}\`;
       };
 
+      /**
+       * Formats local date to ISO string with timezone
+       * @param {Date} date - Date object to format
+       * @returns {string} ISO formatted date string
+       */
       const formatLocalToISOString = (date) => {
         const pad = (num) => String(num).padStart(2, "0");
     
@@ -100,6 +143,10 @@ export function generateEditPage(config: Entity): string {
 
       const DateFormatColumns = [${dateColumns.join(', ')}];
 
+      /**
+       * Loads and populates form with existing record data
+       * Handles date format conversion for date fields
+       */
       useEffect(() => {
         const loadRecord = async () => {
           try {
@@ -123,6 +170,11 @@ export function generateEditPage(config: Entity): string {
         loadRecord();
       }, [params.id, reset, fetchRecord]);
 
+      /**
+       * Form submission handler
+       * Formats dates and submits updated data to API
+       * @param {Object} data - Form data
+       */
       const onSubmit = async (data) => {  
         const { created_at, updated_at, ...formattedData } = { ...data };
         
@@ -216,6 +268,14 @@ export function generateEditPage(config: Entity): string {
   `;
 }
 
+/**
+ * Generates a reusable edit form component
+ * Can be used for both create and edit operations
+ * 
+ * @param {string} entityName - Name of the entity
+ * @param {Attribute[]} attributes - Entity attributes
+ * @returns {string} Generated component code
+ */
 export function generateEditPageComponent(entityName: string, attributes: Attribute[]) {
   const componentName = `${entityName}Edit`;
   

@@ -1,9 +1,19 @@
 "use strict";
+/**
+ * Package Manager Module
+ * Manages package dependencies for generated components
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generatePackageImports = generatePackageImports;
+/**
+ * Gets required packages based on field types
+ * @param {Attribute[]} attributes - List of entity attributes
+ * @returns {PackageConfig[]} List of required packages
+ */
 function getFieldSpecificPackages(attributes) {
     var packages = [];
     attributes.forEach(function (attr) {
+        // Add packages based on input/data type
         switch (attr.inputType.toLowerCase() || attr.dataType.toLowerCase()) {
             case 'date':
                 packages.push({
@@ -47,7 +57,7 @@ function getFieldSpecificPackages(attributes) {
                 });
                 break;
         }
-        // Add validation specific packages
+        // Add validation packages if needed
         if (attr.validations) {
             if (attr.validations.required || attr.validations.pattern || attr.validations.min || attr.validations.max) {
                 packages.push({
@@ -65,7 +75,13 @@ function getFieldSpecificPackages(attributes) {
     });
     return packages;
 }
+/**
+ * Generates package imports for an entity
+ * @param {Entity} config - Entity configuration
+ * @returns {{ packages: PackageConfig[], devPackages: PackageConfig[] }} Required packages and dev dependencies
+ */
 function generatePackageImports(config) {
+    // Define base packages required for all entities
     var basePackages = {
         // Core packages
         'react': {
@@ -119,7 +135,7 @@ function generatePackageImports(config) {
     };
     // Get field-specific packages
     var fieldPackages = getFieldSpecificPackages(config.attributes);
-    // Merge base packages with field-specific packages and their dependencies
+    // Merge base and field-specific packages
     fieldPackages.forEach(function (pkg) {
         if (!basePackages[pkg.name]) {
             basePackages[pkg.name] = pkg;

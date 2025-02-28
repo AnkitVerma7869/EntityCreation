@@ -1,16 +1,28 @@
+/**
+ * Required Date Picker Component
+ * A customized date picker component that requires a single date selection
+ */
+
 import flatpickr from "flatpickr";
 import { useEffect, useRef } from "react";
 
+/**
+ * Props interface for DatePickerOneRequired component
+ */
 interface DatePickerOneRequiredProps {
-  defaultValue?: string | Date;
-  label?: string;
-  onChange: (selectedDates: Date[], dateStr: string) => void;
-  minDate?: Date;
-  maxDate?: Date;
-  required?: boolean;
-  labelClasses?: string;                
+  defaultValue?: string | Date;    // Initial date value
+  label?: string;                  // Field label
+  onChange: (selectedDates: Date[], dateStr: string) => void;  // Change handler
+  minDate?: Date;                  // Minimum selectable date
+  maxDate?: Date;                  // Maximum selectable date
+  required?: boolean;              // Whether field is required
+  labelClasses?: string;           // Custom classes for label
 }
 
+/**
+ * DatePickerOneRequired Component
+ * Renders a date picker with required date selection
+ */
 const DatePickerOneRequired = ({
   defaultValue,
   label = "Date picker",

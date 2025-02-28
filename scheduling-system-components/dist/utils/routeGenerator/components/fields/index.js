@@ -1,4 +1,8 @@
 "use strict";
+/**
+ * Form Field Generator Index
+ * Exports all field generators and helper functions for form generation
+ */
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -48,7 +52,12 @@ var TimeField_1 = require("./TimeField");
 Object.defineProperty(exports, "generateTimeField", { enumerable: true, get: function () { return TimeField_1.generateTimeField; } });
 var TextAreaField_1 = require("./TextAreaField");
 Object.defineProperty(exports, "generateTextAreaField", { enumerable: true, get: function () { return TextAreaField_1.generateTextAreaField; } });
-// Helper function to format field labels for display
+/**
+ * Formats field labels for display
+ * Converts snake_case or kebab-case to Title Case
+ * @param {string} name - Field name to format
+ * @returns {string} Formatted field label
+ */
 function formatFieldLabel(name) {
     return name
         .split(/[_\s-]+/) // Split by underscore, space, and hyphen
@@ -63,17 +72,24 @@ function formatFieldName(name) {
         .trim()
         .replace(/\s+/g, '-'); // Replace spaces with hyphens
 }
-function generateSingleField(attr, fieldName, defaultValue) {
+function generateSingleField(attr, fieldName, defaultValue, isEditPage) {
+    var _a;
     if (defaultValue === void 0) { defaultValue = null; }
+    if (isEditPage === void 0) { isEditPage = false; }
     // Format the label for display (e.g., "First Name")
     var fieldLabel = formatFieldLabel(attr.name);
-    // Keep original field name structure but ensure it's valid
+    // Format the field name for form handling (e.g., "first_name")
     var formattedFieldName = formatFieldName(fieldName);
     // Create a new attribute with formatted names
     var formattedAttr = __assign(__assign({}, attr), { name: fieldLabel // Use formatted label for display
      });
     // Handle defaultValue
     var defaultVal = defaultValue || attr.defaultValue || '';
+    // isEditable only applies on edit page, isReadOnly applies everywhere
+    var isDisabled = (isEditPage && !attr.isEditable) || attr.isReadOnly;
+    var disabledClass = isDisabled ? 'cursor-not-allowed opacity-70' : '';
+    // Add these props to the attribute for use in field generators
+    formattedAttr.config = __assign(__assign({}, formattedAttr.config), { disabled: isDisabled, className: "".concat(((_a = formattedAttr.config) === null || _a === void 0 ? void 0 : _a.className) || '', " ").concat(disabledClass).trim() });
     // Check for predefined enum types first
     if (attr.inputType.endsWith('_enum')) {
         // All predefined enums use radio or select based on their config
@@ -130,12 +146,13 @@ function generateSingleField(attr, fieldName, defaultValue) {
         case 'gender':
             return (0, RadioField_1.generateRadioField)(formattedAttr, formattedFieldName, defaultVal);
         default:
-            return (0, TextField_1.generateTextField)(formattedAttr, formattedFieldName);
+            return (0, TextField_1.generateTextField)(formattedAttr, formattedFieldName, defaultVal);
     }
 }
-function generateField(entity) {
+function generateField(entity, isEditPage) {
+    if (isEditPage === void 0) { isEditPage = false; }
     var fields = entity.attributes.map(function (attr) {
-        return generateSingleField(attr, attr.name, attr.defaultValue || null);
+        return generateSingleField(attr, attr.name, attr.defaultValue || null, isEditPage);
     });
     // Group fields into pairs for two-column layout
     var pairedFields = [];
