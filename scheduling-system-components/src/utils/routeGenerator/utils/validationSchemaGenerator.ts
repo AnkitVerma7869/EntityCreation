@@ -16,9 +16,8 @@ export function generateValidationSchema(attributes: Attribute[]) {
 
     // Special handling for telephone fields
     if (attr.inputType.toLowerCase() === 'tel') {
-      // Add the country code field schema
-      const countryCodeSchema = `countryCode_${formattedFieldName}: yup.string()`;
-      schema = `${schema},\n${countryCodeSchema}`;
+      schema = `${formattedFieldName}: yup.string()`
+      return schema;
     }
 
     // For checkbox with options, add validation for array of strings

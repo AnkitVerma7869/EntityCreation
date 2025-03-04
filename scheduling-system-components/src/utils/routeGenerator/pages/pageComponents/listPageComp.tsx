@@ -107,20 +107,30 @@ export default function ${formattedEntityName}ListPage() {
 
     /**
      * Formats date and time for display
-     * @param {string} inputDate - Raw date string
+     * @param {string | Date} inputDate - Raw date input
      * @returns {string} Formatted date string
      */
-    const formatDateTime = (inputDate) => {
+    const formatDateTime = (inputDate: string | Date): string => {
       if (!inputDate) return "";
-      const date = new Date(inputDate.replace(" ", "T")); // Convert "YYYY-MM-DD HH:mm" to ISO format
-      return date.toLocaleString("en-US", {
-        month: "2-digit",
-        day: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true
-      });
+      try {
+        const date = typeof inputDate === 'string' 
+          ? new Date(inputDate.replace(" ", "T"))
+          : inputDate;
+
+        if (isNaN(date.getTime())) return "Invalid Date";
+
+        return date.toLocaleString("en-US", {
+          month: "2-digit",
+          day: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true
+        });
+      } catch (error) {
+        console.error('Error formatting date:', error);
+        return "Invalid Date";
+      }
     };
 
     // List of columns that need date formatting
@@ -132,25 +142,34 @@ export default function ${formattedEntityName}ListPage() {
      */
     useEffect(() => {
       const fetchData = async () => {
-        const fetchedRecords = await fetchRecords({
-          page,
-          limit: pageSize,
-          sortBy: sortField,
-          orderBy: sortOrder,
-          search: searchTerm
-        });
-
-        const formattedRecords = fetchedRecords.map(record => {
-          const formattedRecord = { ...record };
-          DateFormatColumns.forEach(columnName => {
-            if (formattedRecord[columnName]) {
-              formattedRecord[columnName] = formatDateTime(formattedRecord[columnName]);
-            }
+        try {
+          const fetchedRecords = await fetchRecords({
+            page,
+            limit: pageSize,
+            sortBy: sortField,
+            orderBy: sortOrder,
+            search: searchTerm
           });
-          return formattedRecord;
-        });
 
-        setRecords(formattedRecords);
+          if (error) {
+            // Error is already set in the store
+            return;
+          }
+
+          const formattedRecords = fetchedRecords.map(record => {
+            const formattedRecord = { ...record };
+            DateFormatColumns.forEach(columnName => {
+              if (formattedRecord[columnName]) {
+                formattedRecord[columnName] = formatDateTime(formattedRecord[columnName]);
+              }
+            });
+            return formattedRecord;
+          });
+
+          setRecords(formattedRecords);
+        } catch (err) {
+          console.error('Error in fetchData:', err);
+        }
       };
 
       fetchData();
@@ -214,9 +233,27 @@ export default function ${formattedEntityName}ListPage() {
      */
     const CustomNoRowsOverlay = () => (
       <GridOverlay>
-        <div className="text-center py-4">
+        <div className="flex flex-col items-center justify-center py-4">
           {error ? (
-            <p className="text-danger">{error}</p>
+            <div className="text-center">
+              <p className="text-danger font-medium mb-2">{error}</p>
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setPage(1);
+                  fetchRecords({
+                    page: 1,
+                    limit: pageSize,
+                    sortBy: sortField,
+                    orderBy: sortOrder,
+                    search: ''
+                  });
+                }}
+                className="text-primary hover:text-primary-dark underline"
+              >
+                Try Again
+              </button>
+            </div>
           ) : (
             <p className="text-meta-1">No records found for the selected criteria</p>
           )}
@@ -255,7 +292,7 @@ export default function ${formattedEntityName}ListPage() {
         ` : ''}
         ${attr.dataType.toLowerCase() === 'date' ? `
         type: 'date',
-        valueFormatter: (params) => {
+        valueFormatter: (params: { value: string | null }) => {
           if (!params.value) return '';
           return formatDateTime(params.value);
         },

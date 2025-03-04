@@ -23,26 +23,14 @@ export function generateTelField(attr: Attribute, fieldName: string, defaultValu
         control={control}
         defaultValue="${defaultValue || ''}"
         onValueChange={(value) => {
-          // Extract only the numbers from the phone string
-          const phoneDigits = value.phone.replace(/\D/g, '');
-          const countryCodeDigits = value.countryCode.replace(/\D/g, '');
-          
-          // Remove country code if it exists at the start of the phone number
-          let finalPhone = phoneDigits;
-          if (phoneDigits.startsWith(countryCodeDigits)) {
-            finalPhone = phoneDigits.slice(countryCodeDigits.length);
-          }
-          
-          setValue('${fieldName}', finalPhone);
-          setValue('countryCode_${fieldName}', countryCodeDigits);
+          // Simple concatenation with + prefix
+          const phoneWithCode = \`+\${value.countryCode}\${value.phone}\`;
+          setValue('${fieldName}', phoneWithCode);
         }}
         disabled={${attr.config?.disabled || false}}
       />
-      {errors.${fieldName} && (
-        <p className="mt-1 text-sm text-meta-1">{errors.${fieldName}?.message}</p>
-      )}
-      {errors['countryCode_${fieldName}'] && (
-        <p className="mt-1 text-sm text-meta-1">{errors['countryCode_${fieldName}']?.message}</p>
+      {errors['${fieldName}'] && (
+        <p className="mt-1 text-sm text-meta-1">{errors['${fieldName}']?.message}</p>
       )}
     </div>
   `;

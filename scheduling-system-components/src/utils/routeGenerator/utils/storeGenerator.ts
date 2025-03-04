@@ -236,7 +236,7 @@ export function generateEntityStore(config: Entity) {
             formData: { ...state.formData, [field]: content }
           })),
 
-          // API Actions
+             // API Actions
           /**
            * Fetches records with pagination and filtering
            * @param {Partial<ListParams>} params - Optional parameters for the query
@@ -265,21 +265,37 @@ export function generateEntityStore(config: Entity) {
               const data = await response.json();
               
               if (!response.ok) {
-                throw new Error(data.message || 'Failed to fetch records');
+                const errorMessage = data.error?.message || data.message || 'Failed to fetch records';
+                set({ error: errorMessage, records: [] });
+                return [];
               }
               
-              const records = data.success?.data?.result || [];
+              if (!data.success || !data.success.data) {
+                const errorMessage = 'Invalid response format from server';
+                set({ error: errorMessage, records: [] });
+                return [];
+              }
+              
+              const records = data.success.data.result || [];
               
               set({ 
-                totalPages: data.success?.data?.totalPages || 0,
-                currentPage: data.success?.data?.currentPage || 1,
-                totalRecords: data.success?.data?.totalRecords || 0,
+                records,
+                totalPages: data.success.data.totalPages || 0,
+                currentPage: data.success.data.currentPage || 1,
+                totalRecords: data.success.data.totalRecords || 0,
                 error: null 
               });
               
               return records;
             } catch (error: any) {
-              set({ error: error.message });
+              const errorMessage = error.message || 'An unexpected error occurred while fetching records';
+              set({ 
+                error: errorMessage,
+                records: [],
+                totalPages: 0,
+                currentPage: 1,
+                totalRecords: 0
+              });
               return [];
             } finally {
               set({ loading: false });
