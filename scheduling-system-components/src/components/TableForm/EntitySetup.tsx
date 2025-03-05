@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, Pencil, Trash2 } from 'lucide-react';
 import { Attribute, ConfigData } from "../../interfaces/types";
 import * as yup from "yup";
 import { entityNameSchema, attributeNameSchema, dataTypeSchema, sizeSchema, precisionSchema, enumValuesSchema } from '../../schemas/validationSchemas';
@@ -12,6 +12,7 @@ import {
   hasPrimaryKey 
 } from '../../helpers/helpers';
 import { useEntitySetup } from '../../hooks/useEntitySetup';
+import ForeignKeyModal from '../../../../models/ForeignKeyModal';
 
 // Props interface for EntitySetup component
 interface EntitySetupProps {
@@ -72,7 +73,7 @@ export default function EntitySetup({
     handleEntitySelect,
     handleEntityNameChange,
     handleDefaultValueChange,
-    handleConstraintsChange,
+    handleConstraintsChange: originalHandleConstraintsChange,
     handleValidationsChange,
     handleAddAttribute: originalHandleAddAttribute
   } = useEntitySetup({
@@ -114,6 +115,9 @@ export default function EntitySetup({
 
   // Add reserved column names constant
   const RESERVED_COLUMNS = ['id','created_at', 'updated_at'];
+
+  // Add state for foreign key modal
+  const [isForeignKeyModalOpen, setIsForeignKeyModalOpen] = useState(false);
 
   const handleAttributeNameChange = (e: React.ChangeEvent<HTMLInputElement>) => 
     RESERVED_COLUMNS.includes(e.target.value.toLowerCase()) 
@@ -516,6 +520,46 @@ export default function EntitySetup({
     }
   }, [editingIndex, currentAttribute]);
 
+  // Add handler for foreign key selection
+  const handleForeignKeySelect = (selectedTable: string, selectedColumn: string, cascadeOptions: { onDelete: string; onUpdate: string }) => {
+    setCurrentAttribute({
+      ...currentAttribute,
+      constraints: ['foreign key'],
+      references: {
+        table: selectedTable,
+        column: selectedColumn,
+        onDelete: cascadeOptions.onDelete,
+        onUpdate: cascadeOptions.onUpdate
+      }
+    });
+    showToast(`Foreign key reference set to ${selectedTable}.${selectedColumn}`, 'success');
+  };
+
+  // Update handleConstraintsChange to handle foreign key modal
+  const handleConstraintsChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    
+    if (value === 'primary key') {
+      const hasPrimaryKeyAlready = attributes.some((attr, idx) => {
+        if (editingIndex !== null && idx === editingIndex) return false;
+        return attr.constraints.includes('primary key');
+      });
+      
+      if (hasPrimaryKeyAlready) {
+        showToast("Only one PRIMARY KEY constraint is allowed per table!", 'error');
+        return;
+      }
+    } else if (value === 'foreign key') {
+      setIsForeignKeyModalOpen(true);
+      return;
+    }
+
+    setCurrentAttribute({ 
+      ...currentAttribute, 
+      constraints: value ? [value] : []
+    });
+  };
+
   return (
     <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
       <div className="border-b border-stroke px-6.5 py-4 dark:border-strokedark">
@@ -869,6 +913,62 @@ export default function EntitySetup({
                   );
                 })}
               </select>
+
+              {/* Display Foreign Key Reference Information */}
+              {currentAttribute.constraints.includes('foreign key') && currentAttribute.references && (
+                <div className="mt-2 p-2 bg-gray-50 dark:bg-boxdark-2 rounded border border-stroke dark:border-strokedark">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex justify-between items-center mb-2">
+                        <h4 className="text-sm font-medium text-black dark:text-white">Foreign Key Reference</h4>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsForeignKeyModalOpen(true);
+                            }}
+                            className="hover:text-primary"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCurrentAttribute({
+                                ...currentAttribute,
+                                constraints: currentAttribute.constraints.filter(c => c !== 'foreign key'),
+                                references: undefined
+                              });
+                              showToast('Foreign key reference removed', 'success');
+                            }}
+                            className="hover:text-meta-1"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-sm text-black dark:text-white">
+                        References: <span className="font-medium">{currentAttribute.references.table}</span>
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Column: <span className="font-medium">{currentAttribute.references.column}</span>
+                      </p>
+                      <div className="flex gap-2 mt-1">
+                        {currentAttribute.references.onDelete && (
+                          <span className="text-xs px-2 py-1 bg-primary/10 text-primary rounded">
+                            On Delete: {currentAttribute.references.onDelete}
+                          </span>
+                        )}
+                        {currentAttribute.references.onUpdate && (
+                          <span className="text-xs px-2 py-1 bg-primary/10 text-primary rounded">
+                            On Update: {currentAttribute.references.onUpdate}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Default Value */}
@@ -1039,6 +1139,15 @@ export default function EntitySetup({
           </>
         )}
       </div>
+
+      {/* Add ForeignKeyModal */}
+      <ForeignKeyModal
+        isOpen={isForeignKeyModalOpen}
+        onClose={() => setIsForeignKeyModalOpen(false)}
+        onSelect={handleForeignKeySelect}
+        currentTable={entityName}
+        initialValues={currentAttribute.references}
+      />
     </div>
   );
 }
