@@ -59,12 +59,22 @@ export interface Attribute {
   isReadOnly?: boolean;
   displayInList?: boolean;  
   enumType?: string;
+  references?: IReference;
+}
+
+// Interface for reference configuration
+export interface IReference {
+  table: string;
+  column: string;
+  onDelete?: string;
+  onUpdate?: string;
 }
 
 // Interface for complete entity/table definition
 export interface Entity {
   entityName: string;    // Table name
   attributes: Attribute[]; // Table columns
+  references?: IReference[]; // Table references
 }
 
 // Interface for configuration data
