@@ -15,9 +15,8 @@ function generateValidationSchema(attributes) {
         var schema = "".concat(formattedFieldName, ": yup.").concat(yupType, "()");
         // Special handling for telephone fields
         if (attr.inputType.toLowerCase() === 'tel') {
-            // Add the country code field schema
-            var countryCodeSchema = "countryCode_".concat(formattedFieldName, ": yup.string()");
-            schema = "".concat(schema, ",\n").concat(countryCodeSchema);
+            schema = "".concat(formattedFieldName, ": yup.string()");
+            return schema;
         }
         // For checkbox with options, add validation for array of strings
         if (attr.inputType.toLowerCase() === 'checkbox' && Array.isArray(attr.options) && attr.options.length > 0) {
