@@ -167,7 +167,7 @@ export default function EntitySetup({
     });
   };
 
-  // Update handleInputTypeChange to set options editability
+  // Update handleInputTypeChange to only disable data type for specific cases
   const handleInputTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     if (currentAttribute.constraints.includes('foreign key')) {
       showToast("Cannot change input type for foreign key fields", 'error');
@@ -197,6 +197,7 @@ export default function EntitySetup({
           isMultiSelect: false
         });
         setIsMultiSelect(false);
+        setIsDataTypeDisabled(true); // Only disable for these specific input types
       } else {
         setCurrentAttribute({
           ...currentAttribute,
@@ -213,9 +214,8 @@ export default function EntitySetup({
         if (inputTypeConfig.options) {
           setInputOptions(inputTypeConfig.options);
         }
+        setIsDataTypeDisabled(inputTypeConfig.isDataTypeFixed || false); // Only disable if explicitly set
       }
-  
-      setIsDataTypeDisabled(inputTypeConfig.isDataTypeFixed || ['select', 'radio', 'checkbox'].includes(inputType));
     }
   };
 
@@ -426,7 +426,7 @@ export default function EntitySetup({
     setValidationErrors({});
   };
 
-  // Update resetInputs to clear validation errors
+  // Update resetInputs to ensure isDataTypeDisabled is false by default
   const resetInputs = () => {
     const defaultInputType = 'text';
     const defaultConfig = configData.inputTypes[defaultInputType];
@@ -435,7 +435,7 @@ export default function EntitySetup({
     setInputOptions([]);
     setNewOption('');
     clearValidationErrors();
-    setIsDataTypeDisabled(false);
+    setIsDataTypeDisabled(false); // Ensure this is false by default
     setPrimaryKeyInfo(null);
     setForeignKeyDataType(null);
     setCurrentAttribute({
@@ -561,7 +561,7 @@ export default function EntitySetup({
     showToast(`Foreign key reference set to ${selectedTable}.${selectedColumn}`, 'success');
   };
 
-  // Update handleConstraintsChange to handle primary key data type
+  // Update handleConstraintsChange to only disable data type for specific constraints
   const handleConstraintsChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     
@@ -589,6 +589,7 @@ export default function EntitySetup({
           ...currentAttribute, 
           constraints: [value]
         });
+        setIsDataTypeDisabled(false); // Enable data type selection if no primary key info
       }
     } else if (value === 'foreign key') {
       setIsForeignKeyModalOpen(true);
@@ -599,7 +600,7 @@ export default function EntitySetup({
         ...currentAttribute, 
         constraints: value ? [value] : []
       });
-      setIsDataTypeDisabled(false); // Re-enable data type selection
+      setIsDataTypeDisabled(false); // Re-enable data type selection for other constraints
     }
   };
 
