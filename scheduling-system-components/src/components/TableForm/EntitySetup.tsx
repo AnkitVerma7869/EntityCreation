@@ -759,7 +759,7 @@ export default function EntitySetup({
                   <option 
                     key={type} 
                     value={type}
-                    disabled={!!primaryKeyInfo && type.toLowerCase() !== primaryKeyInfo.dataType.toLowerCase()}
+                    disabled={!!primaryKeyInfo && currentAttribute.constraints.includes('primary key') && type.toLowerCase() !== primaryKeyInfo.dataType.toLowerCase()}
                   >
                     {type.charAt(0).toUpperCase() + type.slice(1).toLowerCase()}
                   </option>
