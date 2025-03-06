@@ -70,7 +70,7 @@ export default function EntitySetup({
   const {
     errors,
     setErrors,
-    handleEntitySelect,
+    handleEntitySelect: originalHandleEntitySelect,
     handleEntityNameChange,
     handleDefaultValueChange,
     handleConstraintsChange: originalHandleConstraintsChange,
@@ -108,7 +108,7 @@ export default function EntitySetup({
   const [isMultiSelect, setIsMultiSelect] = useState(false);
 
   // Add this with other state declarations at the top
-  const [isDataTypeDisabled, setIsDataTypeDisabled] = useState(false);
+  const [isDataTypeDisabled, setIsDataTypeDisabled] = useState<boolean>(false);
 
   // Add this state to track if options are editable
   const [isOptionsEditable, setIsOptionsEditable] = useState(true);
@@ -118,6 +118,15 @@ export default function EntitySetup({
 
   // Add state for foreign key modal
   const [isForeignKeyModalOpen, setIsForeignKeyModalOpen] = useState(false);
+
+  // Add state for primary key information
+  const [primaryKeyInfo, setPrimaryKeyInfo] = useState<{
+    name: string;
+    dataType: string;
+  } | null>(null);
+
+  // Add state for foreign key data type
+  const [foreignKeyDataType, setForeignKeyDataType] = useState<string | null>(null);
 
   const handleAttributeNameChange = (e: React.ChangeEvent<HTMLInputElement>) => 
     RESERVED_COLUMNS.includes(e.target.value.toLowerCase()) 
@@ -160,6 +169,11 @@ export default function EntitySetup({
 
   // Update handleInputTypeChange to set options editability
   const handleInputTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (currentAttribute.constraints.includes('foreign key')) {
+      showToast("Cannot change input type for foreign key fields", 'error');
+      return;
+    }
+
     const inputType = e.target.value;
     setSelectedInputType(inputType);
     setErrors({});
@@ -168,11 +182,9 @@ export default function EntitySetup({
     const inputTypeConfig = configData.inputTypes[inputType];
     
     if (inputTypeConfig) {
-      // Check if this is a predefined enum type
       const isPredefinedEnum = inputType.endsWith('_enum');
       setIsOptionsEditable(!isPredefinedEnum);
 
-      // For select/radio/checkbox types
       if (['select', 'radio', 'checkbox'].includes(inputType)) {
         setCurrentAttribute({
           ...currentAttribute,
@@ -186,7 +198,6 @@ export default function EntitySetup({
         });
         setIsMultiSelect(false);
       } else {
-        // For all other input types including predefined enums
         setCurrentAttribute({
           ...currentAttribute,
           inputType,
@@ -204,7 +215,6 @@ export default function EntitySetup({
         }
       }
   
-      // Handle dataType disabling
       setIsDataTypeDisabled(inputTypeConfig.isDataTypeFixed || ['select', 'radio', 'checkbox'].includes(inputType));
     }
   };
@@ -348,10 +358,14 @@ export default function EntitySetup({
 
   // Update handleDataTypeChange
   const handleDataTypeChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (currentAttribute.constraints.includes('foreign key')) {
+      showToast("Cannot change data type for foreign key fields", 'error');
+      return;
+    }
+    
     setErrors({}); 
     const newDataType = e.target.value.toLowerCase();
     
-    // If current input type is gender, prevent data type change
     if (selectedInputType === 'gender') {
       return;
     }
@@ -367,7 +381,7 @@ export default function EntitySetup({
         dataType: newDataType,
         size: typeProps.needsSize ? currentAttribute.size : null,
         precision: typeProps.needsPrecision ? currentAttribute.precision : null,
-        validations: {} // Clear validations when data type changes
+        validations: {}
       });
 
     } catch (err) {
@@ -422,6 +436,8 @@ export default function EntitySetup({
     setNewOption('');
     clearValidationErrors();
     setIsDataTypeDisabled(false);
+    setPrimaryKeyInfo(null);
+    setForeignKeyDataType(null);
     setCurrentAttribute({
       name: '',
       dataType: defaultConfig.dataType,
@@ -521,7 +537,10 @@ export default function EntitySetup({
   }, [editingIndex, currentAttribute]);
 
   // Add handler for foreign key selection
-  const handleForeignKeySelect = (selectedTable: string, selectedColumn: string, cascadeOptions: { onDelete: string; onUpdate: string }) => {
+  const handleForeignKeySelect = (selectedTable: string, selectedColumn: string, cascadeOptions: { onDelete: string; onUpdate: string }, dataType: string) => {
+    const lowerDataType = dataType.toLowerCase();
+    const inputType = lowerDataType === 'integer' ? 'number' : 'text';
+
     setCurrentAttribute({
       ...currentAttribute,
       constraints: ['foreign key'],
@@ -530,12 +549,19 @@ export default function EntitySetup({
         column: selectedColumn,
         onDelete: cascadeOptions.onDelete,
         onUpdate: cascadeOptions.onUpdate
-      }
+      },
+      dataType: lowerDataType,
+      size: null,  // Reset size
+      precision: null,  // Reset precision
+      inputType: inputType // Set input type based on data type
     });
+    setForeignKeyDataType(lowerDataType);
+    setIsDataTypeDisabled(true);
+    setSelectedInputType(inputType); // Update selected input type
     showToast(`Foreign key reference set to ${selectedTable}.${selectedColumn}`, 'success');
   };
 
-  // Update handleConstraintsChange to handle foreign key modal
+  // Update handleConstraintsChange to handle primary key data type
   const handleConstraintsChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     
@@ -549,15 +575,58 @@ export default function EntitySetup({
         showToast("Only one PRIMARY KEY constraint is allowed per table!", 'error');
         return;
       }
+
+      // Set the data type based on primary key info if available
+      if (primaryKeyInfo) {
+        setCurrentAttribute({
+          ...currentAttribute,
+          constraints: [value],
+          dataType: primaryKeyInfo.dataType.toLowerCase()
+        });
+        setIsDataTypeDisabled(true); // Disable data type selection for primary key
+      } else {
+        setCurrentAttribute({ 
+          ...currentAttribute, 
+          constraints: [value]
+        });
+      }
     } else if (value === 'foreign key') {
       setIsForeignKeyModalOpen(true);
+      setIsDataTypeDisabled(true); // Disable data type selection for foreign key
       return;
+    } else {
+      setCurrentAttribute({ 
+        ...currentAttribute, 
+        constraints: value ? [value] : []
+      });
+      setIsDataTypeDisabled(false); // Re-enable data type selection
     }
+  };
 
-    setCurrentAttribute({ 
-      ...currentAttribute, 
-      constraints: value ? [value] : []
-    });
+  // Update handleEntitySelect to fetch primary key information
+  const handleEntitySelect = async (value: string) => {
+    await originalHandleEntitySelect(value);
+    
+    if (value && value !== 'custom') {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_ENDPOINT}/api/v1/entity/all-entities`);
+        const result = await response.json();
+        
+        if (result.success) {
+          const entity = result.success.data.find((e: any) => e.name === value);
+          if (entity) {
+            setPrimaryKeyInfo({
+              name: entity.primarykeycolumnname,
+              dataType: entity.primarykeycolumndatatype
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching entity details:', error);
+      }
+    } else {
+      setPrimaryKeyInfo(null);
+    }
   };
 
   return (
@@ -649,9 +718,10 @@ export default function EntitySetup({
               <select
                 value={selectedInputType || 'text'}
                 onChange={handleInputTypeChange}
+                disabled={currentAttribute.constraints.includes('foreign key')}
                 className={`w-full rounded border-[1.5px] ${
                   errors.inputType ? 'border-meta-1' : 'border-stroke'
-                } bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary`}
+                } bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-not-allowed disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary`}
               >
                 <option value="">Select input type</option>
                 {Object.entries(configData.inputTypes).map(([type, config]) => (
@@ -662,6 +732,11 @@ export default function EntitySetup({
               </select>
               {errors.inputType && (
                 <p className="text-meta-1 text-sm mt-1">{errors.inputType}</p>
+              )}
+              {currentAttribute.constraints.includes('foreign key') && (
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Input type cannot be changed for foreign key fields
+                </p>
               )}
             </div>
 
@@ -680,13 +755,27 @@ export default function EntitySetup({
               >
                 <option value="">Select data type</option>
                 {configData.dataTypes.map((type) => (
-                  <option key={type} value={type}>
+                  <option 
+                    key={type} 
+                    value={type}
+                    disabled={!!primaryKeyInfo && type.toLowerCase() !== primaryKeyInfo.dataType.toLowerCase()}
+                  >
                     {type.charAt(0).toUpperCase() + type.slice(1).toLowerCase()}
                   </option>
                 ))}
               </select> 
               {errors.dataType && (
                 <p className="text-meta-1 text-sm mt-1">{errors.dataType}</p>
+              )}
+              {primaryKeyInfo && currentAttribute.constraints.includes('primary key') && (
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Primary key data type is set to {primaryKeyInfo.dataType.toLowerCase()}
+                </p>
+              )}
+              {foreignKeyDataType && currentAttribute.constraints.includes('foreign key') && (
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Foreign key data type is set to {foreignKeyDataType}
+                </p>
               )}
             </div>
 
@@ -934,10 +1023,29 @@ export default function EntitySetup({
                           <button
                             type="button"
                             onClick={() => {
+                              // Reset all form fields to initial state
+                              const defaultInputType = 'text';
+                              const defaultConfig = configData.inputTypes[defaultInputType];
+                              
+                              setSelectedInputType(defaultInputType);
+                              setInputOptions([]);
+                              setNewOption('');
+                              clearValidationErrors();
+                              setIsDataTypeDisabled(false);
+                              setPrimaryKeyInfo(null);
+                              setForeignKeyDataType(null);
                               setCurrentAttribute({
-                                ...currentAttribute,
-                                constraints: currentAttribute.constraints.filter(c => c !== 'foreign key'),
-                                references: undefined
+                                name: currentAttribute.name, // Keep the name
+                                dataType: defaultConfig.dataType,
+                                size: defaultConfig.size || null,
+                                precision: defaultConfig.precision || null,
+                                constraints: [],
+                                defaultValue: null,
+                                validations: {},
+                                options: [],
+                                inputType: defaultInputType,
+                                isEditable: true,
+                                sortable: true
                               });
                               showToast('Foreign key reference removed', 'success');
                             }}
@@ -980,9 +1088,15 @@ export default function EntitySetup({
                 type="text"
                 value={currentAttribute.defaultValue || ''}
                 onChange={handleDefaultValueChange}
-                className="w-full rounded border-[1.5px] border-stroke bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                disabled={currentAttribute.constraints.includes('foreign key')}
+                className="w-full rounded border-[1.5px] border-stroke bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-not-allowed disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                 placeholder="Enter default value"
               />
+              {currentAttribute.constraints.includes('foreign key') && (
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Default value cannot be set for foreign key fields
+                </p>
+              )}
             </div>
 
             {/* Validations Section */}

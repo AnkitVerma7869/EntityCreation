@@ -357,16 +357,16 @@ export default function ${formattedEntityName}ListPage() {
             return `{
               ...${baseColumn},
               type: 'number',
-              align: 'right',
-              headerAlign: 'right'
+              align: 'left',
+              headerAlign: 'left'
             }`;
 
           case 'boolean':
             return `{
               ...${baseColumn},
               type: 'boolean',
-              align: 'center',
-              headerAlign: 'center'
+              align: 'left',
+              headerAlign: 'left'
             }`;
 
           default:

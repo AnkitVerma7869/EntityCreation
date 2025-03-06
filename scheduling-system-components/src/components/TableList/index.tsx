@@ -83,7 +83,7 @@ export default function TablesList({ onCreateNew }: TableListProps) {
   const [tables, setTables] = useState<Entity[]>([]);
   const [columns, setColumns] = useState<GridColDef[]>([]);
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
-    pageSize: 5,
+    pageSize: 10,
     page: 0,
   });
   const [loading, setLoading] = useState(true);
@@ -137,33 +137,16 @@ export default function TablesList({ onCreateNew }: TableListProps) {
         // Define columns for the data grid
         const dynamicColumns: GridColDef[] = [
           { 
-            field: 'id', 
-            headerName: 'ID', 
-            width: 70,
-            filterable: true,
-          },
-          { 
             field: 'name', 
             headerName: 'Table Name', 
             flex: 1,
             filterable: true,
             sortable: true,
-            renderCell: (params) => (
-              <div 
-                className="text-blue-600 hover:text-blue-800 cursor-pointer"
-                onClick={() => {
-                  const entityName = params.row.name.toLowerCase();
-                  router.push(`/${entityName}`);
-                }}
-              >
-                {params.value}
-              </div>
-            )
           },
           { 
             field: 'numberofcolumn', 
             headerName: 'Total Fields', 
-            width: 120,
+            flex: 1,
             filterable: true,
             sortable: true,
           }
@@ -172,8 +155,8 @@ export default function TablesList({ onCreateNew }: TableListProps) {
         setColumns(dynamicColumns);
 
         if (data.success && Array.isArray(data.success.data)) {
-          const formattedTables = data.success.data.map((table: any, index: number) => ({
-            id: index + 1,
+          const formattedTables = data.success.data.map((table: any) => ({
+            id: table.name.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0),
             name: table.name,
             numberofcolumn: table.numberofcolumn
           }));
@@ -221,10 +204,11 @@ export default function TablesList({ onCreateNew }: TableListProps) {
             columns={columns}
             paginationModel={paginationModel}
             onPaginationModelChange={setPaginationModel}
-            pageSizeOptions={[5, 10, 25, 50]}
+            pageSizeOptions={[10, 25, 50]}
             loading={loading}
             disableRowSelectionOnClick
             autoHeight={!loading}
+            onRowClick={handleRowClick}
             slots={{
               toolbar: GridToolbar,
               loadingOverlay: CustomLoadingOverlay,

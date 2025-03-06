@@ -7,7 +7,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 interface ForeignKeyModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (selectedTable: string, selectedColumn: string, cascadeOptions: { onDelete: string; onUpdate: string }) => void;
+  onSelect: (selectedTable: string, selectedColumn: string, cascadeOptions: { onDelete: string; onUpdate: string }, dataType: string) => void;
   currentTable: string;
   initialValues?: {
     table: string;
@@ -21,6 +21,8 @@ interface Entity {
   name: string;
   numberofcolumn: string;
   columnname: string;
+  primarykeycolumnname: string;
+  primarykeycolumndatatype: string;
 }
 
 // Define the form data interface
@@ -112,7 +114,6 @@ const ForeignKeyModal: React.FC<ForeignKeyModalProps> = ({
           setEntities(filteredEntities);
           setError('');
         } else {
-          // Handle any error response
           const errorMessage = result.error?.message || 'Failed to fetch entities';
           setError(errorMessage);
         }
@@ -130,7 +131,10 @@ const ForeignKeyModal: React.FC<ForeignKeyModalProps> = ({
   }, [isOpen, currentTable, API_URL]);
 
   const onSubmit = (data: FormData) => {
-    onSelect(data.selectedTable, selectedColumn, cascadeOptions);
+    const selectedEntity = entities.find(entity => entity.name === data.selectedTable);
+    if (selectedEntity) {
+      onSelect(data.selectedTable, selectedColumn, cascadeOptions, selectedEntity.primarykeycolumndatatype);
+    }
     onClose();
     reset();
   };
@@ -141,9 +145,12 @@ const ForeignKeyModal: React.FC<ForeignKeyModalProps> = ({
     setSelectedTable(tableName);
     setValue('selectedTable', tableName, { shouldValidate: true });
 
-    // If a table is selected, automatically select the 'id' column
+    // If a table is selected, automatically select the primary key column
     if (tableName) {
-      setSelectedColumn('id');
+      const selectedEntity = entities.find(entity => entity.name === tableName);
+      if (selectedEntity) {
+        setSelectedColumn(selectedEntity.primarykeycolumnname);
+      }
     } else {
       setSelectedColumn('');
     }
@@ -204,12 +211,12 @@ const ForeignKeyModal: React.FC<ForeignKeyModalProps> = ({
               </label>
               <input
                 type="text"
-                value="id"
+                value={selectedColumn}
                 disabled
                 className="w-full rounded border-[1.5px] border-stroke bg-gray-50 dark:bg-boxdark-2 px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
               />
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                The 'id' column is automatically selected as it is the primary key of the referenced table.
+                The primary key column is automatically selected based on the referenced table.
               </p>
             </div>
 
