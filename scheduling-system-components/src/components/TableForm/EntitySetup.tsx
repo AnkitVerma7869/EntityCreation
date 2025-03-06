@@ -12,7 +12,7 @@ import {
   hasPrimaryKey 
 } from '../../helpers/helpers';
 import { useEntitySetup } from '../../hooks/useEntitySetup';
-import ForeignKeyModal from '../../../../models/ForeignKeyModal';
+import ForeignKeyModal from '@/components/models/ForeignKeyModal';
 
 // Props interface for EntitySetup component
 interface EntitySetupProps {
