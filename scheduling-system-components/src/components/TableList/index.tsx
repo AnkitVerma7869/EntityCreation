@@ -1,9 +1,12 @@
+// Add ISR configuration
+export const dynamic = 'force-dynamic';
+export const revalidate = 7200; // Server-side revalidation only
+
 /**
  * TableList Module
  * Provides a data grid interface for managing and viewing database tables
  */
 
-'use client';
 import React, { useState, useEffect } from 'react';
 import { 
   DataGrid, 
@@ -65,7 +68,7 @@ const CustomErrorOverlay = (props: { message: string | null }) => (
 /**
  * TablesList Component
  * Displays a data grid of database tables with their properties and configurations.
- * Allows users to view, sort, filter and navigate to individual table details.
+ * Features ISR for improved performance and data freshness.
  * 
  * Features:
  * - Pagination
@@ -83,7 +86,7 @@ export default function TablesList({ onCreateNew }: TableListProps) {
   const [tables, setTables] = useState<Entity[]>([]);
   const [columns, setColumns] = useState<GridColDef[]>([]);
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
-    pageSize: 5,
+    pageSize: 10,
     page: 0,
   });
   const [loading, setLoading] = useState(true);
@@ -91,6 +94,71 @@ export default function TablesList({ onCreateNew }: TableListProps) {
 
   // API configuration
   const API_URL = process.env.NEXT_PUBLIC_API_URL_ENDPOINT;
+
+  const fetchTables = async () => {
+    try {
+      setLoading(true);
+      setApiError(null);
+      
+      if (!API_URL) {
+        setApiError('API URL is not configured');
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/api/v1/entity/all-entities`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        setApiError(errorData.message || 'Failed to fetch data');
+        setTables([]);
+        return;
+      }
+
+      const data = await response.json();
+      
+      if (data.error) {
+        setApiError(data.error);
+        setTables([]);
+        return;
+      }
+
+      // Define columns for the data grid
+      const dynamicColumns: GridColDef[] = [
+        { 
+          field: 'name', 
+          headerName: 'Table Name', 
+          flex: 1,
+          filterable: true,
+          sortable: true,
+        },
+        { 
+          field: 'numberofcolumn', 
+          headerName: 'Total Fields', 
+          flex: 1,
+          filterable: true,
+          sortable: true,
+        }
+      ];
+      
+      setColumns(dynamicColumns);
+
+      if (data.success && Array.isArray(data.success.data)) {
+        const formattedTables = data.success.data.map((table: any) => ({
+          id: table.name.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0),
+          name: table.name,
+          numberofcolumn: table.numberofcolumn
+        }));
+        
+        setTables(formattedTables);
+      }
+    } catch (error) {
+      console.error('Error fetching tables:', error);
+      setApiError('Failed to fetch');
+      setTables([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   /**
    * Handles row click events by navigating to the detailed view of the selected table
@@ -101,94 +169,8 @@ export default function TablesList({ onCreateNew }: TableListProps) {
     router.push(`/${entityName}`);
   };
 
-  // Data fetching effect
+  // Single useEffect for data fetching
   useEffect(() => {
-    /**
-     * Fetches table data from the API and formats it for display in the data grid
-     * Handles error states and data transformation
-     */
-    const fetchTables = async () => {
-      try {
-        setLoading(true);
-        setApiError(null);
-        
-        if (!API_URL) {
-          setApiError('API URL is not configured');
-          return;
-        }
-
-        const response = await fetch(`${API_URL}/api/v1/entity/all-entities`);
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          setApiError(errorData.message || 'Failed to fetch data');
-          setTables([]);
-          return;
-        }
-
-        const data = await response.json();
-        
-        if (data.error) {
-          setApiError(data.error);
-          setTables([]);
-          return;
-        }
-
-        // Define columns for the data grid
-        const dynamicColumns: GridColDef[] = [
-          { 
-            field: 'id', 
-            headerName: 'ID', 
-            width: 70,
-            filterable: true,
-          },
-          { 
-            field: 'name', 
-            headerName: 'Table Name', 
-            flex: 1,
-            filterable: true,
-            sortable: true,
-            renderCell: (params) => (
-              <div 
-                className="text-blue-600 hover:text-blue-800 cursor-pointer"
-                onClick={() => {
-                  const entityName = params.row.name.toLowerCase();
-                  router.push(`/${entityName}`);
-                }}
-              >
-                {params.value}
-              </div>
-            )
-          },
-          { 
-            field: 'numberofcolumn', 
-            headerName: 'Total Fields', 
-            width: 120,
-            filterable: true,
-            sortable: true,
-          }
-        ];
-        
-        setColumns(dynamicColumns);
-
-        if (data.success && Array.isArray(data.success.data)) {
-          const formattedTables = data.success.data.map((table: any, index: number) => ({
-            id: index + 1,
-            name: table.name,
-            numberofcolumn: table.numberofcolumn
-          }));
-          
-          setTables(formattedTables);
-        }
-      } catch (error) {
-        console.error('Error fetching tables:', error);
-        setApiError('Failed to fetch');
-        setTables([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchTables();
   }, [API_URL]);
 
@@ -221,10 +203,11 @@ export default function TablesList({ onCreateNew }: TableListProps) {
             columns={columns}
             paginationModel={paginationModel}
             onPaginationModelChange={setPaginationModel}
-            pageSizeOptions={[5, 10, 25, 50]}
+            pageSizeOptions={[10, 25, 50]}
             loading={loading}
             disableRowSelectionOnClick
             autoHeight={!loading}
+            onRowClick={handleRowClick}
             slots={{
               toolbar: GridToolbar,
               loadingOverlay: CustomLoadingOverlay,

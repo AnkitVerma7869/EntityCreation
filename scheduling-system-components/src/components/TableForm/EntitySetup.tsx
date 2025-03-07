@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, Pencil, Trash2 } from 'lucide-react';
 import { Attribute, ConfigData } from "../../interfaces/types";
 import * as yup from "yup";
 import { entityNameSchema, attributeNameSchema, dataTypeSchema, sizeSchema, precisionSchema, enumValuesSchema } from '../../schemas/validationSchemas';
@@ -12,6 +12,7 @@ import {
   hasPrimaryKey 
 } from '../../helpers/helpers';
 import { useEntitySetup } from '../../hooks/useEntitySetup';
+import ForeignKeyModal from '../Modals/ForeignKeyModal';
 
 // Props interface for EntitySetup component
 interface EntitySetupProps {
@@ -69,10 +70,10 @@ export default function EntitySetup({
   const {
     errors,
     setErrors,
-    handleEntitySelect,
+    handleEntitySelect: originalHandleEntitySelect,
     handleEntityNameChange,
     handleDefaultValueChange,
-    handleConstraintsChange,
+    handleConstraintsChange: originalHandleConstraintsChange,
     handleValidationsChange,
     handleAddAttribute: originalHandleAddAttribute
   } = useEntitySetup({
@@ -107,13 +108,25 @@ export default function EntitySetup({
   const [isMultiSelect, setIsMultiSelect] = useState(false);
 
   // Add this with other state declarations at the top
-  const [isDataTypeDisabled, setIsDataTypeDisabled] = useState(false);
+  const [isDataTypeDisabled, setIsDataTypeDisabled] = useState<boolean>(false);
 
   // Add this state to track if options are editable
   const [isOptionsEditable, setIsOptionsEditable] = useState(true);
 
   // Add reserved column names constant
   const RESERVED_COLUMNS = ['id','created_at', 'updated_at'];
+
+  // Add state for foreign key modal
+  const [isForeignKeyModalOpen, setIsForeignKeyModalOpen] = useState(false);
+
+  // Add state for primary key information
+  const [primaryKeyInfo, setPrimaryKeyInfo] = useState<{
+    name: string;
+    dataType: string;
+  } | null>(null);
+
+  // Add state for foreign key data type
+  const [foreignKeyDataType, setForeignKeyDataType] = useState<string | null>(null);
 
   const handleAttributeNameChange = (e: React.ChangeEvent<HTMLInputElement>) => 
     RESERVED_COLUMNS.includes(e.target.value.toLowerCase()) 
@@ -154,8 +167,13 @@ export default function EntitySetup({
     });
   };
 
-  // Update handleInputTypeChange to set options editability
+  // Update handleInputTypeChange to only disable data type for specific cases
   const handleInputTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (currentAttribute.constraints.includes('foreign key')) {
+      showToast("Cannot change input type for foreign key fields", 'error');
+      return;
+    }
+
     const inputType = e.target.value;
     setSelectedInputType(inputType);
     setErrors({});
@@ -164,11 +182,9 @@ export default function EntitySetup({
     const inputTypeConfig = configData.inputTypes[inputType];
     
     if (inputTypeConfig) {
-      // Check if this is a predefined enum type
       const isPredefinedEnum = inputType.endsWith('_enum');
       setIsOptionsEditable(!isPredefinedEnum);
 
-      // For select/radio/checkbox types
       if (['select', 'radio', 'checkbox'].includes(inputType)) {
         setCurrentAttribute({
           ...currentAttribute,
@@ -181,8 +197,8 @@ export default function EntitySetup({
           isMultiSelect: false
         });
         setIsMultiSelect(false);
+        setIsDataTypeDisabled(true); // Only disable for these specific input types
       } else {
-        // For all other input types including predefined enums
         setCurrentAttribute({
           ...currentAttribute,
           inputType,
@@ -198,10 +214,8 @@ export default function EntitySetup({
         if (inputTypeConfig.options) {
           setInputOptions(inputTypeConfig.options);
         }
+        setIsDataTypeDisabled(inputTypeConfig.isDataTypeFixed || false); // Only disable if explicitly set
       }
-  
-      // Handle dataType disabling
-      setIsDataTypeDisabled(inputTypeConfig.isDataTypeFixed || ['select', 'radio', 'checkbox'].includes(inputType));
     }
   };
 
@@ -344,10 +358,14 @@ export default function EntitySetup({
 
   // Update handleDataTypeChange
   const handleDataTypeChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (currentAttribute.constraints.includes('foreign key')) {
+      showToast("Cannot change data type for foreign key fields", 'error');
+      return;
+    }
+    
     setErrors({}); 
     const newDataType = e.target.value.toLowerCase();
     
-    // If current input type is gender, prevent data type change
     if (selectedInputType === 'gender') {
       return;
     }
@@ -363,7 +381,7 @@ export default function EntitySetup({
         dataType: newDataType,
         size: typeProps.needsSize ? currentAttribute.size : null,
         precision: typeProps.needsPrecision ? currentAttribute.precision : null,
-        validations: {} // Clear validations when data type changes
+        validations: {}
       });
 
     } catch (err) {
@@ -408,7 +426,7 @@ export default function EntitySetup({
     setValidationErrors({});
   };
 
-  // Update resetInputs to clear validation errors
+  // Update resetInputs to ensure isDataTypeDisabled is false by default
   const resetInputs = () => {
     const defaultInputType = 'text';
     const defaultConfig = configData.inputTypes[defaultInputType];
@@ -417,7 +435,9 @@ export default function EntitySetup({
     setInputOptions([]);
     setNewOption('');
     clearValidationErrors();
-    setIsDataTypeDisabled(false);
+    setIsDataTypeDisabled(false); // Ensure this is false by default
+    setPrimaryKeyInfo(null);
+    setForeignKeyDataType(null);
     setCurrentAttribute({
       name: '',
       dataType: defaultConfig.dataType,
@@ -516,6 +536,100 @@ export default function EntitySetup({
     }
   }, [editingIndex, currentAttribute]);
 
+  // Add handler for foreign key selection
+  const handleForeignKeySelect = (selectedTable: string, selectedColumn: string, cascadeOptions: { onDelete: string; onUpdate: string }, dataType: string) => {
+    const lowerDataType = dataType.toLowerCase();
+    const inputType = lowerDataType === 'integer' ? 'number' : 'text';
+
+    setCurrentAttribute({
+      ...currentAttribute,
+      constraints: ['foreign key'],
+      references: {
+        table: selectedTable,
+        column: selectedColumn,
+        onDelete: cascadeOptions.onDelete,
+        onUpdate: cascadeOptions.onUpdate
+      },
+      dataType: lowerDataType,
+      size: null,  // Reset size
+      precision: null,  // Reset precision
+      inputType: inputType // Set input type based on data type
+    });
+    setForeignKeyDataType(lowerDataType);
+    setIsDataTypeDisabled(true);
+    setSelectedInputType(inputType); // Update selected input type
+    showToast(`Foreign key reference set to ${selectedTable}.${selectedColumn}`, 'success');
+  };
+
+  // Update handleConstraintsChange to only disable data type for specific constraints
+  const handleConstraintsChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    
+    if (value === 'primary key') {
+      const hasPrimaryKeyAlready = attributes.some((attr, idx) => {
+        if (editingIndex !== null && idx === editingIndex) return false;
+        return attr.constraints.includes('primary key');
+      });
+      
+      if (hasPrimaryKeyAlready) {
+        showToast("Only one PRIMARY KEY constraint is allowed per table!", 'error');
+        return;
+      }
+
+      // Set the data type based on primary key info if available
+      if (primaryKeyInfo) {
+        setCurrentAttribute({
+          ...currentAttribute,
+          constraints: [value],
+          dataType: primaryKeyInfo.dataType.toLowerCase()
+        });
+        setIsDataTypeDisabled(true); // Disable data type selection for primary key
+      } else {
+        setCurrentAttribute({ 
+          ...currentAttribute, 
+          constraints: [value]
+        });
+        setIsDataTypeDisabled(false); // Enable data type selection if no primary key info
+      }
+    } else if (value === 'foreign key') {
+      setIsForeignKeyModalOpen(true);
+      setIsDataTypeDisabled(true); // Disable data type selection for foreign key
+      return;
+    } else {
+      setCurrentAttribute({ 
+        ...currentAttribute, 
+        constraints: value ? [value] : []
+      });
+      setIsDataTypeDisabled(false); // Re-enable data type selection for other constraints
+    }
+  };
+
+  // Update handleEntitySelect to fetch primary key information
+  const handleEntitySelect = async (value: string) => {
+    await originalHandleEntitySelect(value);
+    
+    if (value && value !== 'custom') {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_ENDPOINT}/api/v1/entity/all-entities`);
+        const result = await response.json();
+        
+        if (result.success) {
+          const entity = result.success.data.find((e: any) => e.name === value);
+          if (entity) {
+            setPrimaryKeyInfo({
+              name: entity.primarykeycolumnname,
+              dataType: entity.primarykeycolumndatatype
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching entity details:', error);
+      }
+    } else {
+      setPrimaryKeyInfo(null);
+    }
+  };
+
   return (
     <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
       <div className="border-b border-stroke px-6.5 py-4 dark:border-strokedark">
@@ -605,9 +719,10 @@ export default function EntitySetup({
               <select
                 value={selectedInputType || 'text'}
                 onChange={handleInputTypeChange}
+                disabled={currentAttribute.constraints.includes('foreign key')}
                 className={`w-full rounded border-[1.5px] ${
                   errors.inputType ? 'border-meta-1' : 'border-stroke'
-                } bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary`}
+                } bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-not-allowed disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary`}
               >
                 <option value="">Select input type</option>
                 {Object.entries(configData.inputTypes).map(([type, config]) => (
@@ -618,6 +733,11 @@ export default function EntitySetup({
               </select>
               {errors.inputType && (
                 <p className="text-meta-1 text-sm mt-1">{errors.inputType}</p>
+              )}
+              {currentAttribute.constraints.includes('foreign key') && (
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Input type cannot be changed for foreign key fields
+                </p>
               )}
             </div>
 
@@ -636,13 +756,27 @@ export default function EntitySetup({
               >
                 <option value="">Select data type</option>
                 {configData.dataTypes.map((type) => (
-                  <option key={type} value={type}>
+                  <option 
+                    key={type} 
+                    value={type}
+                    disabled={!!primaryKeyInfo && currentAttribute.constraints.includes('primary key') && type.toLowerCase() !== primaryKeyInfo.dataType.toLowerCase()}
+                  >
                     {type.charAt(0).toUpperCase() + type.slice(1).toLowerCase()}
                   </option>
                 ))}
               </select> 
               {errors.dataType && (
                 <p className="text-meta-1 text-sm mt-1">{errors.dataType}</p>
+              )}
+              {primaryKeyInfo && currentAttribute.constraints.includes('primary key') && (
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Primary key data type is set to {primaryKeyInfo.dataType.toLowerCase()}
+                </p>
+              )}
+              {foreignKeyDataType && currentAttribute.constraints.includes('foreign key') && (
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Foreign key data type is set to {foreignKeyDataType}
+                </p>
               )}
             </div>
 
@@ -869,6 +1003,81 @@ export default function EntitySetup({
                   );
                 })}
               </select>
+
+              {/* Display Foreign Key Reference Information */}
+              {currentAttribute.constraints.includes('foreign key') && currentAttribute.references && (
+                <div className="mt-2 p-2 bg-gray-50 dark:bg-boxdark-2 rounded border border-stroke dark:border-strokedark">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex justify-between items-center mb-2">
+                        <h4 className="text-sm font-medium text-black dark:text-white">Foreign Key Reference</h4>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsForeignKeyModalOpen(true);
+                            }}
+                            className="hover:text-primary"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              // Reset all form fields to initial state
+                              const defaultInputType = 'text';
+                              const defaultConfig = configData.inputTypes[defaultInputType];
+                              
+                              setSelectedInputType(defaultInputType);
+                              setInputOptions([]);
+                              setNewOption('');
+                              clearValidationErrors();
+                              setIsDataTypeDisabled(false);
+                              setPrimaryKeyInfo(null);
+                              setForeignKeyDataType(null);
+                              setCurrentAttribute({
+                                name: currentAttribute.name, // Keep the name
+                                dataType: defaultConfig.dataType,
+                                size: defaultConfig.size || null,
+                                precision: defaultConfig.precision || null,
+                                constraints: [],
+                                defaultValue: null,
+                                validations: {},
+                                options: [],
+                                inputType: defaultInputType,
+                                isEditable: true,
+                                sortable: true
+                              });
+                              showToast('Foreign key reference removed', 'success');
+                            }}
+                            className="hover:text-meta-1"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-sm text-black dark:text-white">
+                        References: <span className="font-medium">{currentAttribute.references.table}</span>
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Column: <span className="font-medium">{currentAttribute.references.column}</span>
+                      </p>
+                      <div className="flex gap-2 mt-1">
+                        {currentAttribute.references.onDelete && (
+                          <span className="text-xs px-2 py-1 bg-primary/10 text-primary rounded">
+                            On Delete: {currentAttribute.references.onDelete}
+                          </span>
+                        )}
+                        {currentAttribute.references.onUpdate && (
+                          <span className="text-xs px-2 py-1 bg-primary/10 text-primary rounded">
+                            On Update: {currentAttribute.references.onUpdate}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Default Value */}
@@ -880,9 +1089,15 @@ export default function EntitySetup({
                 type="text"
                 value={currentAttribute.defaultValue || ''}
                 onChange={handleDefaultValueChange}
-                className="w-full rounded border-[1.5px] border-stroke bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                disabled={currentAttribute.constraints.includes('foreign key')}
+                className="w-full rounded border-[1.5px] border-stroke bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-not-allowed disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                 placeholder="Enter default value"
               />
+              {currentAttribute.constraints.includes('foreign key') && (
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Default value cannot be set for foreign key fields
+                </p>
+              )}
             </div>
 
             {/* Validations Section */}
@@ -1039,6 +1254,15 @@ export default function EntitySetup({
           </>
         )}
       </div>
+
+      {/* Add ForeignKeyModal */}
+      <ForeignKeyModal
+        isOpen={isForeignKeyModalOpen}
+        onClose={() => setIsForeignKeyModalOpen(false)}
+        onSelect={handleForeignKeySelect}
+        currentTable={entityName}
+        initialValues={currentAttribute.references}
+      />
     </div>
   );
 }

@@ -121,8 +121,6 @@ export default function TableForm() {
     try {
       const response = await saveEntity(entity);
       showToast(response.message, 'success');
-      await generateTableRoutes({ entityName: entity.entityName, attributes: entity.attributes });
-      resetForm();
       router.push('/entities');
     } catch (error: any) {
       showToast(error.message || "Failed to save entity. Please try again.", 'error');

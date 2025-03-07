@@ -106,7 +106,7 @@ export default function ${formattedEntityName}ListPage() {
     const [recordToDelete, setRecordToDelete] = useState<string | null>(null);
 
     /**
-     * Formats date and time for display
+     * Formats date and time for displayRE
      * @param {string | Date} inputDate - Raw date input
      * @returns {string} Formatted date string
      */
@@ -160,7 +160,7 @@ export default function ${formattedEntityName}ListPage() {
             const formattedRecord = { ...record };
             DateFormatColumns.forEach(columnName => {
               if (formattedRecord[columnName]) {
-                formattedRecord[columnName] = formatDateTime(formattedRecord[columnName]);
+                formattedRecord[columnName] = formatDateTime(new Date(formattedRecord[columnName]));
               }
             });
             return formattedRecord;
@@ -266,39 +266,114 @@ export default function ${formattedEntityName}ListPage() {
      * Includes field configuration, formatting, and action buttons
      */
     const columns: GridColDef[] = [
-      ${displayableAttributes.map((attr, index) => `{
-        field: '${attr.name.replace(/\s+/g, '_')}',
-        headerName: \`\${formatFieldLabel('${attr.name}')}\`,
-        flex: 1,
-        sortable: ${attr.sortable !== false},
-        disableColumnMenu: true,
-        ${index === 0 ? `
-        renderCell: (params) => (
-          <div
-            className="cursor-pointer text-primary hover:underline"
-            onClick={() => router.push(\`/${config.entityName.toLowerCase()}/\${params.row.id}\`)}
-          >
-            {params.value}
-          </div>
-        ),
-        ` : ''}
-        ${attr.dataType.toLowerCase() === 'number' ? `
-        type: 'number',
-        align: 'right',
-        headerAlign: 'right',
-        ` : ''}
-        ${attr.dataType.toLowerCase() === 'boolean' ? `
-        type: 'boolean',
-        ` : ''}
-        ${attr.dataType.toLowerCase() === 'date' ? `
-        type: 'date',
-        valueFormatter: (params: { value: string | null }) => {
-          if (!params.value) return '';
-          return formatDateTime(params.value);
-        },
-        ` : ''}
-      }`).join(',')}
-      ,{
+      ${displayableAttributes.map((attr) => {
+        const baseColumn = `{
+          field: '${attr.name.replace(/\s+/g, '_')}',
+          headerName: formatFieldLabel('${attr.name}'),
+          flex: 1,
+          sortable: true,
+          disableColumnMenu: true
+        }`;
+
+        // First column gets the click handler
+        if (attr === displayableAttributes[0]) {
+          return `{
+            ...${baseColumn},
+            renderCell: (params) => (
+              <div
+                className="cursor-pointer text-primary hover:underline"
+                onClick={() => router.push(\`/${config.entityName.toLowerCase()}/\${params.row.id}\`)}
+              >
+                {params.value}
+              </div>
+            )
+          }`;
+        }
+
+        // Handle different data types
+        switch (attr.dataType.toLowerCase()) {
+          case 'date':
+            return `{
+              ...${baseColumn},
+              width: 110,
+              resizable: false,
+              headerAlign: 'left',
+              align: 'left',
+              renderCell: (params) => {
+                if (!params.row['${attr.name}']) return '';
+                const date = new Date(params.row['${attr.name}']);
+                return date.toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric'
+                });
+              }
+            }`;
+
+          case 'datetime':
+          case 'timestamp':
+            return `{
+              ...${baseColumn},
+              width: 160,
+              resizable: false,
+              headerAlign: 'left',
+              align: 'left',
+              renderCell: (params) => {
+                if (!params.row['${attr.name}']) return '';
+                const date = new Date(params.row['${attr.name}']);
+                return date.toLocaleString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true
+                });
+              }
+            }`;
+
+          case 'time':
+            return `{
+              ...${baseColumn},
+              width: 100,
+              resizable: false,
+              headerAlign: 'left',
+              align: 'left',
+              renderCell: (params) => {
+                if (!params.row.${attr.name}) return '';
+                const time = new Date(\`1970-01-01T\${params.row.${attr.name}}\`);
+                return time.toLocaleTimeString('en-US', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true
+                });
+              }
+            }`;
+
+          case 'number':
+          case 'decimal':
+          case 'float':
+          case 'integer':
+            return `{
+              ...${baseColumn},
+              type: 'number',
+              align: 'left',
+              headerAlign: 'left'
+            }`;
+
+          case 'boolean':
+            return `{
+              ...${baseColumn},
+              type: 'boolean',
+              align: 'left',
+              headerAlign: 'left'
+            }`;
+
+          default:
+            return baseColumn;
+        }
+      }).join(',\n        ')},
+      {
         field: 'actions',
         headerName: 'Actions',
         width: 100,
@@ -412,3 +487,7 @@ export default function ${formattedEntityName}ListPage() {
   }
 `
 } 
+
+function formatFieldLabel(name: string) {
+  throw new Error('Function not implemented.');
+}
