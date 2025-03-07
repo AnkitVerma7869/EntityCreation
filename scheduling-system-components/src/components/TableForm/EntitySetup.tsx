@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Pencil, Trash2 } from 'lucide-react';
+import { X, Pencil, Trash2 } from 'lucide-react';
 import { Attribute, ConfigData } from "../../interfaces/types";
 import * as yup from "yup";
 import { entityNameSchema, attributeNameSchema, dataTypeSchema, sizeSchema, precisionSchema, enumValuesSchema } from '../../schemas/validationSchemas';
@@ -12,6 +13,7 @@ import {
   hasPrimaryKey 
 } from '../../helpers/helpers';
 import { useEntitySetup } from '../../hooks/useEntitySetup';
+import ForeignKeyModal from '../Modals/ForeignKeyModal';
 import ForeignKeyModal from '../Modals/ForeignKeyModal';
 
 // Props interface for EntitySetup component
@@ -71,8 +73,10 @@ export default function EntitySetup({
     errors,
     setErrors,
     handleEntitySelect: originalHandleEntitySelect,
+    handleEntitySelect: originalHandleEntitySelect,
     handleEntityNameChange,
     handleDefaultValueChange,
+    handleConstraintsChange: originalHandleConstraintsChange,
     handleConstraintsChange: originalHandleConstraintsChange,
     handleValidationsChange,
     handleAddAttribute: originalHandleAddAttribute
@@ -109,12 +113,25 @@ export default function EntitySetup({
 
   // Add this with other state declarations at the top
   const [isDataTypeDisabled, setIsDataTypeDisabled] = useState<boolean>(false);
+  const [isDataTypeDisabled, setIsDataTypeDisabled] = useState<boolean>(false);
 
   // Add this state to track if options are editable
   const [isOptionsEditable, setIsOptionsEditable] = useState(true);
 
   // Add reserved column names constant
   const RESERVED_COLUMNS = ['id','created_at', 'updated_at'];
+
+  // Add state for foreign key modal
+  const [isForeignKeyModalOpen, setIsForeignKeyModalOpen] = useState(false);
+
+  // Add state for primary key information
+  const [primaryKeyInfo, setPrimaryKeyInfo] = useState<{
+    name: string;
+    dataType: string;
+  } | null>(null);
+
+  // Add state for foreign key data type
+  const [foreignKeyDataType, setForeignKeyDataType] = useState<string | null>(null);
 
   // Add state for foreign key modal
   const [isForeignKeyModalOpen, setIsForeignKeyModalOpen] = useState(false);
@@ -393,6 +410,11 @@ export default function EntitySetup({
       return;
     }
     
+    if (currentAttribute.constraints.includes('foreign key')) {
+      showToast("Cannot change data type for foreign key fields", 'error');
+      return;
+    }
+    
     setErrors({}); 
     const newDataType = e.target.value.toLowerCase();
     
@@ -411,6 +433,7 @@ export default function EntitySetup({
         dataType: newDataType,
         size: typeProps.needsSize ? currentAttribute.size : null,
         precision: typeProps.needsPrecision ? currentAttribute.precision : null,
+        validations: {}
         validations: {}
       });
 
@@ -457,6 +480,7 @@ export default function EntitySetup({
   };
 
   // Update resetInputs to ensure isDataTypeDisabled is false by default
+  // Update resetInputs to ensure isDataTypeDisabled is false by default
   const resetInputs = () => {
     const defaultInputType = 'text';
     const defaultConfig = configData.inputTypes[defaultInputType];
@@ -465,6 +489,9 @@ export default function EntitySetup({
     setInputOptions([]);
     setNewOption('');
     clearValidationErrors();
+    setIsDataTypeDisabled(false); // Ensure this is false by default
+    setPrimaryKeyInfo(null);
+    setForeignKeyDataType(null);
     setIsDataTypeDisabled(false); // Ensure this is false by default
     setPrimaryKeyInfo(null);
     setForeignKeyDataType(null);
@@ -746,8 +773,10 @@ export default function EntitySetup({
                 value={selectedInputType || 'text'}
                 onChange={handleInputTypeChange}
                 disabled={currentAttribute.constraints.includes('foreign key')}
+                disabled={currentAttribute.constraints.includes('foreign key')}
                 className={`w-full rounded border-[1.5px] ${
                   errors.inputType ? 'border-meta-1' : 'border-stroke'
+                } bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-not-allowed disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary`}
                 } bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-not-allowed disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary`}
               >
                 <option value="">Select input type</option>
@@ -1361,6 +1390,15 @@ export default function EntitySetup({
           </>
         )}
       </div>
+
+      {/* Add ForeignKeyModal */}
+      <ForeignKeyModal
+        isOpen={isForeignKeyModalOpen}
+        onClose={() => setIsForeignKeyModalOpen(false)}
+        onSelect={handleForeignKeySelect}
+        currentTable={entityName}
+        initialValues={currentAttribute.references}
+      />
 
       {/* Add ForeignKeyModal */}
       <ForeignKeyModal
