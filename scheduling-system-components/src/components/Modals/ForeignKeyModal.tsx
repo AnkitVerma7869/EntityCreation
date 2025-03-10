@@ -71,17 +71,16 @@ const ForeignKeyModal: React.FC<ForeignKeyModalProps> = ({
     if (isOpen && initialValues) {
       setSelectedTable(initialValues.table);
       setSelectedColumn(initialValues.column);
-      // Initialize cascade options based on initial values
       setCascadeOptions({
-        onDelete: initialValues.onDelete || '',
-        onUpdate: initialValues.onUpdate || ''
+        onDelete: initialValues.onDelete || 'CASCADE',
+        onUpdate: initialValues.onUpdate || 'CASCADE'
       });
       setValue('selectedTable', initialValues.table, { shouldValidate: true });
     } else if (isOpen) {
       // When opening a new modal without initial values
       setCascadeOptions({
-        onDelete: '',
-        onUpdate: ''
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       });
     }
   }, [isOpen, initialValues, setValue]);
@@ -92,8 +91,8 @@ const ForeignKeyModal: React.FC<ForeignKeyModalProps> = ({
       setSelectedTable('');
       setSelectedColumn('');
       setCascadeOptions({
-        onDelete: '',
-        onUpdate: ''
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       });
       reset();
     }
