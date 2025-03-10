@@ -131,7 +131,6 @@ export async function saveEntity(entity: Entity): Promise<{message: string, succ
         isMultiSelect: isRadioType ? false : attr.isMultiSelect,
         isEditable: attr.isEditable !== undefined ? attr.isEditable : true,
         sortable: attr.sortable !== undefined ? attr.sortable : true,
-        // Add enumType to the transformed data
         enumType: attr.inputType.endsWith('_enum') ? attr.inputType : undefined,
         enumValues: attr.dataType.toLowerCase() === 'enum' ? 
           (attr.inputType === 'gender' ? ['male', 'female', 'others'] : 
@@ -176,7 +175,7 @@ export async function saveEntity(entity: Entity): Promise<{message: string, succ
       entityName: entity.entityName,
       attributes: entity.attributes
     };
-    await generateTableRoutes(config);
+    await generateTableRoutes(config);  
     console.log('Routes generated successfully for:', entity.entityName);
   } catch (error) {
     console.error('Error generating routes:', error);

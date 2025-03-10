@@ -631,29 +631,9 @@ export default function EntitySetup({
   };
 
   // Update handleEntitySelect to fetch primary key information
-  const handleEntitySelect = async (value: string) => {
-    await originalHandleEntitySelect(value);
-    
-    if (value && value !== 'custom') {
-      try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_ENDPOINT}/api/v1/entity/all-entities`);
-        const result = await response.json();
-        
-        if (result.success) {
-          const entity = result.success.data.find((e: any) => e.name === value);
-          if (entity) {
-            setPrimaryKeyInfo({
-              name: entity.primarykeycolumnname,
-              dataType: entity.primarykeycolumndatatype
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching entity details:', error);
-      }
-    } else {
-      setPrimaryKeyInfo(null);
-    }
+  const handleEntitySelect = (value: string) => {
+    originalHandleEntitySelect(value);
+    setPrimaryKeyInfo(null);
   };
 
   return (
