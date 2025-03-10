@@ -23,6 +23,8 @@ import { Box, Paper } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { Entity } from '../../interfaces/types';
 import { Loader2 } from 'lucide-react';
+import Cookies from 'js-cookie';
+import { get } from '@/utils/apiCalls';
 
 /**
  * Props interface for TableList component
@@ -123,37 +125,64 @@ export default function TablesList({ initialData, onCreateNew }: TableListProps)
         return;
       }
 
-      // Use the original API endpoint
-      const response = await fetch(`${API_URL}/api/v1/entity/all-entities`);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        setApiError(errorData.message || 'Failed to fetch data');
-        setTables([]);
+      // Get the access token from cookies
+      const token = Cookies.get('accessToken');
+      if (!token) {
+        setApiError('Authentication required');
+        router.push('/auth/signin');
         return;
       }
 
-      const data = await response.json();
-      
-      if (data.error) {
-        setApiError(data.error);
-        setTables([]);
-        return;
-      }
-
-      // Format the data as before
-      if (data.success && Array.isArray(data.success.data)) {
-        const formattedTables = data.success.data.map((table: any) => ({
-          id: table.name.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0),
-          name: table.name,
-          numberofcolumn: table.numberofcolumn
-        }));
+      try {
+        // Use the get utility function from apiCalls with proper parameters
+        const data = await get(
+          '/api/v1/entity/all-entities', 
+          token,
+          {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        );
         
-        setTables(formattedTables);
+        // Handle the response
+        if (data.error) {
+          throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
+        }
+
+        // Format the data as before
+        if (data.success && Array.isArray(data.success.data)) {
+          const formattedTables = data.success.data.map((table: any) => ({
+            id: table.name.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0),
+            name: table.name,
+            numberofcolumn: table.numberofcolumn
+          }));
+          
+          setTables(formattedTables);
+        } else {
+          throw new Error('Invalid response format');
+        }
+      } catch (error: any) {
+        // Handle specific error types
+        let errorMessage = 'Failed to fetch tables';
+        
+        try {
+          const parsedError = JSON.parse(error.message);
+          errorMessage = parsedError.message || parsedError.error || errorMessage;
+        } catch {
+          errorMessage = error.message || errorMessage;
+        }
+
+        setApiError(errorMessage);
+        setTables([]);
+
+        // Handle authentication errors
+        if (errorMessage.includes('Unauthorized') || errorMessage.includes('Invalid token')) {
+          router.push('/auth/signin');
+        }
       }
-    } catch (error) {
-      console.error('Error fetching tables:', error);
-      setApiError('Failed to fetch');
+    } catch (error: any) {
+      console.error('Error in fetchTables:', error);
+      setApiError('An unexpected error occurred');
       setTables([]);
     } finally {
       setLoading(false);

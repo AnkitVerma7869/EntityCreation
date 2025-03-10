@@ -4,6 +4,8 @@
  */
 
 import { Entity, Attribute } from '../../../interfaces/types';
+import Cookies from 'js-cookie';
+import { get, post, put, del } from '@/utils/apiCalls';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL_ENDPOINT;
 
@@ -78,10 +80,8 @@ function generateFieldState(attr: Attribute): string {
  * @returns {string} Generated store implementation
  */
 export function generateEntityStore(config: Entity) {
-  // Format the entity name for use in identifiers
   const formattedEntityName = formatEntityName(config.entityName);
   
-  // Filter out password fields
   const nonPasswordFields = config.attributes
     .filter(attr => 
       !attr.name.toLowerCase().includes('password') && 
@@ -89,408 +89,290 @@ export function generateEntityStore(config: Entity) {
     )
     .map(attr => attr.name.replace(/\s+/g, '_'));
 
+  // Create the store template with proper escaping
   return `
-    import { create } from 'zustand';
-    import { devtools } from 'zustand/middleware';
+import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
+import Cookies from 'js-cookie';
+import { get, post, put, del } from '@/utils/apiCalls';
 
-    /**
-     * Parameters for list operations
-     */
-    interface ListParams {
-      page: number;          // Current page number
-      limit: number;         // Items per page
-      sortBy: string;        // Field to sort by
-      orderBy: 'asc' | 'desc'; // Sort direction
-      search: string;        // Search query
-      searchFields: string[]; // Fields to search in
-      returnFields: string[]; // Fields to return
-      conditions: Record<string, any>; // Additional query conditions
-    }
+/**
+ * Parameters for list operations
+ */
+interface ListParams {
+  page: number;
+  limit: number;
+  sortBy: string;
+  orderBy: 'asc' | 'desc';
+  search: string;
+  searchFields: string[];
+  returnFields: string[];
+  conditions: Record<string, any>;
+}
 
-    /**
-     * State interface for ${formattedEntityName} store
-     */
-    interface ${formattedEntityName}State {
-      // Form Data
+/**
+ * State interface for ${formattedEntityName}
+ */
+interface ${formattedEntityName}State {
+  // Form Data
+  formData: {
+    ${config.attributes
+      .map(attr => `${formatFieldName(attr.name.replace(/\s+/g, '_'))}: ${
+        attr.inputType.toLowerCase() === 'date' ? 'Date | null' :
+        attr.inputType.toLowerCase() === 'file' ? 'File[]' :
+        attr.inputType.toLowerCase() === 'select' && attr.config?.multiple ? 'string[]' :
+        attr.inputType.toLowerCase() === 'number' ? 'number' : 'string'
+      }`)
+      .join(';\n    ')}
+  };
+  
+  // UI States
+  loading: boolean;
+  error: string | null;
+  success: string | null;
+  
+  // Records
+  records: any[];
+  currentRecord: any | null;
+  
+  // Pagination and Sorting State
+  listParams: ListParams;
+  totalPages: number;
+  currentPage: number;
+  totalRecords: number;
+  
+  // Actions
+  setFormData: (data: Partial<${formattedEntityName}State['formData']>) => void;
+  resetForm: () => void;
+  setError: (error: string | null) => void;
+  setSuccess: (message: string | null) => void;
+  
+  // Field Change Handlers
+  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleDateChange: (field: string, value: Date | null) => void;
+  handleFileChange: (field: string, files: File[]) => void;
+  handleSelectChange: (field: string, value: string | string[]) => void;
+  handleRichTextChange: (field: string, content: string) => void;
+  
+  // API Actions
+  fetchRecords: (params?: Partial<ListParams>) => Promise<any[]>;
+  fetchRecord: (id: string) => Promise<any>;
+  createRecord: (data: any) => Promise<{ success: string; error: string | null }>;
+  updateRecord: (id: string, data: any) => Promise<{ success: string | null; error: string | null }>;
+  deleteRecord: (id: string) => Promise<{ success: string; error: string | null }>;
+}
+
+/**
+ * Zustand store for ${formattedEntityName}
+ */
+export const use${formattedEntityName}Store = create<${formattedEntityName}State>()(
+  devtools(
+    (set, get) => ({
+      // Initial State
       formData: {
         ${config.attributes
-          .map(attr => `${formatFieldName(attr.name.replace(/\s+/g, '_'))}: ${
-            attr.inputType.toLowerCase() === 'date' ? 'Date | null' :
-            attr.inputType.toLowerCase() === 'file' ? 'File[]' :
-            attr.inputType.toLowerCase() === 'select' && attr.config?.multiple ? 'string[]' :
-            attr.inputType.toLowerCase() === 'number' ? 'number' : 'string'
-          }`)
-          .join(';\n        ')}
-      };
-      
-      // UI States
-      loading: boolean;
-      error: string | null;
-      success: string | null;
-      
-      // Records
-      records: any[];
-      currentRecord: any | null;
-      
-      // Pagination and Sorting State
-      listParams: ListParams;
-      totalPages: number;
-      currentPage: number;
-      totalRecords: number;
-      
-      // Actions
-      setFormData: (data: Partial<${formattedEntityName}State['formData']>) => void;
-      resetForm: () => void;
-      setError: (error: string | null) => void;
-      setSuccess: (message: string | null) => void;
-      
+          .map(attr => `${formatFieldName(attr.name.replace(/\s+/g, '_'))}: ${generateFieldState(attr)}`)
+          .join(',\n        ')}
+      },
+      loading: false,
+      error: null,
+      success: null,
+      records: [],
+      currentRecord: null,
+      listParams: {
+        page: 1,
+        limit: 10,
+        sortBy: 'id',
+        orderBy: 'asc',
+        search: '',
+        searchFields: ${JSON.stringify(nonPasswordFields)},
+        returnFields: ${JSON.stringify(['id', ...nonPasswordFields])},
+        conditions: {}
+      },
+      totalPages: 0,
+      currentPage: 1,
+      totalRecords: 0,
+
+      // State Setters
+      setFormData: (data) => set((state) => ({
+        formData: { ...state.formData, ...data }
+      })),
+
+      resetForm: () => set(() => ({
+        formData: {
+          ${config.attributes
+            .map(attr => `${formatFieldName(attr.name.replace(/\s+/g, '_'))}: ${generateFieldState(attr)}`)
+            .join(',\n          ')}
+        },
+        error: null,
+        success: null
+      })),
+
+      setError: (error) => set({ error }),
+      setSuccess: (success) => set({ success }),
+
       // Field Change Handlers
-      handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-      handleDateChange: (field: string, value: Date | null) => void;
-      handleFileChange: (field: string, files: File[]) => void;
-      handleSelectChange: (field: string, value: string | string[]) => void;
-      handleRichTextChange: (field: string, content: string) => void;
-      
-      // API Actions
-      fetchRecords: (params?: Partial<ListParams>) => Promise<any[]>;
-      fetchRecord: (id: string) => Promise<any>;
-      createRecord: (data: any) => Promise<{ success: string; error: string | null }>;
-      updateRecord: (id: string, data: any) => Promise<{ success: string | null; error: string | null }>;
-      deleteRecord: (id: string) => Promise<{ success: string; error: string | null }>;
-    }
-
-    /**
-     * Zustand store for ${formattedEntityName}
-     * Manages state and operations for ${formattedEntityName} entities
-     */
-    export const use${formattedEntityName}Store = create<${formattedEntityName}State>()(
-      devtools(
-        (set, get) => ({
-          // Initial State
+      handleChange: (e) => {
+        const { name, value, type } = e.target;
+        set((state) => ({
           formData: {
-            ${config.attributes
-              .map(attr => `${formatFieldName(attr.name.replace(/\s+/g, '_'))}: ${generateFieldState(attr)}`)
-              .join(',\n')}
-          },
-          loading: false,
-          error: null,
-          success: null,
-          records: [],
-          currentRecord: null,
-          listParams: {
-            page: 1,
-            limit: 10,
-            sortBy: 'id',
-            orderBy: 'asc',
-            search: '',
-            searchFields: ${JSON.stringify(nonPasswordFields)},
-            returnFields: ${JSON.stringify(['id', ...nonPasswordFields])},
-            conditions: {}
-          },
-          totalPages: 0,
-          currentPage: 1,
-          totalRecords: 0,
-
-          // State Setters
-          setFormData: (data) => set((state) => ({
-            formData: { ...state.formData, ...data }
-          })),
-
-          resetForm: () => set((state) => ({
-            formData: {
-              ${config.attributes
-                .map(attr => `${formatFieldName(attr.name.replace(/\s+/g, '_'))}: ${generateFieldState(attr)}`)
-                .join(',\n              ')}
-            },
-            error: null,
-            success: null
-          })),
-
-          setError: (error) => set({ error }),
-          setSuccess: (success) => set({ success }),
-
-          // Field Change Handlers
-          handleChange: (e) => {
-            const { name, value, type } = e.target;
-            set((state) => ({
-              formData: {
-                ...state.formData,
-                [name]: type === 'number' ? Number(value) : value
-              }
-            }));
-          },
-
-          handleDateChange: (field, value) => set((state) => ({
-            formData: { ...state.formData, [field]: value }
-          })),
-
-          handleFileChange: (field, files) => set((state) => ({
-            formData: { ...state.formData, [field]: files }
-          })),
-
-          handleSelectChange: (field, value) => set((state) => ({
-            formData: { ...state.formData, [field]: value }
-          })),
-
-          handleRichTextChange: (field, content) => set((state) => ({
-            formData: { ...state.formData, [field]: content }
-          })),
-
-             // API Actions
-          /**
-           * Fetches records with pagination and filtering
-           * @param {Partial<ListParams>} params - Optional parameters for the query
-           * @returns {Promise<any[]>} List of records
-           */
-          fetchRecords: async (params?: Partial<ListParams>) => {
-            set({ loading: true, error: null });
-            try {
-              const currentParams = get().listParams;
-              const requestParams = {
-                ...currentParams,
-                ...params
-              };
-              
-              set({ listParams: requestParams });
-
-              const response = await fetch(\`${API_URL}/api/v1/${config.entityName.toLowerCase()}/\`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Accept': 'application/json'
-                },
-                body: JSON.stringify(requestParams)
-              });
-              
-              const data = await response.json();
-              
-              if (!response.ok) {
-                const errorMessage = data.error?.message || data.message || 'Failed to fetch records';
-                set({ error: errorMessage, records: [] });
-                return [];
-              }
-              
-              if (!data.success || !data.success.data) {
-                const errorMessage = 'Invalid response format from server';
-                set({ error: errorMessage, records: [] });
-                return [];
-              }
-              
-              const records = data.success.data.result || [];
-              
-              set({ 
-                records,
-                totalPages: data.success.data.totalPages || 0,
-                currentPage: data.success.data.currentPage || 1,
-                totalRecords: data.success.data.totalRecords || 0,
-                error: null 
-              });
-              
-              return records;
-            } catch (error: any) {
-              const errorMessage = error.message || 'An unexpected error occurred while fetching records';
-              set({ 
-                error: errorMessage,
-                records: [],
-                totalPages: 0,
-                currentPage: 1,
-                totalRecords: 0
-              });
-              return [];
-            } finally {
-              set({ loading: false });
-            }
-          },
-
-          /**
-           * Fetches a single record by ID
-           * @param {string} id - Record ID
-           * @returns {Promise<any>} Record data or null
-           */
-          fetchRecord: async (id: string) => {
-            set({ loading: true, error: null })
-            try {
-              const response = await fetch(\`${API_URL}/api/v1/${config.entityName.toLowerCase()}/\${id}\`)
-              const result = await response.json();
-
-              if (!response.ok) throw new Error(result.message || 'Failed to fetch record');
-              
-              // Extract data from success response
-              if (result.success && result.success.data && result.success.data[0]) {
-                const record = result.success.data[0];
-                set({ currentRecord: record, formData: record });
-                return record;
-              }
-              return null;
-            } catch (error: any) {
-              set({ error: error.message });
-              return null;
-            } finally {
-              set({ loading: false });
-            }
-          },
-
-          /**
-           * Creates a new record
-           * @param {any} data - Record data
-           * @returns {Promise<{ success: string; error: string | null }>} Result with success/error message
-           */
-          createRecord: async (data: any) => {
-            set({ loading: true, error: null });    
-            try {
-              const response = await fetch(\`${API_URL}/api/v1/${config.entityName.toLowerCase()}/create\`, {
-                method: 'POST',
-                headers: { 
-                  'Content-Type': 'application/json',
-                  'Accept': 'application/json'
-                },
-                body: JSON.stringify(data)
-              });
-
-              const result = await response.json();
-              
-              if (result.success) {
-                // Handle successful response
-                const successMessage = result.success.message;
-                set({ 
-                  success: successMessage,
-                  error: null
-                });
-                return { success: successMessage, error: null };
-              } else {
-                // Handle error response
-                const errorMessage = typeof result.error === 'object' 
-                  ? result.error.message || JSON.stringify(result.error)
-                  : result.error || 'Failed to create record';
-                
-                set({ 
-                  error: errorMessage,
-                  success: null
-                });
-                return { error: errorMessage, success: null };
-              }
-            } catch (error: any) {
-              const errorMessage = error.message || 'An unexpected error occurred';
-              set({ 
-                error: errorMessage,
-                success: null
-              });
-              return { error: errorMessage, success: null };
-            } finally {
-              set({ loading: false });
-            }
-          },
-
-          /**
-           * Updates an existing record
-           * @param {string} id - ID of record to update
-           * @param {any} data - Updated record data
-           * @returns {Promise<{ success: string; error: string | null }>} Result with success/error message
-           */
-          updateRecord: async (id: string, data: any) => {
-            set({ loading: true, error: null });
-            try {
-              // Send PUT request to update endpoint
-              const response = await fetch(\`${API_URL}/api/v1/${config.entityName.toLowerCase()}/\${id}\`, {
-                method: 'PUT',
-                headers: { 
-                  'Content-Type': 'application/json',
-                  'Accept': 'application/json'
-                },
-                body: JSON.stringify(data)
-              });
-              const result = await response.json();
-              
-              if (result.success) {
-                // Handle successful response
-                const successMessage = result.success.message;
-                set({ 
-                  success: successMessage,
-                  error: null 
-                });
-                return { success: successMessage, error: null };
-              } else {
-                // Handle error response
-                const errorMessage = typeof result.error === 'object'
-                  ? result.error.message || JSON.stringify(result.error)
-                  : result.error || 'Failed to update record';
-                
-                set({ 
-                  error: errorMessage,
-                  success: null 
-                });
-                return { error: errorMessage, success: null };
-              }
-            } catch (error: any) {
-              // Handle unexpected errors
-              const errorMessage = error.message || 'An unexpected error occurred';
-              set({ 
-                error: errorMessage,
-                success: null 
-              });
-              return { error: errorMessage, success: null };
-            } finally {
-              set({ loading: false });
-            }
-          },
-
-          /**
-           * Deletes an existing record
-           * @param {string} id - ID of record to delete
-           * @returns {Promise<{ success: string; error: string | null }>} Result with success/error message
-           */
-          deleteRecord: async (id: string) => {
-            set({ loading: true, error: null });
-            try {
-              // Send DELETE request
-              const response = await fetch(\`${API_URL}/api/v1/${config.entityName.toLowerCase()}/\${id}\`, {
-                method: 'DELETE',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Accept': 'application/json'
-                }
-              });
-              const result = await response.json();
-              
-              if (result.success) {
-                // Handle successful response
-                const successMessage = result.success.message || 'Record deleted successfully';
-                set({ 
-                  success: successMessage,
-                  error: null,
-                  // Update local state by filtering out deleted record
-                  records: get().records.filter(record => record.id !== id)
-                });
-                return { success: successMessage, error: null };
-              } else {
-                // Handle error response
-                const errorMessage = typeof result.error === 'object'
-                  ? result.error.message || JSON.stringify(result.error)
-                  : result.error || 'Failed to delete record';
-                
-                set({ 
-                  error: errorMessage,
-                  success: null 
-                });
-                return { error: errorMessage, success: null };
-              }
-            } catch (error: any) {
-              // Handle unexpected errors
-              const errorMessage = error.message || 'An unexpected error occurred';
-              set({ 
-                error: errorMessage,
-                success: null 
-              });
-              return { error: errorMessage, success: null };
-            } finally {
-              set({ loading: false });
-            }
+            ...state.formData,
+            [name]: type === 'number' ? Number(value) : value
           }
-        }),
-        { name: \`${formattedEntityName}Store\` }
-      )
-    );
-  `;
+        }));
+      },
+
+      handleDateChange: (field, value) => set((state) => ({
+        formData: { ...state.formData, [field]: value }
+      })),
+
+      handleFileChange: (field, files) => set((state) => ({
+        formData: { ...state.formData, [field]: files }
+      })),
+
+      handleSelectChange: (field, value) => set((state) => ({
+        formData: { ...state.formData, [field]: value }
+      })),
+
+      handleRichTextChange: (field, content) => set((state) => ({
+        formData: { ...state.formData, [field]: content }
+      })),
+
+      // API Actions
+      fetchRecords: async (params) => {
+        set({ loading: true, error: null });
+        try {
+          const token = Cookies.get('accessToken');
+          if (!token) throw new Error('Authentication token not found');
+
+          const currentParams = get().listParams;
+          const requestParams = { ...currentParams, ...params };
+          set({ listParams: requestParams });
+
+          const data = await post('/api/v1/${config.entityName.toLowerCase()}', token, requestParams);
+          
+          if (!data.success?.data) throw new Error('Invalid response format');
+          
+          const records = data.success.data.result || [];
+          set({ 
+            records,
+            totalPages: data.success.data.totalPages || 0,
+            currentPage: data.success.data.currentPage || 1,
+            totalRecords: data.success.data.totalRecords || 0,
+            error: null 
+          });
+          
+          return records;
+        } catch (error: any) {
+          const errorMessage = error.message || 'Failed to fetch records';
+          set({ error: errorMessage, records: [], totalPages: 0, currentPage: 1, totalRecords: 0 });
+          return [];
+        } finally {
+          set({ loading: false });
+        }
+      },
+
+      fetchRecord: async (id) => {
+        set({ loading: true, error: null });
+        try {
+          const token = Cookies.get('accessToken');
+          if (!token) throw new Error('Authentication token not found');
+
+          const data = await get('/api/v1/${config.entityName.toLowerCase()}/' + id, token);
+          
+          if (data.success?.data?.[0]) {
+            const record = data.success.data[0];
+            set({ currentRecord: record, formData: record });
+            return record;
+          }
+          return null;
+        } catch (error: any) {
+          set({ error: error.message });
+          return null;
+        } finally {
+          set({ loading: false });
+        }
+      },
+
+      createRecord: async (data) => {
+        set({ loading: true, error: null });
+        try {
+          const token = Cookies.get('accessToken');
+          if (!token) throw new Error('Authentication token not found');
+
+          const result = await post('/api/v1/${config.entityName.toLowerCase()}/create', token, data);
+          
+          if (result.success) {
+            const message = result.success.message;
+            set({ success: message, error: null });
+            return { success: message, error: null };
+          }
+          
+          throw new Error(result.error || 'Failed to create record');
+        } catch (error: any) {
+          const message = error.message;
+          set({ error: message, success: null });
+          return { error: message, success: null };
+        } finally {
+          set({ loading: false });
+        }
+      },
+
+      updateRecord: async (id, data) => {
+        set({ loading: true, error: null });
+        try {
+          const token = Cookies.get('accessToken');
+          if (!token) throw new Error('Authentication token not found');
+
+          const result = await put('/api/v1/${config.entityName.toLowerCase()}/' + id, token, data);
+          
+          if (result.success) {
+            const message = result.success.message;
+            set({ success: message, error: null });
+            return { success: message, error: null };
+          }
+          
+          throw new Error(result.error || 'Failed to update record');
+        } catch (error: any) {
+          const message = error.message;
+          set({ error: message, success: null });
+          return { error: message, success: null };
+        } finally {
+          set({ loading: false });
+        }
+      },
+
+      deleteRecord: async (id) => {
+        set({ loading: true, error: null });
+        try {
+          const token = Cookies.get('accessToken');
+          if (!token) throw new Error('Authentication token not found');
+
+          const result = await del('/api/v1/${config.entityName.toLowerCase()}/' + id, token, null);
+          
+          if (result.success) {
+            const message = result.success.message || 'Record deleted successfully';
+            set({ 
+              success: message, 
+              error: null,
+              records: get().records.filter(record => record.id !== id)
+            });
+            return { success: message, error: null };
+          }
+          
+          throw new Error(result.error || 'Failed to delete record');
+        } catch (error: any) {
+          const message = error.message;
+          set({ error: message, success: null });
+          return { error: message, success: null };
+        } finally {
+          set({ loading: false });
+        }
+      }
+    }),
+    { name: '${formattedEntityName}Store' }
+  )
+);`;
 }
 
 /**
