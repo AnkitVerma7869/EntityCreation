@@ -1,6 +1,8 @@
+'use client';
+
 // Add ISR configuration
 export const dynamic = 'force-dynamic';
-export const revalidate = 7200; // Server-side revalidation only
+export const revalidate = 1200; // Server-side revalidation only
 
 /**
  * TableList Module
@@ -27,6 +29,7 @@ import { Loader2 } from 'lucide-react';
  * @interface TableListProps
  */
 interface TableListProps {
+  initialData?: Entity[]; // Add prop for initial data
   onCreateNew?: () => void;  // Optional callback when creating new table
 }
 
@@ -80,11 +83,26 @@ const CustomErrorOverlay = (props: { message: string | null }) => (
  * @param {TableListProps} props - Component props
  * @returns {JSX.Element} Rendered component
  */
-export default function TablesList({ onCreateNew }: TableListProps) {
+export default function TablesList({ initialData, onCreateNew }: TableListProps) {
   // State management
   const router = useRouter();
-  const [tables, setTables] = useState<Entity[]>([]);
-  const [columns, setColumns] = useState<GridColDef[]>([]);
+  const [tables, setTables] = useState<Entity[]>(initialData || []);
+  const [columns] = useState<GridColDef[]>([
+    { 
+      field: 'name', 
+      headerName: 'Table Name', 
+      flex: 1,
+      filterable: true,
+      sortable: true,
+    },
+    { 
+      field: 'numberofcolumn', 
+      headerName: 'Total Fields', 
+      flex: 1,
+      filterable: true,
+      sortable: true,
+    }
+  ]);
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
     pageSize: 10,
     page: 0,
@@ -105,6 +123,7 @@ export default function TablesList({ onCreateNew }: TableListProps) {
         return;
       }
 
+      // Use the original API endpoint
       const response = await fetch(`${API_URL}/api/v1/entity/all-entities`);
       
       if (!response.ok) {
@@ -122,26 +141,7 @@ export default function TablesList({ onCreateNew }: TableListProps) {
         return;
       }
 
-      // Define columns for the data grid
-      const dynamicColumns: GridColDef[] = [
-        { 
-          field: 'name', 
-          headerName: 'Table Name', 
-          flex: 1,
-          filterable: true,
-          sortable: true,
-        },
-        { 
-          field: 'numberofcolumn', 
-          headerName: 'Total Fields', 
-          flex: 1,
-          filterable: true,
-          sortable: true,
-        }
-      ];
-      
-      setColumns(dynamicColumns);
-
+      // Format the data as before
       if (data.success && Array.isArray(data.success.data)) {
         const formattedTables = data.success.data.map((table: any) => ({
           id: table.name.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0),
@@ -169,10 +169,15 @@ export default function TablesList({ onCreateNew }: TableListProps) {
     router.push(`/${entityName}`);
   };
 
-  // Single useEffect for data fetching
   useEffect(() => {
     fetchTables();
   }, [API_URL]);
+
+  // Add refresh function
+  const refreshData = async () => {
+    await fetchTables();
+    router.refresh(); // Refresh the current route
+  };
 
   return (
     <div className="space-y-6">

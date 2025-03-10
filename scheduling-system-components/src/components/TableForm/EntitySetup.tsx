@@ -167,8 +167,8 @@ export default function EntitySetup({
     });
   };
 
-  // Update handleInputTypeChange
-  const handleInputTypeChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+  // Update handleInputTypeChange to only disable data type for specific cases
+  const handleInputTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     if (currentAttribute.constraints.includes('foreign key')) {
       showToast("Cannot change input type for foreign key fields", 'error');
       return;
@@ -185,36 +185,6 @@ export default function EntitySetup({
       const isPredefinedEnum = inputType.endsWith('_enum');
       setIsOptionsEditable(!isPredefinedEnum);
 
-      // Handle primary key input type changes
-      if (currentAttribute.constraints.includes('primary key')) {
-        if (inputType === 'number') {
-          setCurrentAttribute({
-            ...currentAttribute,
-            inputType,
-            dataType: 'integer',
-            size: null,
-            precision: null,
-            options: [],
-            validations: {},
-            isMultiSelect: false,
-            defaultValue: null
-          });
-        } else if (inputType === 'text') {
-          setCurrentAttribute({
-            ...currentAttribute,
-            inputType,
-            dataType: 'varchar', // Default to varchar for text input
-            size: null,
-            precision: null,
-            options: [],
-            validations: {},
-            isMultiSelect: false,
-            defaultValue: null
-          });
-        }
-        return;
-      }
-
       if (['select', 'radio', 'checkbox'].includes(inputType)) {
         setCurrentAttribute({
           ...currentAttribute,
@@ -227,7 +197,7 @@ export default function EntitySetup({
           isMultiSelect: false
         });
         setIsMultiSelect(false);
-        setIsDataTypeDisabled(true);
+        setIsDataTypeDisabled(true); // Only disable for these specific input types
       } else {
         setCurrentAttribute({
           ...currentAttribute,
@@ -244,7 +214,7 @@ export default function EntitySetup({
         if (inputTypeConfig.options) {
           setInputOptions(inputTypeConfig.options);
         }
-        setIsDataTypeDisabled(false);
+        setIsDataTypeDisabled(inputTypeConfig.isDataTypeFixed || false); // Only disable if explicitly set
       }
     }
   };
@@ -606,27 +576,31 @@ export default function EntitySetup({
         return;
       }
 
-      // Set default input type and data type for primary key
-      const defaultInputType = 'number';
-      setSelectedInputType(defaultInputType);
-      
-      setCurrentAttribute({ 
-        ...currentAttribute, 
-        constraints: [value],
-        inputType: defaultInputType,
-        dataType: 'integer', // Set a default data type for primary key
-        size: null,  // Reset size
-        precision: null,  // Reset precision
-        defaultValue: null  // Reset default value
-      });
+      // Set the data type based on primary key info if available
+      if (primaryKeyInfo) {
+        setCurrentAttribute({
+          ...currentAttribute,
+          constraints: [value],
+          dataType: primaryKeyInfo.dataType.toLowerCase()
+        });
+        setIsDataTypeDisabled(true); // Disable data type selection for primary key
+      } else {
+        setCurrentAttribute({ 
+          ...currentAttribute, 
+          constraints: [value]
+        });
+        setIsDataTypeDisabled(false); // Enable data type selection if no primary key info
+      }
     } else if (value === 'foreign key') {
       setIsForeignKeyModalOpen(true);
+      setIsDataTypeDisabled(true); // Disable data type selection for foreign key
       return;
     } else {
       setCurrentAttribute({ 
         ...currentAttribute, 
         constraints: value ? [value] : []
       });
+      setIsDataTypeDisabled(false); // Re-enable data type selection for other constraints
     }
   };
 
@@ -751,33 +725,14 @@ export default function EntitySetup({
                 } bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-not-allowed disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary`}
               >
                 <option value="">Select input type</option>
-                {Object.entries(configData.inputTypes).map(([type, config]) => {
-                  const isPrimaryKeySelected = currentAttribute.constraints.includes('primary key');
-                  const allowedPrimaryKeyInputTypes = ['text', 'number'];
-                  
-                  // Only show valid options for primary key
-                  if (isPrimaryKeySelected && !allowedPrimaryKeyInputTypes.includes(type)) {
-                    return null;
-                  }
-                  
-                  return (
-                    <option 
-                      key={type} 
-                      value={type}
-                      className={isPrimaryKeySelected && !allowedPrimaryKeyInputTypes.includes(type) ? disabledOptionClass : ''}
-                    >
-                      {type.charAt(0).toUpperCase() + type.slice(1)} ({config.htmlType})
-                    </option>
-                  );
-                })}
+                {Object.entries(configData.inputTypes).map(([type, config]) => (
+                  <option key={type} value={type}>
+                    {type.charAt(0).toUpperCase() + type.slice(1)} ({config.htmlType})
+                  </option>
+                ))}
               </select>
               {errors.inputType && (
                 <p className="text-meta-1 text-sm mt-1">{errors.inputType}</p>
-              )}
-              {currentAttribute.constraints.includes('primary key') && (
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Primary key only supports text and number input types
-                </p>
               )}
               {currentAttribute.constraints.includes('foreign key') && (
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -794,57 +749,28 @@ export default function EntitySetup({
               <select
                 value={currentAttribute.dataType}
                 onChange={handleDataTypeChange}               
-                disabled={currentAttribute.constraints.includes('foreign key')}
+                disabled={isDataTypeDisabled}
                 className={`w-full rounded border-[1.5px] ${
                   errors.dataType ? 'border-meta-1' : 'border-stroke'
                 } bg-transparent px-3 py-2 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-not-allowed disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary`}
               >
                 <option value="">Select data type</option>
-                {configData.dataTypes.map((type) => {
-                  const lowerType = type.toLowerCase();
-                  const isPrimaryKeySelected = currentAttribute.constraints.includes('primary key');
-                  
-                  // Handle primary key data type restrictions
-                  let isDisabled = false;
-                  if (isPrimaryKeySelected) {
-                    if (selectedInputType === 'number') {
-                      isDisabled = lowerType !== 'integer';
-                    } else if (selectedInputType === 'text') {
-                      isDisabled = !['varchar', 'uuid'].includes(lowerType);
-                    } else {
-                      isDisabled = true;
-                    }
-                  }
-                  
-                  // Only show relevant options for primary key based on input type
-                  if (isPrimaryKeySelected) {
-                    if (selectedInputType === 'number' && lowerType !== 'integer') return null;
-                    if (selectedInputType === 'text' && !['varchar', 'uuid'].includes(lowerType)) return null;
-                  }
-                  
-                  return (
-                    <option 
-                      key={type} 
-                      value={type}
-                      disabled={isDisabled}
-                      className={isDisabled ? disabledOptionClass : ''}
-                    >
-                      {type.charAt(0).toUpperCase() + type.slice(1).toLowerCase()}
-                    </option>
-                  );
-                })}
+                {configData.dataTypes.map((type) => (
+                  <option 
+                    key={type} 
+                    value={type}
+                    disabled={!!primaryKeyInfo && currentAttribute.constraints.includes('primary key') && type.toLowerCase() !== primaryKeyInfo.dataType.toLowerCase()}
+                  >
+                    {type.charAt(0).toUpperCase() + type.slice(1).toLowerCase()}
+                  </option>
+                ))}
               </select> 
               {errors.dataType && (
                 <p className="text-meta-1 text-sm mt-1">{errors.dataType}</p>
               )}
-              {currentAttribute.constraints.includes('primary key') && selectedInputType === 'number' && (
+              {primaryKeyInfo && currentAttribute.constraints.includes('primary key') && (
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Primary key with number input type only supports INTEGER data type
-                </p>
-              )}
-              {currentAttribute.constraints.includes('primary key') && selectedInputType === 'text' && (
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Primary key with text input type only supports VARCHAR and UUID data types
+                  Primary key data type is set to {primaryKeyInfo.dataType.toLowerCase()}
                 </p>
               )}
               {foreignKeyDataType && currentAttribute.constraints.includes('foreign key') && (
@@ -1012,28 +938,16 @@ export default function EntitySetup({
                   min="1"
                   value={currentAttribute.size || ''}
                   onChange={handleSizeChange}
-                  disabled={!needsSizeValidation(currentAttribute.dataType) || 
-                    (currentAttribute.constraints.includes('primary key') && currentAttribute.dataType.toLowerCase() !== 'varchar')}
+                  disabled={!needsSizeValidation(currentAttribute.dataType)}
                   className={`w-full rounded border-[1.5px] ${
                     errors.size ? 'border-meta-1' : 'border-stroke'
                   } bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
-                    !needsSizeValidation(currentAttribute.dataType) || 
-                    (currentAttribute.constraints.includes('primary key') && currentAttribute.dataType.toLowerCase() !== 'varchar') ? 'opacity-50' : ''
+                    !needsSizeValidation(currentAttribute.dataType) ? 'opacity-50' : ''
                   }`}
                   placeholder={needsSizeValidation(currentAttribute.dataType) ? 'Enter size' : 'Not applicable'}
                 />
                 {errors.size && (
                   <p className="text-meta-1 text-sm mt-1">{errors.size}</p>
-                )}
-                {currentAttribute.constraints.includes('primary key') && currentAttribute.dataType.toLowerCase() !== 'varchar' && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Size cannot be set for primary key fields
-                  </p>
-                )}
-                {currentAttribute.constraints.includes('primary key') && currentAttribute.dataType.toLowerCase() === 'varchar' && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Size is required for VARCHAR primary key
-                  </p>
                 )}
               </div>
 
@@ -1041,7 +955,7 @@ export default function EntitySetup({
               <div>
                 <label className="mb-1 block text-sm font-medium text-black dark:text-white">
                   Precision
-                  {needsPrecision(currentAttribute.dataType) && !currentAttribute.constraints.includes('primary key') && 
+                  {needsPrecision(currentAttribute.dataType) && 
                     <span className="text-meta-1">*</span>
                   }
                 </label>
@@ -1049,21 +963,16 @@ export default function EntitySetup({
                   type="number"
                   value={currentAttribute.precision ?? ''}
                   onChange={handlePrecisionChange}
-                  disabled={!needsPrecision(currentAttribute.dataType) || currentAttribute.constraints.includes('primary key')}
+                  disabled={!needsPrecision(currentAttribute.dataType)}
                   className={`w-full rounded border-[1.5px] ${
                     errors.precision ? 'border-meta-1' : 'border-stroke'
                   } bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
-                    !needsPrecision(currentAttribute.dataType) || currentAttribute.constraints.includes('primary key') ? 'opacity-50' : ''
+                    !needsPrecision(currentAttribute.dataType) ? 'opacity-50' : ''
                   }`}
-                  placeholder={needsPrecision(currentAttribute.dataType) && !currentAttribute.constraints.includes('primary key') ? 'Enter precision' : 'Not applicable'}
+                  placeholder={needsPrecision(currentAttribute.dataType) ? 'Enter precision' : 'Not applicable'}
                 />
                 {errors.precision && (
                   <p className="text-meta-1 text-sm mt-1">{errors.precision}</p>
-                )}
-                {currentAttribute.constraints.includes('primary key') && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Precision cannot be set for primary key fields
-                  </p>
                 )}
               </div>
             </div>
@@ -1094,17 +1003,6 @@ export default function EntitySetup({
                   );
                 })}
               </select>
-
-              {/* Display Primary Key Message */}
-              {currentAttribute.constraints.includes('primary key') && (
-                <div className="mt-2 p-2 bg-primary/10 text-primary rounded">
-                  <p className="text-sm">
-                    {currentAttribute.inputType === 'number' 
-                      ? 'Primary key with number input type will use INTEGER data type automatically' 
-                      : 'Primary key selected - size, precision, and default value are disabled'}
-                  </p>
-                </div>
-              )}
 
               {/* Display Foreign Key Reference Information */}
               {currentAttribute.constraints.includes('foreign key') && currentAttribute.references && (
@@ -1191,18 +1089,13 @@ export default function EntitySetup({
                 type="text"
                 value={currentAttribute.defaultValue || ''}
                 onChange={handleDefaultValueChange}
-                disabled={currentAttribute.constraints.includes('foreign key') || currentAttribute.constraints.includes('primary key')}
+                disabled={currentAttribute.constraints.includes('foreign key')}
                 className="w-full rounded border-[1.5px] border-stroke bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-not-allowed disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                 placeholder="Enter default value"
               />
               {currentAttribute.constraints.includes('foreign key') && (
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                   Default value cannot be set for foreign key fields
-                </p>
-              )}
-              {currentAttribute.constraints.includes('primary key') && (
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Default value cannot be set for primary key fields
                 </p>
               )}
             </div>
