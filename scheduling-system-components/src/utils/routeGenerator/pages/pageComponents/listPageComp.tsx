@@ -65,6 +65,7 @@ import { Edit, Trash2, Search, Plus, X } from 'lucide-react';
 import { DataGrid, GridColDef, GridOverlay, gridClasses, GridToolbar } from '@mui/x-data-grid';
 import Box from '@mui/material/Box';
 import DeleteConfirmationModal from '@/components/models/DeleteConfirmationModal';
+import { toast } from 'react-hot-toast';
 
 /**
  * Formats a field name for display in column headers
@@ -166,9 +167,11 @@ export default function ${formattedEntityName}ListPage() {
             return formattedRecord;
           });
 
+          // Update records state with the new data
           setRecords(formattedRecords);
         } catch (err) {
           console.error('Error in fetchData:', err);
+          toast.error('Failed to fetch records',err);
         }
       };
 
@@ -194,25 +197,41 @@ export default function ${formattedEntityName}ListPage() {
     };
 
     const handleDelete = async () => {
-      if (recordToDelete) {
-        try {
-          await deleteRecord(recordToDelete);
-          // First update local state for immediate feedback
+      if (!recordToDelete) return;
+
+      try {
+        const result = await deleteRecord(recordToDelete);
+        
+        if (result.success) {
+          // Show success message
+          toast.success(result.success);
+          // Close modal after successful deletion
+          closeDeleteModal();
+          
+          // Remove the deleted record from the current records
           setRecords(prevRecords => prevRecords.filter(record => record.id !== recordToDelete));
-          // Then fetch fresh data from server
+          
+          // If this was the last record on the current page and not the first page,
+          // go to the previous page
+          if (records.length === 1 && page > 1) {
+            setPage(prev => prev - 1);
+          }
+          
+          // Refresh the data from the server
           await fetchRecords({
-            page,
+            page: records.length === 1 && page > 1 ? page - 1 : page,
             limit: pageSize,
             sortBy: sortField,
             orderBy: sortOrder,
             search: searchTerm
           });
-          // Close modal after everything is done
-          closeDeleteModal();
-        } catch (error) {
-          console.error('Error deleting record:', error);
-          // Optionally add error handling UI feedback here
+        } else if (result.error) {
+          // Throw error to be caught by the modal
+          throw new Error(result.error);
         }
+      } catch (error) {
+        // Re-throw the error to be handled by the modal
+        throw error;
       }
     };
 

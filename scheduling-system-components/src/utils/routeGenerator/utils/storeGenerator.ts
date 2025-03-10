@@ -156,7 +156,7 @@ export function generateEntityStore(config: Entity) {
       fetchRecord: (id: string) => Promise<any>;
       createRecord: (data: any) => Promise<{ success: string; error: string | null }>;
       updateRecord: (id: string, data: any) => Promise<{ success: string | null; error: string | null }>;
-      deleteRecord: (id: string) => Promise<boolean>;
+      deleteRecord: (id: string) => Promise<{ success: string; error: string | null }>;
     }
 
     /**
@@ -437,7 +437,7 @@ export function generateEntityStore(config: Entity) {
           /**
            * Deletes an existing record
            * @param {string} id - ID of record to delete
-           * @returns {Promise<boolean>} True if deletion was successful
+           * @returns {Promise<{ success: string; error: string | null }>} Result with success/error message
            */
           deleteRecord: async (id: string) => {
             set({ loading: true, error: null });
@@ -452,18 +452,36 @@ export function generateEntityStore(config: Entity) {
               });
               const result = await response.json();
               
-              // Throw error if response not OK
-              if (!response.ok) throw new Error(result.error || 'Failed to delete record');
-              
-              // Update local state by filtering out deleted record
-              set((state) => ({
-                records: state.records.filter(record => record.id !== id),
-                success: 'Record deleted successfully'
-              }));
-              return true;
+              if (result.success) {
+                // Handle successful response
+                const successMessage = result.success.message || 'Record deleted successfully';
+                set({ 
+                  success: successMessage,
+                  error: null,
+                  // Update local state by filtering out deleted record
+                  records: get().records.filter(record => record.id !== id)
+                });
+                return { success: successMessage, error: null };
+              } else {
+                // Handle error response
+                const errorMessage = typeof result.error === 'object'
+                  ? result.error.message || JSON.stringify(result.error)
+                  : result.error || 'Failed to delete record';
+                
+                set({ 
+                  error: errorMessage,
+                  success: null 
+                });
+                return { error: errorMessage, success: null };
+              }
             } catch (error: any) {
-              set({ error: error.message });
-              return false;
+              // Handle unexpected errors
+              const errorMessage = error.message || 'An unexpected error occurred';
+              set({ 
+                error: errorMessage,
+                success: null 
+              });
+              return { error: errorMessage, success: null };
             } finally {
               set({ loading: false });
             }
