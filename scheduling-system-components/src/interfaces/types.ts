@@ -97,4 +97,11 @@ export interface ConfigData {
       enumType?: string;
     }
   };      
+}
+
+export interface ApiMethods {
+  get: (url: string, token: string, headers?: Record<string, string>) => Promise<any>;
+  post: (url: string, token: string, body: any, headers?: Record<string, string>) => Promise<any>;
+  put: (url: string, token: string, body: any, headers?: Record<string, string>) => Promise<any>;
+  delete: (url: string, token: string, body: any, headers?: Record<string, string>) => Promise<any>;
 } 

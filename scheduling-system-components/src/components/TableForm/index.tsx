@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from "react";
 import toast , { Toaster } from 'react-hot-toast';
-import { Attribute, Entity, ConfigData } from "../../interfaces/types";
+import { Attribute, Entity, ConfigData, ApiMethods } from "../../interfaces/types";
 import { initialAttributeState, fetchEntityConfig, saveEntity} from "../../utils/utilstableform";
 import { generateTableRoutes } from '../../utils/routeGenerator';
 import EntitySetup from "./EntitySetup";
@@ -45,7 +45,11 @@ const FullPageLoader = () => (
   </div>
 );
 
-export default function TableForm() {
+interface TableFormProps {
+  apiMethods: ApiMethods;
+}
+
+export default function TableForm({ apiMethods }: TableFormProps) {
   // Configuration state
   const [loading, setLoading] = useState(true);
   const [configData, setConfigData] = useState<ConfigData>({
@@ -119,7 +123,7 @@ export default function TableForm() {
 
     setIsSaving(true);
     try {
-      const response = await saveEntity(entity);
+      const response = await saveEntity(entity, apiMethods);
       showToast(response.message, 'success');
       router.push('/entities');
     } catch (error: any) {

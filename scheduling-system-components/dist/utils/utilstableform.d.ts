@@ -34,6 +34,7 @@ export declare function fetchEntityConfig(): Promise<ConfigData>;
  * - Generates frontend routes
  * - Provides error handling
  *
+ *
  * @param {Entity} entity - Entity configuration to save
  * @returns {Promise<{message: string, success: boolean}>} API response
  * @throws {Error} If API call or route generation fails

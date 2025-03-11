@@ -50,11 +50,16 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.initialAttributeState = exports.formatArrayToString = void 0;
 exports.fetchEntityConfig = fetchEntityConfig;
 exports.saveEntity = saveEntity;
 var routeGenerator_1 = require("./routeGenerator");
+var js_cookie_1 = __importDefault(require("js-cookie"));
+var apiCalls_1 = require("@/utils/apiCalls");
 // API endpoint from environment variables
 var API_URL = process.env.NEXT_PUBLIC_API_URL_ENDPOINT;
 /**
@@ -112,6 +117,45 @@ function fetchEntityConfig() {
     });
 }
 /**
+ * Updates the sidebar routes through the API
+ * @param entityName - Name of the entity to add to routes
+ */
+function updateSidebarRoutes(entityName) {
+    return __awaiter(this, void 0, void 0, function () {
+        var response, data, error_1;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 3, , 4]);
+                    return [4 /*yield*/, fetch('/api/sidebar-routes', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ entityName: entityName }),
+                        })];
+                case 1:
+                    response = _a.sent();
+                    if (!response.ok) {
+                        throw new Error('Failed to update sidebar routes');
+                    }
+                    return [4 /*yield*/, response.json()];
+                case 2:
+                    data = _a.sent();
+                    if (!data.success) {
+                        throw new Error(data.error || 'Failed to update sidebar routes');
+                    }
+                    return [3 /*break*/, 4];
+                case 3:
+                    error_1 = _a.sent();
+                    console.error('Error updating sidebar routes:', error_1);
+                    throw new Error('Failed to update sidebar routes');
+                case 4: return [2 /*return*/];
+            }
+        });
+    });
+}
+/**
  * Saves entity configuration to backend API and generates corresponding routes
  *
  * Features:
@@ -121,24 +165,33 @@ function fetchEntityConfig() {
  * - Generates frontend routes
  * - Provides error handling
  *
+ *
  * @param {Entity} entity - Entity configuration to save
  * @returns {Promise<{message: string, success: boolean}>} API response
  * @throws {Error} If API call or route generation fails
  */
 function saveEntity(entity) {
     return __awaiter(this, void 0, void 0, function () {
-        var configData, transformedEntity, response, responseData, config, error_1;
+        var token, configData_1, transformedEntity, response, config, error_2, error_3, errorMessage, parsedError;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, fetchEntityConfig()];
+                case 0:
+                    token = js_cookie_1.default.get('accessToken');
+                    if (!token) {
+                        throw new Error('Authentication required');
+                    }
+                    _a.label = 1;
                 case 1:
-                    configData = _a.sent();
+                    _a.trys.push([1, 9, , 10]);
+                    return [4 /*yield*/, fetchEntityConfig()];
+                case 2:
+                    configData_1 = _a.sent();
                     transformedEntity = {
                         entityName: entity.entityName,
                         attributes: entity.attributes.map(function (attr) {
                             var _a, _b, _c;
                             // Get input type configuration
-                            var inputTypeConfig = configData === null || configData === void 0 ? void 0 : configData.inputTypes[attr.inputType];
+                            var inputTypeConfig = configData_1 === null || configData_1 === void 0 ? void 0 : configData_1.inputTypes[attr.inputType];
                             // Handle special input types
                             var inputType = attr.inputType === 'gender' ? 'radio' : attr.inputType;
                             var isRadioType = inputType === 'radio';
@@ -158,7 +211,6 @@ function saveEntity(entity) {
                                 isMultiSelect: isRadioType ? false : attr.isMultiSelect,
                                 isEditable: attr.isEditable !== undefined ? attr.isEditable : true,
                                 sortable: attr.sortable !== undefined ? attr.sortable : true,
-                                // Add enumType to the transformed data
                                 enumType: attr.inputType.endsWith('_enum') ? attr.inputType : undefined,
                                 enumValues: attr.dataType.toLowerCase() === 'enum' ?
                                     (attr.inputType === 'gender' ? ['male', 'female', 'others'] :
@@ -176,25 +228,19 @@ function saveEntity(entity) {
                     };
                     // Log transformed entity for debugging
                     console.log('Saving Entity:', transformedEntity);
-                    return [4 /*yield*/, fetch("".concat(API_URL, "/api/v1/entity/create"), {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify(transformedEntity),
+                    return [4 /*yield*/, (0, apiCalls_1.post)('/api/v1/entity/create', token, transformedEntity, {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
                         })];
-                case 2:
-                    response = _a.sent();
-                    return [4 /*yield*/, response.json()];
                 case 3:
-                    responseData = _a.sent();
+                    response = _a.sent();
                     // Handle API errors
-                    if ('error' in responseData) {
-                        throw new Error(responseData.error.message);
+                    if ('error' in response) {
+                        throw new Error(typeof response.error === 'string' ? response.error : JSON.stringify(response.error));
                     }
                     _a.label = 4;
                 case 4:
-                    _a.trys.push([4, 6, , 7]);
+                    _a.trys.push([4, 7, , 8]);
                     config = {
                         entityName: entity.entityName,
                         attributes: entity.attributes
@@ -202,16 +248,31 @@ function saveEntity(entity) {
                     return [4 /*yield*/, (0, routeGenerator_1.generateTableRoutes)(config)];
                 case 5:
                     _a.sent();
-                    console.log('Routes generated successfully for:', entity.entityName);
-                    return [3 /*break*/, 7];
+                    return [4 /*yield*/, updateSidebarRoutes(entity.entityName)];
                 case 6:
-                    error_1 = _a.sent();
-                    console.error('Error generating routes:', error_1);
-                    throw new Error(error_1 instanceof Error ? error_1.message : 'Unknown error');
-                case 7: return [2 /*return*/, {
-                        message: responseData.success.message,
+                    _a.sent();
+                    console.log('Routes generated successfully for:', entity.entityName);
+                    return [3 /*break*/, 8];
+                case 7:
+                    error_2 = _a.sent();
+                    console.error('Error generating routes:', error_2);
+                    throw new Error(error_2 instanceof Error ? error_2.message : 'Unknown error');
+                case 8: return [2 /*return*/, {
+                        message: response.success.message,
                         success: true
                     }];
+                case 9:
+                    error_3 = _a.sent();
+                    errorMessage = 'Failed to save entity';
+                    try {
+                        parsedError = JSON.parse(error_3.message);
+                        errorMessage = parsedError.message || parsedError.error || errorMessage;
+                    }
+                    catch (_b) {
+                        errorMessage = error_3.message || errorMessage;
+                    }
+                    throw new Error(errorMessage);
+                case 10: return [2 /*return*/];
             }
         });
     });
