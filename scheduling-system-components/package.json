@@ -1,11 +1,12 @@
 {
     "name": "dex-un-table-generator",
-    "version": "3.1.42",
+    "version": "3.1.40",
     "description": "Dynamic table and route generation components for Next.js",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
-        "build": "tsc"
+        "build": "tsc",
+        "prepare": "npm run build"
     },
     "peerDependencies": {
         "@emotion/react": "^11.14.0",
@@ -16,12 +17,9 @@
         "next": "^14.0.0",
         "react": "^18.0.0",
         "react-dom": "^18.0.0",
-        "react-hot-toast": "^2.4.0",
-        "js-cookie": "^3.0.6"
-        
+        "react-hot-toast": "^2.4.0"
     },
     "devDependencies": {
-        "@types/js-cookie": "^3.0.6",
         "@types/node": "^20.0.0",
         "@types/react": "^18.0.0",
         "@types/react-dom": "^18.0.0",
