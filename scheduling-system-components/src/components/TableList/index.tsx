@@ -21,9 +21,10 @@ import {
 } from '@mui/x-data-grid';
 import { Box, Paper } from '@mui/material';
 import { useRouter } from 'next/navigation';
-import { Entity, ApiMethods } from '../../interfaces/types';
+import { Entity } from '../../interfaces/types';
 import { Loader2 } from 'lucide-react';
 import Cookies from 'js-cookie';
+import { get } from '@/utils/apiCalls';
 
 /**
  * Props interface for TableList component
@@ -32,7 +33,6 @@ import Cookies from 'js-cookie';
 interface TableListProps {
   initialData?: Entity[]; // Add prop for initial data
   onCreateNew?: () => void;  // Optional callback when creating new table
-  apiMethods: ApiMethods;
 }
 
 /**
@@ -85,11 +85,7 @@ const CustomErrorOverlay = (props: { message: string | null }) => (
  * @param {TableListProps} props - Component props
  * @returns {JSX.Element} Rendered component
  */
-export default function TablesList({ 
-  initialData, 
-  onCreateNew,
-  apiMethods 
-}: TableListProps) {
+export default function TablesList({ initialData, onCreateNew }: TableListProps) {
   // State management
   const router = useRouter();
   const [tables, setTables] = useState<Entity[]>(initialData || []);
@@ -129,6 +125,7 @@ export default function TablesList({
         return;
       }
 
+      // Get the access token from cookies
       const token = Cookies.get('accessToken');
       if (!token) {
         setApiError('Authentication required');
@@ -136,41 +133,57 @@ export default function TablesList({
         return;
       }
 
-      const data = await apiMethods.get(
-        '/api/v1/entity/all-entities', 
-        token,
-        {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
-      );
-      
-      // Handle the response
-      if (data.error) {
-        throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
-      }
-
-      // Format the data as before
-      if (data.success && Array.isArray(data.success.data)) {
-        const formattedTables = data.success.data.map((table: any) => ({
-          id: table.name.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0),
-          name: table.name,
-          numberofcolumn: table.numberofcolumn
-        }));
+      try {
+        // Use the get utility function from apiCalls with proper parameters
+        const data = await get(
+          '/api/v1/entity/all-entities', 
+          token,
+          {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        );
         
-        setTables(formattedTables);
-      } else {
-        throw new Error('Invalid response format');
+        // Handle the response
+        if (data.error) {
+          throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
+        }
+
+        // Format the data as before
+        if (data.success && Array.isArray(data.success.data)) {
+          const formattedTables = data.success.data.map((table: any) => ({
+            id: table.name.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0),
+            name: table.name,
+            numberofcolumn: table.numberofcolumn
+          }));
+          
+          setTables(formattedTables);
+        } else {
+          throw new Error('Invalid response format');
+        }
+      } catch (error: any) {
+        // Handle specific error types
+        let errorMessage = 'Failed to fetch tables';
+        
+        try {
+          const parsedError = JSON.parse(error.message);
+          errorMessage = parsedError.message || parsedError.error || errorMessage;
+        } catch {
+          errorMessage = error.message || errorMessage;
+        }
+
+        setApiError(errorMessage);
+        setTables([]);
+
+        // Handle authentication errors
+        if (errorMessage.includes('Unauthorized') || errorMessage.includes('Invalid token')) {
+          router.push('/auth/signin');
+        }
       }
     } catch (error: any) {
       console.error('Error in fetchTables:', error);
       setApiError('An unexpected error occurred');
       setTables([]);
-
-      // Handle authentication errors
-      if (error.message.includes('Unauthorized') || error.message.includes('Invalid token')) {
-        router.push('/auth/signin');
-      }
     } finally {
       setLoading(false);
     }

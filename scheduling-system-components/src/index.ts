@@ -11,8 +11,6 @@ export { default as TableList } from './components/TableList';
 // Utility exports
 export { generateTableRoutes } from './utils/routeGenerator';
 export { saveTableConfig } from './utils/tableGenerator';
-export { createClientApiMethods } from './utils/clientApiMethods';
-export type { ApiMethods } from './interfaces/types';
 
 // Type exports
 export type {

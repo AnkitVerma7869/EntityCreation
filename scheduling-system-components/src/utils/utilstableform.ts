@@ -6,6 +6,7 @@
 import { Attribute, ConfigData, Entity } from '../interfaces/types';
 import { generateTableRoutes } from './routeGenerator';
 import Cookies from 'js-cookie';
+import { post } from '@/utils/apiCalls';
 
 // API endpoint from environment variables
 const API_URL = process.env.NEXT_PUBLIC_API_URL_ENDPOINT;
@@ -114,7 +115,6 @@ async function updateSidebarRoutes(entityName: string) {
     throw new Error('Failed to update sidebar routes');
   }
 }
-
 /**
  * Saves entity configuration to backend API and generates corresponding routes
  * 
@@ -127,19 +127,11 @@ async function updateSidebarRoutes(entityName: string) {
  * 
  * 
  * @param {Entity} entity - Entity configuration to save
- * @param {Object} apiMethods - API methods for making requests
  * @returns {Promise<{message: string, success: boolean}>} API response
  * @throws {Error} If API call or route generation fails
  */
-export async function saveEntity(
-  entity: Entity,
-  apiMethods: {
-    get: (url: string, token: string, headers?: Record<string, string>) => Promise<any>;
-    post: (url: string, token: string, body: any, headers?: Record<string, string>) => Promise<any>;
-    put: (url: string, token: string, body: any, headers?: Record<string, string>) => Promise<any>;
-    delete: (url: string, token: string, body: any, headers?: Record<string, string>) => Promise<any>;
-  }
-): Promise<{message: string, success: boolean}> {
+export async function saveEntity(entity: Entity): Promise<{message: string, success: boolean}> {
+  // Get the access token from cookies
   const token = Cookies.get('accessToken');
   if (!token) {
     throw new Error('Authentication required');
@@ -199,7 +191,7 @@ export async function saveEntity(
     console.log('Saving Entity:', transformedEntity);
    
     // Use post utility function from apiCalls
-    const response = await apiMethods.post(
+    const response = await post(
       '/api/v1/entity/create',
       token,
       transformedEntity,
@@ -221,7 +213,8 @@ export async function saveEntity(
         attributes: entity.attributes
       };
       await generateTableRoutes(config);
-       console.log('Routes generated successfully for:', entity.entityName);
+      await updateSidebarRoutes(entity.entityName);
+      console.log('Routes generated successfully for:', entity.entityName);
     } catch (error) {
       console.error('Error generating routes:', error);
       throw new Error(error instanceof Error ? error.message : 'Unknown error');
