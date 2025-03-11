@@ -35,10 +35,11 @@ export declare function fetchEntityConfig(): Promise<ConfigData>;
  * - Provides error handling
  *
  * @param {Entity} entity - Entity configuration to save
+ * @param {string} token - Authentication token
  * @returns {Promise<{message: string, success: boolean}>} API response
  * @throws {Error} If API call or route generation fails
  */
-export declare function saveEntity(entity: Entity): Promise<{
+export declare function saveEntity(entity: Entity, token: string): Promise<{
     message: string;
     success: boolean;
 }>;

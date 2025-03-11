@@ -85,7 +85,7 @@ var CustomErrorOverlay = function (props) { return ((0, jsx_runtime_1.jsx)(x_dat
  */
 function TablesList(_a) {
     var _this = this;
-    var initialData = _a.initialData, onCreateNew = _a.onCreateNew;
+    var initialData = _a.initialData, onCreateNew = _a.onCreateNew, token = _a.token;
     // State management
     var router = (0, navigation_1.useRouter)();
     var _b = (0, react_1.useState)(initialData || []), tables = _b[0], setTables = _b[1];
@@ -125,7 +125,12 @@ function TablesList(_a) {
                         setApiError('API URL is not configured');
                         return [2 /*return*/];
                     }
-                    return [4 /*yield*/, fetch("".concat(API_URL, "/api/v1/entity/all-entities"))];
+                    return [4 /*yield*/, fetch("".concat(API_URL, "/api/v1/entity/all-entities"), {
+                            headers: {
+                                'Authorization': "Bearer ".concat(token),
+                                'Content-Type': 'application/json'
+                            }
+                        })];
                 case 1:
                     response = _a.sent();
                     if (!!response.ok) return [3 /*break*/, 3];

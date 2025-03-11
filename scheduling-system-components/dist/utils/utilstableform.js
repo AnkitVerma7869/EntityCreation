@@ -122,10 +122,11 @@ function fetchEntityConfig() {
  * - Provides error handling
  *
  * @param {Entity} entity - Entity configuration to save
+ * @param {string} token - Authentication token
  * @returns {Promise<{message: string, success: boolean}>} API response
  * @throws {Error} If API call or route generation fails
  */
-function saveEntity(entity) {
+function saveEntity(entity, token) {
     return __awaiter(this, void 0, void 0, function () {
         var configData, transformedEntity, response, responseData, config, error_1;
         return __generator(this, function (_a) {
@@ -180,6 +181,7 @@ function saveEntity(entity) {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
+                                'Authorization': "Bearer ".concat(token)
                             },
                             body: JSON.stringify(transformedEntity),
                         })];

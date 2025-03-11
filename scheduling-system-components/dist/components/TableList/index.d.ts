@@ -8,6 +8,7 @@ import { Entity } from '../../interfaces/types';
 interface TableListProps {
     initialData?: Entity[];
     onCreateNew?: () => void;
+    token: string;
 }
 /**
  * TablesList Component
@@ -24,5 +25,5 @@ interface TableListProps {
  * @param {TableListProps} props - Component props
  * @returns {JSX.Element} Rendered component
  */
-export default function TablesList({ initialData, onCreateNew }: TableListProps): import("react/jsx-runtime").JSX.Element;
+export default function TablesList({ initialData, onCreateNew, token }: TableListProps): import("react/jsx-runtime").JSX.Element;
 export {};

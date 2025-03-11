@@ -1,3 +1,6 @@
 import React from 'react';
-declare const ManageEntities: React.FC;
+interface ManageEntitiesProps {
+    token: string;
+}
+declare const ManageEntities: React.FC<ManageEntitiesProps>;
 export default ManageEntities;
