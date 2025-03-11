@@ -112,17 +112,18 @@ var ForeignKeyModal = function (_a) {
         if (isOpen && initialValues) {
             setSelectedTable(initialValues.table);
             setSelectedColumn(initialValues.column);
+            // Initialize cascade options based on initial values
             setCascadeOptions({
-                onDelete: initialValues.onDelete || 'CASCADE',
-                onUpdate: initialValues.onUpdate || 'CASCADE'
+                onDelete: initialValues.onDelete || '',
+                onUpdate: initialValues.onUpdate || ''
             });
             setValue('selectedTable', initialValues.table, { shouldValidate: true });
         }
         else if (isOpen) {
             // When opening a new modal without initial values
             setCascadeOptions({
-                onDelete: 'CASCADE',
-                onUpdate: 'CASCADE'
+                onDelete: '',
+                onUpdate: ''
             });
         }
     }, [isOpen, initialValues, setValue]);
@@ -132,8 +133,8 @@ var ForeignKeyModal = function (_a) {
             setSelectedTable('');
             setSelectedColumn('');
             setCascadeOptions({
-                onDelete: 'CASCADE',
-                onUpdate: 'CASCADE'
+                onDelete: '',
+                onUpdate: ''
             });
             reset();
         }

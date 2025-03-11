@@ -4,8 +4,7 @@
  */
 
 import { Entity, Attribute } from '../../../interfaces/types';
-import Cookies from 'js-cookie';
-import { get, post, put, del } from '@/utils/apiCalls';
+
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL_ENDPOINT;
 
@@ -77,6 +76,7 @@ function generateFieldState(attr: Attribute): string {
  * - Form reset functionality
  * 
  * @param {Entity} config - Entity configuration
+ * @param {Object} apiMethods - API methods for CRUD operations
  * @returns {string} Generated store implementation
  */
 export function generateEntityStore(config: Entity) {
@@ -94,7 +94,8 @@ export function generateEntityStore(config: Entity) {
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import Cookies from 'js-cookie';
-import { get, post, put, del } from '@/utils/apiCalls';
+import { createClientApiMethods } from '@/components/TableForm/src/utils/clientApiMethods';
+import { ApiMethods } from '@/components/TableForm/src/interfaces/types';
 
 /**
  * Parameters for list operations
@@ -165,7 +166,7 @@ interface ${formattedEntityName}State {
 /**
  * Zustand store for ${formattedEntityName}
  */
-export const use${formattedEntityName}Store = create<${formattedEntityName}State>()(
+export const create${formattedEntityName}Store = (apiMethods: ApiMethods) => create<${formattedEntityName}State>()(
   devtools(
     (set, get) => ({
       // Initial State
@@ -249,9 +250,11 @@ export const use${formattedEntityName}Store = create<${formattedEntityName}State
           const requestParams = { ...currentParams, ...params };
           set({ listParams: requestParams });
 
-          const data = await post('/api/v1/${config.entityName.toLowerCase()}', token, requestParams);
+          const data = await apiMethods.post('/api/v1/${config.entityName.toLowerCase()}', token, requestParams);
           
-          if (!data.success?.data) throw new Error('Invalid response format');
+          if (!data.success?.data) {
+            throw new Error(data.message || data.error?.message || 'Invalid response format');
+          }
           
           const records = data.success.data.result || [];
           set({ 
@@ -264,8 +267,17 @@ export const use${formattedEntityName}Store = create<${formattedEntityName}State
           
           return records;
         } catch (error: any) {
-          const errorMessage = error.message || 'Failed to fetch records';
-          set({ error: errorMessage, records: [], totalPages: 0, currentPage: 1, totalRecords: 0 });
+          const errorMessage = error.response?.data?.message || 
+                              error.response?.data?.error?.message ||
+                              error.message || 
+                              'Failed to fetch records';
+          set({ 
+            error: errorMessage, 
+            records: [], 
+            totalPages: 0, 
+            currentPage: 1, 
+            totalRecords: 0 
+          });
           return [];
         } finally {
           set({ loading: false });
@@ -278,7 +290,7 @@ export const use${formattedEntityName}Store = create<${formattedEntityName}State
           const token = Cookies.get('accessToken');
           if (!token) throw new Error('Authentication token not found');
 
-          const data = await get('/api/v1/${config.entityName.toLowerCase()}/' + id, token);
+          const data = await apiMethods.get('/api/v1/${config.entityName.toLowerCase()}/' + id, token);
           
           if (data.success?.data?.[0]) {
             const record = data.success.data[0];
@@ -300,7 +312,7 @@ export const use${formattedEntityName}Store = create<${formattedEntityName}State
           const token = Cookies.get('accessToken');
           if (!token) throw new Error('Authentication token not found');
 
-          const result = await post('/api/v1/${config.entityName.toLowerCase()}/create', token, data);
+          const result = await apiMethods.post('/api/v1/${config.entityName.toLowerCase()}/create', token, data);
           
           if (result.success) {
             const message = result.success.message;
@@ -324,7 +336,7 @@ export const use${formattedEntityName}Store = create<${formattedEntityName}State
           const token = Cookies.get('accessToken');
           if (!token) throw new Error('Authentication token not found');
 
-          const result = await put('/api/v1/${config.entityName.toLowerCase()}/' + id, token, data);
+          const result = await apiMethods.put('/api/v1/${config.entityName.toLowerCase()}/' + id, token, data);
           
           if (result.success) {
             const message = result.success.message;
@@ -348,7 +360,7 @@ export const use${formattedEntityName}Store = create<${formattedEntityName}State
           const token = Cookies.get('accessToken');
           if (!token) throw new Error('Authentication token not found');
 
-          const result = await del('/api/v1/${config.entityName.toLowerCase()}/' + id, token, null);
+          const result = await apiMethods.delete('/api/v1/${config.entityName.toLowerCase()}/' + id, token, null);
           
           if (result.success) {
             const message = result.success.message || 'Record deleted successfully';
@@ -372,7 +384,12 @@ export const use${formattedEntityName}Store = create<${formattedEntityName}State
     }),
     { name: '${formattedEntityName}Store' }
   )
-);`;
+);
+
+// Create store instance
+const baseUrl = process.env.NEXT_PUBLIC_API_URL_ENDPOINT || '';
+const apiMethods = createClientApiMethods(baseUrl);
+export const use${formattedEntityName}Store = create${formattedEntityName}Store(apiMethods);`;
 }
 
 /**
