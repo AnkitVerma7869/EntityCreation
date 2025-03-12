@@ -37,7 +37,9 @@ export const initialAttributeState: Attribute = {
   inputType: 'text',
   isReadOnly: false,
   displayInList: true,
-  references: undefined
+  references: undefined,
+  isIndexed: false,
+  indexLength: null  // Will be set to 10 for VARCHAR in component
 };
 
 /**
@@ -182,7 +184,9 @@ export async function saveEntity(entity: Entity): Promise<{message: string, succ
           },
           isReadOnly: attr.isReadOnly || false,
           displayInList: attr.displayInList !== false,
-          references: attr.references
+          references: attr.references,
+          isIndexed: attr.isIndexed || false,
+          indexLength: attr.isIndexed && attr.dataType.toLowerCase() === 'varchar' ? attr.indexLength : null
         };
       })
     };
