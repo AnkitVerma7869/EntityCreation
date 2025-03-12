@@ -35,9 +35,7 @@ export const initialAttributeState: Attribute = {
   inputType: 'text',
   isReadOnly: false,
   displayInList: true,
-  references: undefined,
-  isIndexed: false,
-  indexLength: null  // Will be set to 10 for VARCHAR in component
+  references: undefined
 };
 
 /**
@@ -68,8 +66,7 @@ interface ApiSuccessResponse {
       create: { method: string; url: string };
       list: { method: string; url: string };
       get: { method: string; url: string };
-      
-      : { method: string; url: string };
+      update: { method: string; url: string };
       delete: { method: string; url: string };
     };
   };
@@ -88,6 +85,34 @@ interface ApiErrorResponse {
 }
 
 type ApiResponse = ApiSuccessResponse | ApiErrorResponse;
+
+/**
+ * Updates the sidebar routes through the API
+ * @param entityName - Name of the entity to add to routes
+ */
+async function updateSidebarRoutes(entityName: string) {
+  try {
+    const response = await fetch('/api/sidebar-routes', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ entityName }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update sidebar routes');
+    }
+
+    const data = await response.json();
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to update sidebar routes');
+    }
+  } catch (error) {
+    console.error('Error updating sidebar routes:', error);
+    throw new Error('Failed to update sidebar routes');
+  }
+}
 
 /**
  * Saves entity configuration to backend API and generates corresponding routes
@@ -179,9 +204,10 @@ export async function saveEntity(entity: Entity, token: string): Promise<{messag
   try {
     const config = {
       entityName: entity.entityName,
-      attributes: entity.attributes        
+      attributes: entity.attributes
     };
     await generateTableRoutes(config);
+    await updateSidebarRoutes(entity.entityName);
     console.log('Routes generated successfully for:', entity.entityName);
   } catch (error) {
     console.error('Error generating routes:', error);
