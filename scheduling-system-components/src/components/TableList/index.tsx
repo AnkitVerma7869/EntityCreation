@@ -165,15 +165,6 @@ export default function TablesList({ initialData, onCreateNew, token }: TableLis
     }
   };
 
-  /**
-   * Handles row click events by navigating to the detailed view of the selected table
-   * @param {GridRowParams} params - Data grid row parameters
-   */
-  const handleRowClick = (params: GridRowParams) => {
-    const entityName = params.row.name ? params.row.name.toLowerCase() : params.row.entityName.toLowerCase();
-    router.push(`/${entityName}`);
-  };
-
   useEffect(() => {
     fetchTables();
   }, [API_URL]);
@@ -217,7 +208,6 @@ export default function TablesList({ initialData, onCreateNew, token }: TableLis
             loading={loading}
             disableRowSelectionOnClick
             autoHeight={!loading}
-            onRowClick={handleRowClick}
             slots={{
               toolbar: GridToolbar,
               loadingOverlay: CustomLoadingOverlay,
