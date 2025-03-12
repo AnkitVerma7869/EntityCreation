@@ -78,8 +78,17 @@ function generateFieldState(attr: Attribute): string {
  * @returns {string} Generated store implementation
  */
 export function generateEntityStore(config: Entity) {
+  // Format the entity name for use in identifiers
   const formattedEntityName = formatEntityName(config.entityName);
   
+  // Filter out password fields
+  const nonPasswordFields = config.attributes
+    .filter(attr => 
+      !attr.name.toLowerCase().includes('password') && 
+      attr.inputType.toLowerCase() !== 'password'
+    )
+    .map(attr => attr.name.replace(/\s+/g, '_'));
+
   return `
     import { create } from 'zustand';
     import { devtools } from 'zustand/middleware';
@@ -148,7 +157,7 @@ export function generateEntityStore(config: Entity) {
       fetchRecord: (id: string) => Promise<any>;
       createRecord: (data: any) => Promise<{ success: string; error: string | null }>;
       updateRecord: (id: string, data: any) => Promise<{ success: string | null; error: string | null }>;
-      deleteRecord: (id: string) => Promise<boolean>;
+      deleteRecord: (id: string) => Promise<{ success: string; error: string | null }>;
     }
 
     /**
@@ -175,8 +184,8 @@ export function generateEntityStore(config: Entity) {
             sortBy: 'id',
             orderBy: 'asc',
             search: '',
-            searchFields: ${JSON.stringify(config.attributes.map(attr => attr.name.replace(/\s+/g, '_')))},
-            returnFields: ${JSON.stringify(['id', ...config.attributes.map(attr => attr.name.replace(/\s+/g, '_'))])},
+            searchFields: ${JSON.stringify(nonPasswordFields)},
+            returnFields: ${JSON.stringify(['id', ...nonPasswordFields])},
             conditions: {}
           },
           totalPages: 0,
@@ -229,16 +238,33 @@ export function generateEntityStore(config: Entity) {
           })),
 
           // API Actions
+          /**
+           * Fetches records with pagination and filtering
+           * @param {Partial<ListParams>} params - Optional parameters for the query
+           * @returns {Promise<any[]>} List of records
+           */
           fetchRecords: async (params?: Partial<ListParams>) => {
+            set({ loading: true, error: null });
             try {
               const token = Cookies.get('accessToken');
               if (!token) throw new Error('Authentication required');
 
-              const response = await fetch(\`${API_URL}/api/v1/${config.entityName.toLowerCase()}\`, {
+              const currentParams = get().listParams;
+              const requestParams = {
+                ...currentParams,
+                ...params
+              };
+              
+              set({ listParams: requestParams });
+
+              const response = await fetch(\`${API_URL}/api/v1/${config.entityName.toLowerCase()}/\`, {
+                method: 'POST',
                 headers: {
-                  'Authorization': \`Bearer \${token}\`,
-                  'Content-Type': 'application/json'
-                }
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json',
+                  'Authorization': \`Bearer \${token}\`
+                },
+                body: JSON.stringify(requestParams)
               });
               
               const data = await response.json();
@@ -276,9 +302,16 @@ export function generateEntityStore(config: Entity) {
                 totalRecords: 0
               });
               return [];
+            } finally {
+              set({ loading: false });
             }
           },
 
+          /**
+           * Fetches a single record by ID
+           * @param {string} id - Record ID
+           * @returns {Promise<any>} Record data or null
+           */
           fetchRecord: async (id: string) => {
             set({ loading: true, error: null })
             try {
@@ -287,7 +320,9 @@ export function generateEntityStore(config: Entity) {
 
               const response = await fetch(\`${API_URL}/api/v1/${config.entityName.toLowerCase()}/\${id}\`, {
                 headers: {
-                  'Authorization': \`Bearer \${token}\`
+                  'Authorization': \`Bearer \${token}\`,
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json'
                 }
               });
               const result = await response.json();
@@ -309,16 +344,23 @@ export function generateEntityStore(config: Entity) {
             }
           },
 
+          /**
+           * Creates a new record
+           * @param {any} data - Record data
+           * @returns {Promise<{ success: string; error: string | null }>} Result with success/error message
+           */
           createRecord: async (data: any) => {
+            set({ loading: true, error: null });    
             try {
               const token = Cookies.get('accessToken');
               if (!token) throw new Error('Authentication required');
 
-              const response = await fetch(\`${API_URL}/api/v1/${config.entityName.toLowerCase()}\`, {
+              const response = await fetch(\`${API_URL}/api/v1/${config.entityName.toLowerCase()}/create\`, {
                 method: 'POST',
-                headers: {
-                  'Authorization': \`Bearer \${token}\`,
-                  'Content-Type': 'application/json'
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json',
+                  'Authorization': \`Bearer \${token}\`
                 },
                 body: JSON.stringify(data)
               });
@@ -352,9 +394,17 @@ export function generateEntityStore(config: Entity) {
                 success: null
               });
               return { error: errorMessage, success: null };
+            } finally {
+              set({ loading: false });
             }
           },
 
+          /**
+           * Updates an existing record
+           * @param {string} id - ID of record to update
+           * @param {any} data - Updated record data
+           * @returns {Promise<{ success: string; error: string | null }>} Result with success/error message
+           */
           updateRecord: async (id: string, data: any) => {
             set({ loading: true, error: null });
             try {
@@ -364,9 +414,10 @@ export function generateEntityStore(config: Entity) {
               // Send PUT request to update endpoint
               const response = await fetch(\`${API_URL}/api/v1/${config.entityName.toLowerCase()}/\${id}\`, {
                 method: 'PUT',
-                headers: {
-                  'Authorization': \`Bearer \${token}\`,
-                  'Content-Type': 'application/json'
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json',
+                  'Authorization': \`Bearer \${token}\`
                 },
                 body: JSON.stringify(data)
               });
@@ -405,6 +456,11 @@ export function generateEntityStore(config: Entity) {
             }
           },
 
+          /**
+           * Deletes an existing record
+           * @param {string} id - ID of record to delete
+           * @returns {Promise<{ success: string; error: string | null }>} Result with success/error message
+           */
           deleteRecord: async (id: string) => {
             set({ loading: true, error: null });
             try {
@@ -415,24 +471,43 @@ export function generateEntityStore(config: Entity) {
               const response = await fetch(\`${API_URL}/api/v1/${config.entityName.toLowerCase()}/\${id}\`, {
                 method: 'DELETE',
                 headers: {
-                  'Authorization': \`Bearer \${token}\`,
-                  'Content-Type': 'application/json'
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json',
+                  'Authorization': \`Bearer \${token}\`
                 }
               });
               const result = await response.json();
               
-              // Throw error if response not OK
-              if (!response.ok) throw new Error(result.error || 'Failed to delete record');
-              
-              // Update local state by filtering out deleted record
-              set((state) => ({
-                records: state.records.filter(record => record.id !== id),
-                success: 'Record deleted successfully'
-              }));
-              return true;
+              if (result.success) {
+                // Handle successful response
+                const successMessage = result.success.message || 'Record deleted successfully';
+                set({ 
+                  success: successMessage,
+                  error: null,
+                  // Update local state by filtering out deleted record
+                  records: get().records.filter(record => record.id !== id)
+                });
+                return { success: successMessage, error: null };
+              } else {
+                // Handle error response
+                const errorMessage = typeof result.error === 'object'
+                  ? result.error.message || JSON.stringify(result.error)
+                  : result.error || 'Failed to delete record';
+                
+                set({ 
+                  error: errorMessage,
+                  success: null 
+                });
+                return { error: errorMessage, success: null };
+              }
             } catch (error: any) {
-              set({ error: error.message });
-              return false;
+              // Handle unexpected errors
+              const errorMessage = error.message || 'An unexpected error occurred';
+              set({ 
+                error: errorMessage,
+                success: null 
+              });
+              return { error: errorMessage, success: null };
             } finally {
               set({ loading: false });
             }
