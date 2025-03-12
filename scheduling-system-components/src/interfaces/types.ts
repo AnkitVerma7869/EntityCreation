@@ -60,6 +60,8 @@ export interface Attribute {
   displayInList?: boolean;  
   enumType?: string;
   references?: IReference;
+  isIndexed?: boolean;  // New property for index
+  indexLength?: number | null;  // New property for index length
 }
 
 // Interface for reference configuration
