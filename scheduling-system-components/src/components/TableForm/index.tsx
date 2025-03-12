@@ -45,7 +45,11 @@ const FullPageLoader = () => (
   </div>
 );
 
-export default function TableForm() {
+interface TableFormProps {
+  token: string;
+}
+
+export default function TableForm({ token }: TableFormProps) {
   // Configuration state
   const [loading, setLoading] = useState(true);
   const [configData, setConfigData] = useState<ConfigData>({
@@ -119,7 +123,7 @@ export default function TableForm() {
 
     setIsSaving(true);
     try {
-      const response = await saveEntity(entity);
+      const response = await saveEntity(entity, token);
       showToast(response.message, 'success');
       router.push('/entities');
     } catch (error: any) {

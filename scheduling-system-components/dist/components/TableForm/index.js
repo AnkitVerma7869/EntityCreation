@@ -105,25 +105,26 @@ var showToast = function (message, type) {
 var LoadingState = function () { return ((0, jsx_runtime_1.jsx)("div", { className: "flex items-center justify-center min-h-screen", children: (0, jsx_runtime_1.jsx)("div", { className: "text-lg", children: "Loading..." }) })); };
 // Add FullPageLoader component
 var FullPageLoader = function () { return ((0, jsx_runtime_1.jsx)("div", { className: "fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center", children: (0, jsx_runtime_1.jsxs)("div", { className: "bg-white rounded-lg p-8 flex flex-col items-center space-y-3 shadow-lg", children: [(0, jsx_runtime_1.jsx)(lucide_react_1.Loader2, { className: "h-8 w-8 animate-spin text-primary" }), (0, jsx_runtime_1.jsx)("p", { className: "text-primary font-medium", children: "Saving Entity..." })] }) })); };
-function TableForm() {
+function TableForm(_a) {
     var _this = this;
+    var token = _a.token;
     // Configuration state
-    var _a = (0, react_1.useState)(true), loading = _a[0], setLoading = _a[1];
-    var _b = (0, react_1.useState)({
+    var _b = (0, react_1.useState)(true), loading = _b[0], setLoading = _b[1];
+    var _c = (0, react_1.useState)({
         entities: {},
         dataTypes: [],
         constraints: [],
         validations: [],
         inputTypes: {}
-    }), configData = _b[0], setConfigData = _b[1];
+    }), configData = _c[0], setConfigData = _c[1];
     // Form state management
-    var _c = (0, react_1.useState)(""), entityName = _c[0], setEntityName = _c[1];
-    var _d = (0, react_1.useState)([]), attributes = _d[0], setAttributes = _d[1];
-    var _e = (0, react_1.useState)(utilstableform_1.initialAttributeState), currentAttribute = _e[0], setCurrentAttribute = _e[1];
-    var _f = (0, react_1.useState)(false), isCustomEntity = _f[0], setIsCustomEntity = _f[1];
-    var _g = (0, react_1.useState)(""), selectedEntity = _g[0], setSelectedEntity = _g[1];
-    var _h = (0, react_1.useState)(null), editingIndex = _h[0], setEditingIndex = _h[1];
-    var _j = (0, react_1.useState)(false), isSaving = _j[0], setIsSaving = _j[1];
+    var _d = (0, react_1.useState)(""), entityName = _d[0], setEntityName = _d[1];
+    var _e = (0, react_1.useState)([]), attributes = _e[0], setAttributes = _e[1];
+    var _f = (0, react_1.useState)(utilstableform_1.initialAttributeState), currentAttribute = _f[0], setCurrentAttribute = _f[1];
+    var _g = (0, react_1.useState)(false), isCustomEntity = _g[0], setIsCustomEntity = _g[1];
+    var _h = (0, react_1.useState)(""), selectedEntity = _h[0], setSelectedEntity = _h[1];
+    var _j = (0, react_1.useState)(null), editingIndex = _j[0], setEditingIndex = _j[1];
+    var _k = (0, react_1.useState)(false), isSaving = _k[0], setIsSaving = _k[1];
     var router = (0, navigation_1.useRouter)();
     // Load initial configuration data
     (0, react_1.useEffect)(function () {
@@ -188,7 +189,7 @@ function TableForm() {
                     _a.label = 1;
                 case 1:
                     _a.trys.push([1, 3, 4, 5]);
-                    return [4 /*yield*/, (0, utilstableform_1.saveEntity)(entity)];
+                    return [4 /*yield*/, (0, utilstableform_1.saveEntity)(entity, token)];
                 case 2:
                     response = _a.sent();
                     showToast(response.message, 'success');
