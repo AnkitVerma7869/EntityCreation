@@ -1162,6 +1162,81 @@ export default function EntitySetup({
               )}
             </div>
 
+            {/* Index Checkbox and Length */}
+            <div className="space-y-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="isIndexed"
+                    checked={currentAttribute.isIndexed || false}
+                    onChange={(e) => {
+                      const dataType = currentAttribute.dataType.toLowerCase();
+                      const showLengthInput = ['varchar', 'char', 'text', 'json', 'jsonb', 'uuid'].includes(dataType);
+                      setCurrentAttribute({
+                        ...currentAttribute,
+                        isIndexed: e.target.checked,
+                        // Set default index length to 10 for supported types when checkbox is checked
+                        indexLength: e.target.checked && showLengthInput ? 10 : null
+                      });
+                    }}
+                    className="form-checkbox h-4 w-4 text-primary rounded border-stroke"
+                  />
+                  <label htmlFor="isIndexed" className="text-sm font-medium text-black dark:text-white">
+                    Create Index
+                  </label>
+                </div>
+              </div>
+              
+              {currentAttribute.isIndexed && 
+               ['varchar', 'char', 'text', 'json', 'jsonb', 'uuid'].includes(currentAttribute.dataType.toLowerCase()) && (
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-black dark:text-white">
+                    Index Length 
+                  </label>
+                  <input
+                    type="number"
+                    value={currentAttribute.indexLength === null ? '' : currentAttribute.indexLength}
+                    onChange={(e) => {
+                      const value = e.target.value === '' ? null : parseInt(e.target.value);
+                      const dataType = currentAttribute.dataType.toLowerCase();
+                      
+                      // Only check size constraint for varchar and char
+                      if (['varchar', 'char'].includes(dataType) && currentAttribute.size) {
+                        if (value && value > currentAttribute.size) {
+                          showToast(`Index length cannot be greater than field size (${currentAttribute.size})`, 'error');
+                          return;
+                        }
+                      }
+
+                      setCurrentAttribute({
+                        ...currentAttribute,
+                        indexLength: value // Allow null values
+                      });
+                    }}
+                    onBlur={(e) => {
+                      // If the field is empty or invalid when losing focus, set to default 10
+                      if (!currentAttribute.indexLength) {
+                        setCurrentAttribute({
+                          ...currentAttribute,
+                          indexLength: 10
+                        });
+                      }
+                    }}
+                    min="1"
+                    max={['varchar', 'char'].includes(currentAttribute.dataType.toLowerCase()) ? currentAttribute.size || undefined : undefined}
+                    className="w-full rounded border-[1.5px] border-stroke bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                    placeholder="Enter index length"
+                  />
+                  {['varchar', 'char'].includes(currentAttribute.dataType.toLowerCase()) && currentAttribute.size && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Maximum allowed length: {currentAttribute.size}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Default Value */}
             <div>
               <label className="mb-1 block text-sm font-medium text-black dark:text-white">

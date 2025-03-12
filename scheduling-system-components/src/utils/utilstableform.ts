@@ -35,7 +35,9 @@ export const initialAttributeState: Attribute = {
   inputType: 'text',
   isReadOnly: false,
   displayInList: true,
-  references: undefined
+  references: undefined,
+  isIndexed: false,
+  indexLength: null  // Will be set to 10 for VARCHAR in component
 };
 
 /**
@@ -66,7 +68,8 @@ interface ApiSuccessResponse {
       create: { method: string; url: string };
       list: { method: string; url: string };
       get: { method: string; url: string };
-      update: { method: string; url: string };
+      
+      : { method: string; url: string };
       delete: { method: string; url: string };
     };
   };
@@ -176,7 +179,7 @@ export async function saveEntity(entity: Entity, token: string): Promise<{messag
   try {
     const config = {
       entityName: entity.entityName,
-      attributes: entity.attributes
+      attributes: entity.attributes        
     };
     await generateTableRoutes(config);
     console.log('Routes generated successfully for:', entity.entityName);
