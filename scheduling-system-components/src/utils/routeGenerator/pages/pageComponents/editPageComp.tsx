@@ -27,6 +27,27 @@ function formatEntityName(name: string): string {
 }
 
 /**
+ * Checks if the entity has a custom primary key
+ * 
+ * @param {Entity} config - Entity configuration
+ * @returns {boolean} True if a custom primary key exists
+ */
+function hasCustomPrimaryKey(config: Entity): boolean {
+  return config.attributes.some(attr => attr.constraints.includes('primary key'));
+}
+
+/**
+ * Gets the primary key field name if it exists
+ * 
+ * @param {Entity} config - Entity configuration
+ * @returns {string} Primary key field name or 'id' as default
+ */
+function getPrimaryKeyField(config: Entity): string {
+  const primaryKeyAttr = config.attributes.find(attr => attr.constraints.includes('primary key'));
+  return primaryKeyAttr ? primaryKeyAttr.name.replace(/\s+/g, '_') : 'id';
+}
+
+/**
  * Generates a complete edit page component for an entity
  * Includes form handling, data fetching, validation, and API integration
  * 
@@ -64,6 +85,9 @@ export function generateEditPage(config: Entity): string {
       .some(type => attr.dataType.toLowerCase().includes(type)))
     .map(attr => `'${attr.name}'`);
 
+  // Check if entity has a custom primary key
+  const hasCustomPK = hasCustomPrimaryKey(config);
+  const primaryKeyField = getPrimaryKeyField(config);
 
   return `
     'use client';
@@ -85,6 +109,9 @@ export function generateEditPage(config: Entity): string {
     export default function ${formattedEntityName}EditPage({ params }: { params: { id: string } }) {
       const router = useRouter();
       const { loading, error, updateRecord, fetchRecord } = use${formattedEntityName}Store();
+      
+      // Define the primary key field to use for record identification
+      const primaryKeyField = '${primaryKeyField}';
       
       const { 
         register,

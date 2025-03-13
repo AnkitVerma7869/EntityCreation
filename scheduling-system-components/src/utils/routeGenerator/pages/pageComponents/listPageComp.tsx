@@ -24,6 +24,27 @@ function formatEntityName(name: string): string {
 }
 
 /**
+ * Checks if the entity has a custom primary key
+ * 
+ * @param {Entity} config - Entity configuration
+ * @returns {boolean} True if a custom primary key exists
+ */
+function hasCustomPrimaryKey(config: Entity): boolean {
+  return config.attributes.some(attr => attr.constraints.includes('primary key'));
+}
+
+/**
+ * Gets the primary key field name if it exists
+ * 
+ * @param {Entity} config - Entity configuration
+ * @returns {string} Primary key field name or 'id' as default
+ */
+function getPrimaryKeyField(config: Entity): string {
+  const primaryKeyAttr = config.attributes.find(attr => attr.constraints.includes('primary key'));
+  return primaryKeyAttr ? primaryKeyAttr.name.replace(/\s+/g, '_') : 'id';
+}
+
+/**
  * Generates a list page component for an entity
  * Includes data grid, search, pagination, sorting, and CRUD operations
  * 
@@ -54,6 +75,10 @@ export function generateListPage(config: Entity): string {
     .filter(attr => ['date', 'datetime', 'timestamp', 'time', 'datetime-local']
       .some(type => attr.dataType.toLowerCase().includes(type)))
     .map(attr => `'${attr.name}'`);
+    
+  // Check if entity has a custom primary key
+  const hasCustomPK = hasCustomPrimaryKey(config);
+  const primaryKeyField = getPrimaryKeyField(config);
 
   return `
 'use client';
@@ -101,10 +126,13 @@ export default function ${formattedEntityName}ListPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
-    const [sortField, setSortField] = useState('created_at');
+    const [sortField, setSortField] = useState('${hasCustomPK ? primaryKeyField : 'created_at'}');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [recordToDelete, setRecordToDelete] = useState<string | null>(null);
+
+    // Define the primary key field to use for record identification
+    const primaryKeyField = '${primaryKeyField}';
 
     /**
      * Formats date and time for displayRE
@@ -200,6 +228,7 @@ export default function ${formattedEntityName}ListPage() {
       if (!recordToDelete) return;
 
       try {
+        console.log('Deleting record with ID:', recordToDelete, 'using primary key field:', primaryKeyField);
         const result = await deleteRecord(recordToDelete);
         
         if (result.success) {
@@ -209,7 +238,10 @@ export default function ${formattedEntityName}ListPage() {
           closeDeleteModal();
           
           // Remove the deleted record from the current records
-          setRecords(prevRecords => prevRecords.filter(record => record.id !== recordToDelete));
+          setRecords(prevRecords => {
+            console.log('Filtering records by', primaryKeyField, '!=', recordToDelete);
+            return prevRecords.filter(record => record[primaryKeyField] !== recordToDelete);
+          });
           
           // If this was the last record on the current page and not the first page,
           // go to the previous page
@@ -226,10 +258,12 @@ export default function ${formattedEntityName}ListPage() {
             search: searchTerm
           });
         } else if (result.error) {
+          console.error('Delete error:', result.error);
           // Throw error to be caught by the modal
           throw new Error(result.error);
         }
       } catch (error) {
+        console.error('Exception during delete:', error);
         // Re-throw the error to be handled by the modal
         throw error;
       }
@@ -301,7 +335,7 @@ export default function ${formattedEntityName}ListPage() {
             renderCell: (params) => (
               <div
                 className="cursor-pointer text-primary hover:underline"
-                onClick={() => router.push(\`/${config.entityName.toLowerCase()}/\${params.row.id}\`)}
+                onClick={() => router.push(\`/${config.entityName.toLowerCase()}/\${params.row[primaryKeyField]}\`)}
               >
                 {params.value}
               </div>
@@ -402,13 +436,13 @@ export default function ${formattedEntityName}ListPage() {
         renderCell: (params) => (
           <div className="flex items-center space-x-3.5">
             <button
-              onClick={() => handleEdit(params.row.id)}
+              onClick={() => handleEdit(params.row[primaryKeyField])}
               className="hover:text-primary"
             >
               <Edit size={18} />
             </button>
             <button
-              onClick={() => openDeleteModal(params.row.id)}
+              onClick={() => openDeleteModal(params.row[primaryKeyField])}
               className="hover:text-danger"
             >
               <Trash2 size={18} />
@@ -491,7 +525,7 @@ export default function ${formattedEntityName}ListPage() {
                       disableColumnSelector
                       disableDensitySelector
                       disableRowSelectionOnClick
-                      getRowId={(row) => row.id}
+                      getRowId={(row) => row[primaryKeyField]}
                       sortingOrder={['desc', 'asc']}
                       autoHeight
                     />

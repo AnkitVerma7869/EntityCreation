@@ -45,6 +45,27 @@ function formatFieldName(name: string): string {
 }
 
 /**
+ * Checks if the entity has a custom primary key
+ * 
+ * @param {Entity} config - Entity configuration
+ * @returns {boolean} True if a custom primary key exists
+ */
+function hasCustomPrimaryKey(config: Entity): boolean {
+  return config.attributes.some(attr => attr.constraints.includes('primary key'));
+}
+
+/**
+ * Gets the primary key field name if it exists
+ * 
+ * @param {Entity} config - Entity configuration
+ * @returns {string} Primary key field name or 'id' as default
+ */
+function getPrimaryKeyField(config: Entity): string {
+  const primaryKeyAttr = config.attributes.find(attr => attr.constraints.includes('primary key'));
+  return primaryKeyAttr ? primaryKeyAttr.name.replace(/\s+/g, '_') : 'id';
+}
+
+/**
  * Generates a complete create page component for an entity
  * Includes form handling, validation, and API integration
  * 
@@ -81,6 +102,10 @@ export function generateCreatePage(config: Entity): string {
     .filter(attr => ['date', 'datetime', 'timestamp', 'time', 'datetime-local']
       .some(type => attr.dataType.toLowerCase().includes(type)))
     .map(attr => `'${attr.name}'`);
+    
+  // Check if entity has a custom primary key
+  const hasCustomPK = hasCustomPrimaryKey(config);
+  const primaryKeyField = getPrimaryKeyField(config);
 
   return `
     'use client';
@@ -148,18 +173,31 @@ export function generateCreatePage(config: Entity): string {
           }
         });
 
-        const { success, error } = await createRecord(formattedData);
-        toast.dismiss(); 
-        if (success) {
-          toast.success(success, {
-            duration: 2000,
-            position: 'top-right',
-          });
-          setTimeout(() => {
-            router.push('/${config.entityName.toLowerCase()}');
-          }, 2000);
-        } else if (error) {
-          toast.error(error, {
+        try {
+          const response = await createRecord(formattedData);
+          const { success, error, recordId } = response;
+          
+          toast.dismiss(); 
+          
+          if (success) {
+            console.log('Create record success:', success, 'Record ID:', recordId);
+            toast.success(success, {
+              duration: 2000,
+              position: 'top-right',
+            });
+            setTimeout(() => {
+              router.push('/${config.entityName.toLowerCase()}');
+            }, 2000);
+          } else if (error) {
+            console.error('Create record error:', error);
+            toast.error(error, {
+              duration: 5000,
+              position: 'top-right',
+            });
+          }
+        } catch (err) {
+          console.error('Unexpected error during record creation:', err);
+          toast.error(err instanceof Error ? err.message : 'An unexpected error occurred', {
             duration: 5000,
             position: 'top-right',
           });
