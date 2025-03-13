@@ -171,14 +171,6 @@ function TablesList(_a) {
             }
         });
     }); };
-    /**
-     * Handles row click events by navigating to the detailed view of the selected table
-     * @param {GridRowParams} params - Data grid row parameters
-     */
-    var handleRowClick = function (params) {
-        var entityName = params.row.name ? params.row.name.toLowerCase() : params.row.entityName.toLowerCase();
-        router.push("/".concat(entityName));
-    };
     (0, react_1.useEffect)(function () {
         fetchTables();
     }, [API_URL]);
@@ -199,7 +191,7 @@ function TablesList(_a) {
                         minHeight: '400px',
                         display: 'flex',
                         flexDirection: 'column'
-                    }, children: (0, jsx_runtime_1.jsx)(x_data_grid_1.DataGrid, { rows: tables, columns: columns, paginationModel: paginationModel, onPaginationModelChange: setPaginationModel, pageSizeOptions: [10, 25, 50], loading: loading, disableRowSelectionOnClick: true, autoHeight: !loading, onRowClick: handleRowClick, slots: {
+                    }, children: (0, jsx_runtime_1.jsx)(x_data_grid_1.DataGrid, { rows: tables, columns: columns, paginationModel: paginationModel, onPaginationModelChange: setPaginationModel, pageSizeOptions: [10, 25, 50], loading: loading, disableRowSelectionOnClick: true, autoHeight: !loading, slots: {
                             toolbar: x_data_grid_1.GridToolbar,
                             loadingOverlay: CustomLoadingOverlay,
                             noRowsOverlay: apiError ? function () { return (0, jsx_runtime_1.jsx)(CustomErrorOverlay, { message: apiError }); } : undefined,

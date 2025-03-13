@@ -57,6 +57,8 @@ export interface Attribute {
     displayInList?: boolean;
     enumType?: string;
     references?: IReference;
+    isIndexed?: boolean;
+    indexLength?: number | null;
 }
 export interface IReference {
     table: string;

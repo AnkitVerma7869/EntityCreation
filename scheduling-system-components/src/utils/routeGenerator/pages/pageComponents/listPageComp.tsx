@@ -170,9 +170,9 @@ export default function ${formattedEntityName}ListPage() {
           // Update records state with the new data
           setRecords(formattedRecords);
         } catch (err) {
-          console.error('Error in fetchData:', err);
-          toast.error('Failed to fetch records',err);
-        }
+          console.error('Error in fetchData:', error);
+          const errorMessage = err instanceof Error ? err.message : 'Failed to fetch records';
+          toast.error(errorMessage);      }
       };
 
       fetchData();
