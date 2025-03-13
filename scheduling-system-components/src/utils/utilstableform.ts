@@ -35,7 +35,9 @@ export const initialAttributeState: Attribute = {
   inputType: 'text',
   isReadOnly: false,
   displayInList: true,
-  references: undefined
+  references: undefined,
+  isIndexed: false,
+  indexLength: null
 };
 
 /**
@@ -175,7 +177,9 @@ export async function saveEntity(entity: Entity, token: string): Promise<{messag
         },
         isReadOnly: attr.isReadOnly || false,
         displayInList: attr.displayInList !== false,
-        references: attr.references
+        references: attr.references,
+        isIndexed: attr.isIndexed || false,
+        indexLength: attr.indexLength || null
       };
     })
   };
