@@ -112,6 +112,45 @@ function fetchEntityConfig() {
     });
 }
 /**
+ * Updates the sidebar routes through the API
+ * @param entityName - Name of the entity to add to routes
+ */
+function updateSidebarRoutes(entityName) {
+    return __awaiter(this, void 0, void 0, function () {
+        var response, data, error_1;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 3, , 4]);
+                    return [4 /*yield*/, fetch('/api/sidebar-routes', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ entityName: entityName }),
+                        })];
+                case 1:
+                    response = _a.sent();
+                    if (!response.ok) {
+                        throw new Error('Failed to update sidebar routes');
+                    }
+                    return [4 /*yield*/, response.json()];
+                case 2:
+                    data = _a.sent();
+                    if (!data.success) {
+                        throw new Error(data.error || 'Failed to update sidebar routes');
+                    }
+                    return [3 /*break*/, 4];
+                case 3:
+                    error_1 = _a.sent();
+                    console.error('Error updating sidebar routes:', error_1);
+                    throw new Error('Failed to update sidebar routes');
+                case 4: return [2 /*return*/];
+            }
+        });
+    });
+}
+/**
  * Saves entity configuration to backend API and generates corresponding routes
  *
  * Features:
@@ -128,7 +167,7 @@ function fetchEntityConfig() {
  */
 function saveEntity(entity, token) {
     return __awaiter(this, void 0, void 0, function () {
-        var configData, transformedEntity, response, responseData, config, error_1;
+        var configData, transformedEntity, response, responseData, config, error_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, fetchEntityConfig()];
@@ -196,7 +235,7 @@ function saveEntity(entity, token) {
                     }
                     _a.label = 4;
                 case 4:
-                    _a.trys.push([4, 6, , 7]);
+                    _a.trys.push([4, 7, , 8]);
                     config = {
                         entityName: entity.entityName,
                         attributes: entity.attributes
@@ -204,13 +243,16 @@ function saveEntity(entity, token) {
                     return [4 /*yield*/, (0, routeGenerator_1.generateTableRoutes)(config)];
                 case 5:
                     _a.sent();
-                    console.log('Routes generated successfully for:', entity.entityName);
-                    return [3 /*break*/, 7];
+                    return [4 /*yield*/, updateSidebarRoutes(entity.entityName)];
                 case 6:
-                    error_1 = _a.sent();
-                    console.error('Error generating routes:', error_1);
-                    throw new Error(error_1 instanceof Error ? error_1.message : 'Unknown error');
-                case 7: return [2 /*return*/, {
+                    _a.sent();
+                    console.log('Routes generated successfully for:', entity.entityName);
+                    return [3 /*break*/, 8];
+                case 7:
+                    error_2 = _a.sent();
+                    console.error('Error generating routes:', error_2);
+                    throw new Error(error_2 instanceof Error ? error_2.message : 'Unknown error');
+                case 8: return [2 /*return*/, {
                         message: responseData.success.message,
                         success: true
                     }];
