@@ -42,6 +42,27 @@ function formatFieldName(name: string): string {
 }
 
 /**
+ * Checks if the entity has a custom primary key
+ * 
+ * @param {Entity} config - Entity configuration
+ * @returns {boolean} True if a custom primary key exists
+ */
+function hasCustomPrimaryKey(config: Entity): boolean {
+  return config.attributes.some(attr => attr.constraints.includes('primary key'));
+}
+
+/**
+ * Gets the primary key field name if it exists
+ * 
+ * @param {Entity} config - Entity configuration
+ * @returns {string | null} Primary key field name or null
+ */
+function getPrimaryKeyField(config: Entity): string | null {
+  const primaryKeyAttr = config.attributes.find(attr => attr.constraints.includes('primary key'));
+  return primaryKeyAttr ? primaryKeyAttr.name.replace(/\s+/g, '_') : null;
+}
+
+/**
  * Generates initial state value for a field based on its input type
  * 
  * @param {Attribute} attr - Field attribute configuration
@@ -89,10 +110,25 @@ export function generateEntityStore(config: Entity) {
     )
     .map(attr => attr.name.replace(/\s+/g, '_'));
 
+  // Check if entity has a custom primary key
+  const customPrimaryKey = hasCustomPrimaryKey(config);
+  const primaryKeyField = getPrimaryKeyField(config);
+  
+  // Determine return fields based on whether a custom primary key exists
+  const returnFields = customPrimaryKey 
+    ? [...nonPasswordFields] 
+    : ['id', ...nonPasswordFields];
+  
+  // Determine default sort field
+  const defaultSortField = customPrimaryKey && primaryKeyField ? primaryKeyField : 'id';
+
   return `
     import { create } from 'zustand';
     import { devtools } from 'zustand/middleware';
     import Cookies from 'js-cookie';
+
+    // Define the primary key field to use for record identification
+    const primaryKeyField = '${customPrimaryKey && primaryKeyField ? primaryKeyField : 'id'}';
 
     /**
      * Parameters for list operations
@@ -155,7 +191,7 @@ export function generateEntityStore(config: Entity) {
       // API Actions
       fetchRecords: (params?: Partial<ListParams>) => Promise<any[]>;
       fetchRecord: (id: string) => Promise<any>;
-      createRecord: (data: any) => Promise<{ success: string; error: string | null }>;
+      createRecord: (data: any) => Promise<{ success: string; error: string | null; recordId?: string }>;
       updateRecord: (id: string, data: any) => Promise<{ success: string | null; error: string | null }>;
       deleteRecord: (id: string) => Promise<{ success: string; error: string | null }>;
     }
@@ -181,11 +217,11 @@ export function generateEntityStore(config: Entity) {
           listParams: {
             page: 1,
             limit: 10,
-            sortBy: 'id',
+            sortBy: '${defaultSortField}',
             orderBy: 'asc',
             search: '',
             searchFields: ${JSON.stringify(nonPasswordFields)},
-            returnFields: ${JSON.stringify(['id', ...nonPasswordFields])},
+            returnFields: ${JSON.stringify(returnFields)},
             conditions: {}
           },
           totalPages: 0,
@@ -347,7 +383,7 @@ export function generateEntityStore(config: Entity) {
           /**
            * Creates a new record
            * @param {any} data - Record data
-           * @returns {Promise<{ success: string; error: string | null }>} Result with success/error message
+           * @returns {Promise<{ success: string; error: string | null; recordId?: string }>} Result with success/error message and record ID
            */
           createRecord: async (data: any) => {
             set({ loading: true, error: null });    
@@ -366,21 +402,32 @@ export function generateEntityStore(config: Entity) {
               });
 
               const result = await response.json();
+              console.log('API Response:', JSON.stringify(result));
               
               if (result.success) {
                 // Handle successful response
-                const successMessage = result.success.message;
+                const successMessage = result.success.message || 'Record created successfully';
+                
+                // Extract record ID from response data
+                let recordId;
+                if (result.success.data) {
+                  // Try to get ID from primary key field or fallback to 'id'
+                  recordId = result.success.data[primaryKeyField] || result.success.data.id;
+                  console.log('Extracted record ID:', recordId, 'from field:', primaryKeyField);
+                }
+                
                 set({ 
                   success: successMessage,
                   error: null
                 });
-                return { success: successMessage, error: null };
+                return { success: successMessage, error: null, recordId };
               } else {
                 // Handle error response
                 const errorMessage = typeof result.error === 'object' 
                   ? result.error.message || JSON.stringify(result.error)
                   : result.error || 'Failed to create record';
                 
+                console.error('API Error:', errorMessage);
                 set({ 
                   error: errorMessage,
                   success: null
@@ -389,6 +436,7 @@ export function generateEntityStore(config: Entity) {
               }
             } catch (error: any) {
               const errorMessage = error.message || 'An unexpected error occurred';
+              console.error('Exception during record creation:', errorMessage);
               set({ 
                 error: errorMessage,
                 success: null
@@ -485,7 +533,7 @@ export function generateEntityStore(config: Entity) {
                   success: successMessage,
                   error: null,
                   // Update local state by filtering out deleted record
-                  records: get().records.filter(record => record.id !== id)
+                  records: get().records.filter(record => record[primaryKeyField] !== id)
                 });
                 return { success: successMessage, error: null };
               } else {
