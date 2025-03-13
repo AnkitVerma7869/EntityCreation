@@ -7,7 +7,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.predefinedEntities = exports.saveTableConfig = exports.generateTableRoutes = exports.TableList = exports.TableForm = exports.ManageEntities = void 0;
+exports.predefinedEntities = exports.generateTableRoutes = exports.TableList = exports.TableForm = exports.ManageEntities = void 0;
 // Component exports
 var ManageEntities_1 = require("./components/ManageEntities");
 Object.defineProperty(exports, "ManageEntities", { enumerable: true, get: function () { return __importDefault(ManageEntities_1).default; } });
@@ -18,8 +18,6 @@ Object.defineProperty(exports, "TableList", { enumerable: true, get: function ()
 // Utility exports
 var routeGenerator_1 = require("./utils/routeGenerator");
 Object.defineProperty(exports, "generateTableRoutes", { enumerable: true, get: function () { return routeGenerator_1.generateTableRoutes; } });
-var tableGenerator_1 = require("./utils/tableGenerator");
-Object.defineProperty(exports, "saveTableConfig", { enumerable: true, get: function () { return tableGenerator_1.saveTableConfig; } });
 /**
  * Predefined entity templates for common use cases
  */

@@ -10,7 +10,6 @@ export { default as TableList } from './components/TableList';
 
 // Utility exports
 export { generateTableRoutes } from './utils/routeGenerator';
-export { saveTableConfig } from './utils/tableGenerator';
 
 // Type exports
 export type {
