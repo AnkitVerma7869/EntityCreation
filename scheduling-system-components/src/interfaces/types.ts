@@ -62,6 +62,7 @@ export interface Attribute {
   references?: IReference;
   isIndexed?: boolean;  // New property for index
   indexLength?: number | null;  // New property for index length
+  indexType?: string;  // New property for index type
 }
 
 // Interface for reference configuration
