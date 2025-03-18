@@ -189,7 +189,8 @@ export async function saveEntity(entity: Entity, token: string): Promise<{messag
         displayInList: attr.displayInList !== false,
         references: attr.references,
         isIndexed: attr.isIndexed || false,
-        indexLength: attr.indexLength || null
+        indexLength: attr.indexLength || null,
+        indexType: attr.indexType || undefined
       };
     })
   };
