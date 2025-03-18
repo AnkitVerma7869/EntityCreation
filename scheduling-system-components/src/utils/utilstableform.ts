@@ -8,7 +8,7 @@ import { generateTableRoutes } from './routeGenerator';
 
 // API endpoint from environment variables
 const API_URL = process.env.NEXT_PUBLIC_API_URL_ENDPOINT;
-
+const DATABASE_TYPE = process.env.NEXT_PUBLIC_DATABASE_TYPE;
 /**
  * Converts an array to a comma-separated string
  * Used for displaying array values in table cells
@@ -48,10 +48,20 @@ export const initialAttributeState: Attribute = {
  * @throws {Error} If fetch fails
  */
 export async function fetchEntityConfig(): Promise<ConfigData> {
-  const response = await fetch('/data/entityConfig.json');
+  let response;
+
+  if (DATABASE_TYPE === 'mongodb') {
+    response = await fetch('/data/mongoEntityConfig.json');
+  } else if (DATABASE_TYPE === 'postgresql') {
+    response = await fetch('/data/entityConfig.json');
+  } else {
+    throw new Error('Unsupported database type');
+  }
+
   if (!response.ok) {
     throw new Error('Failed to fetch config');
   }
+
   const data = await response.json();
   return data;
 }
