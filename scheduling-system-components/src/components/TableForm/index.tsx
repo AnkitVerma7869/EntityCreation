@@ -101,33 +101,17 @@ export default function TableForm({ token }: TableFormProps) {
   };
 
   // Handle entity save operation
-  const handleSaveEntity = async () => {
-    // Trim the entity name
-    const trimmedEntityName = entityName.trim();
-    
-    // Validate required fields
-    if (!trimmedEntityName) {
-      showToast("Entity Name is required!", 'error');
-      return;
-    }
-
-    if (attributes.length === 0) {
-      showToast("At least one attribute is required!", 'error');
-      return;
-    }
-
-    const entity: Entity = {
-      entityName: trimmedEntityName,
-      attributes
-    };
-
-    setIsSaving(true);
+  const handleSaveEntity = async (entity: Entity) => {
     try {
-      const response = await saveEntity(entity, token);
-      showToast(response.message, 'success');
-      router.push('/entities');
-    } catch (error: any) {
-      showToast(error.message || "Failed to save entity. Please try again.", 'error');
+      setIsSaving(true);
+      const result = await saveEntity(entity, token);
+      if (result.success) {
+        showToast(result.message, 'success');
+        // Navigate after successful save
+        router.push(`/entities?newEntity=true&name=${entity.entityName}`);
+      }
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Failed to save entity', 'error');
     } finally {
       setIsSaving(false);
     }

@@ -1,12 +1,14 @@
 export declare const dynamic = "force-dynamic";
 export declare const revalidate = 1200;
-import { Entity } from '../../interfaces/types';
-/**
- * Props interface for TableList component
- * @interface TableListProps
- */
+interface TableData {
+    name: string;
+    numberofcolumn: string;
+    columnname: string;
+    primarykeycolumnname: string;
+    primarykeycolumndatatype: string;
+}
 interface TableListProps {
-    initialData?: Entity[];
+    initialData?: TableData[];
     onCreateNew?: () => void;
     token: string;
 }

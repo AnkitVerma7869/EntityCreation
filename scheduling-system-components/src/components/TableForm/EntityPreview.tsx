@@ -3,13 +3,14 @@ import { Attribute } from "../../interfaces/types";
 import { formatArrayToString } from "../../utils/utilstableform";
 import { toast } from "react-hot-toast";
 import { entityNameSchema } from '../../schemas/validationSchemas';
+import { Entity } from "../../interfaces/types";
 
 // Props interface for EntityPreview component
 interface EntityPreviewProps {
   attributes: Attribute[];         // List of entity attributes
   setAttributes: React.Dispatch<React.SetStateAction<Attribute[]>>;
   setCurrentAttribute: (attribute: Attribute) => void;
-  handleSaveEntity: () => void;    // Function to save entity
+  handleSaveEntity: (entity: Entity) => Promise<void>;    // Function to save entity
   resetForm: () => void;           // Function to reset form
   setEditingIndex: React.Dispatch<React.SetStateAction<number | null>>;
   entityName: string;
@@ -52,24 +53,16 @@ export default function EntityPreview({
     try {
       await entityNameSchema.validate(entityName);
       
-      // Find duplicate attribute names
-      const duplicates = attributes
-        .map(attr => attr.name.toLowerCase())
-        .filter((name, index, arr) => arr.indexOf(name) !== index);
-      
-      if (duplicates.length > 0) {
-        showToast(`Duplicate attribute names found: ${duplicates.join(', ')}`, 'error');
-        return;
-      }
-
-      // Check if there are any attributes
       if (attributes.length === 0) {
         showToast("Please add at least one attribute", 'error');
         return;
       }
-       
-      // If validation passes, proceed with save
-      handleSaveEntity();
+
+      // Properly construct the Entity object
+      await handleSaveEntity({
+        entityName: entityName,
+        attributes: attributes
+      });
 
     } catch (error) {
       if (error instanceof Error) {

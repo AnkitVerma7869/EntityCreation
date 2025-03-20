@@ -59,6 +59,7 @@ export interface Attribute {
     references?: IReference;
     isIndexed?: boolean;
     indexLength?: number | null;
+    indexType?: string;
 }
 export interface IReference {
     table: string;

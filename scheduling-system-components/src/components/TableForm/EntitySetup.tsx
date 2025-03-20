@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Pencil, Trash2 } from 'lucide-react';
-import { Attribute, ConfigData } from "../../interfaces/types";
+import { Attribute, ConfigData, Entity } from "../../interfaces/types";
 import * as yup from "yup";
 import { entityNameSchema, attributeNameSchema, dataTypeSchema, sizeSchema, precisionSchema, enumValuesSchema } from '../../schemas/validationSchemas';
 import { dataTypeProperties, maxSizes, precisionLimits, disabledOptionClass } from '../../constants/dataTypeProperties';
@@ -45,7 +45,7 @@ interface EntitySetupProps {
   setSelectedEntity: (entity: string) => void;
   editingIndex: number | null;
   setEditingIndex: React.Dispatch<React.SetStateAction<number | null>>;
-  handleSaveEntity: () => void;
+  handleSaveEntity: (entity: Entity) => Promise<void>;
   resetForm: () => void;
   showToast: (message: string, type: 'success' | 'error') => void;
 }

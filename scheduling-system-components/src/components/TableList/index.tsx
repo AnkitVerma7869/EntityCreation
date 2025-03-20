@@ -20,9 +20,10 @@ import {
   GridLoadingOverlay
 } from '@mui/x-data-grid';
 import { Box, Paper } from '@mui/material';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Entity } from '../../interfaces/types';
 import { Loader2 } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
 
 interface TableData {
   name: string;
@@ -90,6 +91,7 @@ const CustomErrorOverlay = (props: { message: string | null }) => (
  */
 export default function TablesList({ initialData, onCreateNew, token }: TableListProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [tables, setTables] = useState<TableData[]>([]);
   const [columns] = useState<GridColDef[]>([
     { 
@@ -184,6 +186,20 @@ export default function TablesList({ initialData, onCreateNew, token }: TableLis
     fetchTables();
   }, [API_URL]);
 
+
+  useEffect(() => {
+    // Get query params from URL
+    const isNewEntity = searchParams.get('newEntity');
+    const entityName = searchParams.get('name');
+    
+    if (isNewEntity === 'true' && entityName) {
+      toast.loading(
+        `Table "${entityName}" is being created. Migration is in progress...`,
+        { duration: 5000 }
+      );
+    }
+  }, [searchParams]);
+
   const refreshData = async () => {
     await fetchTables();
     router.refresh();
@@ -191,6 +207,7 @@ export default function TablesList({ initialData, onCreateNew, token }: TableLis
 
   return (
     <div className="space-y-6">
+      <Toaster />
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-2xl font-bold text-gray-800">Available Tables</h2>
