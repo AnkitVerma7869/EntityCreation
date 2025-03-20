@@ -186,6 +186,7 @@ export default function TablesList({ initialData, onCreateNew, token }: TableLis
     fetchTables();
   }, [API_URL]);
 
+
   useEffect(() => {
     // Get query params from URL
     const isNewEntity = searchParams.get('newEntity');
