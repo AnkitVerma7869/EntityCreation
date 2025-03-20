@@ -84,7 +84,6 @@ export function generateListPage(config: Entity): string {
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import { use${formattedEntityName}Store } from '@/store/${config.entityName.toLowerCase()}Store';
 import { Edit, Trash2, Search, Plus, X } from 'lucide-react';
 import { DataGrid, GridColDef, GridOverlay, gridClasses, GridToolbar } from '@mui/x-data-grid';
@@ -100,10 +99,7 @@ import { toast } from 'react-hot-toast';
  * @returns {string} Formatted display name
  */
 function formatFieldLabel(name: string): string {
-  return name
-    .split(/[_\\s]+/)
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
+  return name.split(/[_\\s]+/).map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
 }
     
 /**
@@ -459,7 +455,6 @@ export default function ${formattedEntityName}ListPage() {
           onClose={closeDeleteModal}
           onConfirm={handleDelete}
         />
-        <DefaultLayout>
           <div className="p-2">
             <div className="flex flex-col gap-9">
               <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
@@ -534,7 +529,6 @@ export default function ${formattedEntityName}ListPage() {
               </div>
             </div>
           </div>
-        </DefaultLayout>
       </>
     );
   }
