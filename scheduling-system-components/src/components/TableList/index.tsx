@@ -20,18 +20,23 @@ import {
   GridLoadingOverlay
 } from '@mui/x-data-grid';
 import { Box, Paper } from '@mui/material';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Entity } from '../../interfaces/types';
 import { Loader2 } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
 
-/**
- * Props interface for TableList component
- * @interface TableListProps
- */
+interface TableData {
+  name: string;
+  numberofcolumn: string;
+  columnname: string;
+  primarykeycolumnname: string;
+  primarykeycolumndatatype: string;
+}
+
 interface TableListProps {
-  initialData?: Entity[]; // Add prop for initial data
-  onCreateNew?: () => void;  // Optional callback when creating new table
-  token: string; // Add token prop
+  initialData?: TableData[];
+  onCreateNew?: () => void;
+  token: string;
 }
 
 /**
@@ -85,9 +90,9 @@ const CustomErrorOverlay = (props: { message: string | null }) => (
  * @returns {JSX.Element} Rendered component
  */
 export default function TablesList({ initialData, onCreateNew, token }: TableListProps) {
-  // State management
   const router = useRouter();
-  const [tables, setTables] = useState<Entity[]>(initialData || []);
+  const searchParams = useSearchParams();
+  const [tables, setTables] = useState<TableData[]>([]);
   const [columns] = useState<GridColDef[]>([
     { 
       field: 'name', 
@@ -95,6 +100,7 @@ export default function TablesList({ initialData, onCreateNew, token }: TableLis
       flex: 1,
       filterable: true,
       sortable: true,
+      sortingOrder: ['asc', 'desc'],
     },
     { 
       field: 'numberofcolumn', 
@@ -102,6 +108,7 @@ export default function TablesList({ initialData, onCreateNew, token }: TableLis
       flex: 1,
       filterable: true,
       sortable: true,
+      sortingOrder: ['asc', 'desc'],
     }
   ]);
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
@@ -111,7 +118,6 @@ export default function TablesList({ initialData, onCreateNew, token }: TableLis
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  // API configuration
   const API_URL = process.env.NEXT_PUBLIC_API_URL_ENDPOINT;
 
   const fetchTables = async () => {
@@ -146,15 +152,26 @@ export default function TablesList({ initialData, onCreateNew, token }: TableLis
         return;
       }
 
-      // Format the data as before
+      // Process the data to remove duplicates and ensure proper formatting
       if (data.success && Array.isArray(data.success.data)) {
-        const formattedTables = data.success.data.map((table: any) => ({
-          id: table.name.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0),
-          name: table.name,
-          numberofcolumn: table.numberofcolumn
-        }));
+        // Create a Map to store unique tables by name
+        const uniqueTables = new Map();
         
-        setTables(formattedTables);
+        data.success.data.forEach((table: TableData) => {
+          // Only add if we haven't seen this table name before
+          if (!uniqueTables.has(table.name)) {
+            uniqueTables.set(table.name, {
+              ...table,
+              id: table.name // Use table name as unique ID
+            });
+          }
+        });
+
+        // Convert Map values to array and sort by name
+        const sortedTables = Array.from(uniqueTables.values())
+          .sort((a, b) => a.name.localeCompare(b.name));
+        
+        setTables(sortedTables);
       }
     } catch (error) {
       console.error('Error fetching tables:', error);
@@ -169,14 +186,27 @@ export default function TablesList({ initialData, onCreateNew, token }: TableLis
     fetchTables();
   }, [API_URL]);
 
-  // Add refresh function
+  useEffect(() => {
+    // Get query params from URL
+    const isNewEntity = searchParams.get('newEntity');
+    const entityName = searchParams.get('name');
+    
+    if (isNewEntity === 'true' && entityName) {
+      toast.loading(
+        `Table "${entityName}" is being created. Migration is in progress...`,
+        { duration: 5000 }
+      );
+    }
+  }, [searchParams]);
+
   const refreshData = async () => {
     await fetchTables();
-    router.refresh(); // Refresh the current route
+    router.refresh();
   };
 
   return (
     <div className="space-y-6">
+      <Toaster />
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-2xl font-bold text-gray-800">Available Tables</h2>
@@ -186,7 +216,7 @@ export default function TablesList({ initialData, onCreateNew, token }: TableLis
         </div>
         <button
           onClick={() => router.push('/entities/create')}
-          className="px-4 py-2 bg-blue-500 text-white rounded"
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
         >
           Add New 
         </button>
@@ -221,17 +251,16 @@ export default function TablesList({ initialData, onCreateNew, token }: TableLis
             }}
             initialState={{
               pagination: {
-                paginationModel: { pageSize: 5, page: 0 },
+                paginationModel: { pageSize: 10, page: 0 },
               },
               sorting: {
-                sortModel: [{ field: 'id', sort: 'asc' }],
+                sortModel: [{ field: 'name', sort: 'asc' }],
               },
             }}
             sortingOrder={['asc', 'desc']}
             disableColumnMenu
             sx={{
               '& .MuiDataGrid-row': {
-                cursor: 'pointer',
                 '&:hover': {
                   backgroundColor: 'rgba(0, 0, 0, 0.04)',
                 },

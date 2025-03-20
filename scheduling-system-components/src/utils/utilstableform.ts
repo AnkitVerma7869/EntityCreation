@@ -40,9 +40,6 @@ export const initialAttributeState: Attribute = {
   indexLength: null
 };
 
-let isRunning = false;
-let isCheckingMigration = false;
-
 /**
  * Fetches entity configuration from JSON file
  * Contains input types, data types, and other configuration options
@@ -101,17 +98,6 @@ interface ApiErrorResponse {
 
 type ApiResponse = ApiSuccessResponse | ApiErrorResponse;
 
-interface WebhookEntity {
-  name?: string;
-  table_name?: string;
-  status?: boolean;
-  migrations?: boolean;
-}
-
-// Track entities being processed
-const processingEntities = new Set<string>();
-const completedEntities = new Set<string>();
-
 /**
  * Updates the sidebar routes through the API
  * @param entityName - Name of the entity to add to routes
@@ -120,82 +106,24 @@ async function updateSidebarRoutes(entityName: string) {
   try {
     const response = await fetch('/api/sidebar-routes', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({ entityName }),
     });
 
-    if (!response.ok) throw new Error('Failed to update sidebar routes');
+    if (!response.ok) {
+      throw new Error('Failed to update sidebar routes');
+    }
+
     const data = await response.json();
-    if (!data.success) throw new Error(data.error || 'Failed to update sidebar routes');
-  } catch (error) {
-    console.error('Error updating sidebar routes:', error);
-    throw error;
-  }
-}
-
-/**
- * Checks webhook and updates routes if needed
- */
-async function checkWebhookAndUpdateRoutes() {
-  // If already running or checking migration, skip
-  if (isRunning || isCheckingMigration) return;
-  
-  isRunning = true;
-  isCheckingMigration = true;
-
-  try {
-    const response = await fetch(`${API_URL}/api/v1/entity/check-migration-status`);
-    if (!response.ok) throw new Error('Failed to call webhook');
-
-    const result = await response.json();
-    const entities: WebhookEntity[] = result.success.data;
-    
-    for (const entity of entities) {
-      // Handle both response formats
-      const entityName = entity.name || entity.table_name;
-      const migrationStatus = entity.status || entity.migrations;
-      
-      if (!entityName) continue;       
-      // Skip if already processing or completed
-      if (processingEntities.has(entityName) || completedEntities.has(entityName)) {
-        continue;
-      }
-
-      if (migrationStatus) {
-        try {
-          processingEntities.add(entityName);
-          await updateSidebarRoutes(entityName);
-          completedEntities.add(entityName);
-          console.log(`Sidebar routes updated for: ${entityName}`);
-        } catch (error) {
-          console.error(`Error updating sidebar routes for ${entityName}:`, error);
-        } finally {
-          processingEntities.delete(entityName);
-        }
-      } else {
-        console.log(`Migration still in progress for: ${entityName}`);
-      }
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to update sidebar routes');
     }
   } catch (error) {
-    console.error('Error checking webhook:', error);
-  } finally {
-    isRunning = false;
-    isCheckingMigration = false; // Reset the flag when done
+    console.error('Error updating sidebar routes:', error);
+    throw new Error('Failed to update sidebar routes');
   }
-}
-
-// Start polling when module loads
-const pollInterval = setInterval(checkWebhookAndUpdateRoutes, 10000);
-
-// Clear completed entities every hour
-const cleanupInterval = setInterval(() => {
-  completedEntities.clear();
-}, 3600000);
-
-// Export function to stop polling if needed
-export function stopPolling() {
-  clearInterval(pollInterval);
-  clearInterval(cleanupInterval);
 }
 
 /**
@@ -293,6 +221,7 @@ export async function saveEntity(entity: Entity, token: string): Promise<{messag
       attributes: entity.attributes
     };
     await generateTableRoutes(config);
+    await updateSidebarRoutes(entity.entityName);
     console.log('Routes generated successfully for:', entity.entityName);
   } catch (error) {
     console.error('Error generating routes:', error);

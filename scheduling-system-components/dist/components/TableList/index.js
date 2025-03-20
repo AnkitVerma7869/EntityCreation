@@ -1,5 +1,16 @@
 "use strict";
 'use client';
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -86,9 +97,8 @@ var CustomErrorOverlay = function (props) { return ((0, jsx_runtime_1.jsx)(x_dat
 function TablesList(_a) {
     var _this = this;
     var initialData = _a.initialData, onCreateNew = _a.onCreateNew, token = _a.token;
-    // State management
     var router = (0, navigation_1.useRouter)();
-    var _b = (0, react_1.useState)(initialData || []), tables = _b[0], setTables = _b[1];
+    var _b = (0, react_1.useState)([]), tables = _b[0], setTables = _b[1];
     var columns = (0, react_1.useState)([
         {
             field: 'name',
@@ -96,6 +106,7 @@ function TablesList(_a) {
             flex: 1,
             filterable: true,
             sortable: true,
+            sortingOrder: ['asc', 'desc'],
         },
         {
             field: 'numberofcolumn',
@@ -103,6 +114,7 @@ function TablesList(_a) {
             flex: 1,
             filterable: true,
             sortable: true,
+            sortingOrder: ['asc', 'desc'],
         }
     ])[0];
     var _c = (0, react_1.useState)({
@@ -111,10 +123,9 @@ function TablesList(_a) {
     }), paginationModel = _c[0], setPaginationModel = _c[1];
     var _d = (0, react_1.useState)(true), loading = _d[0], setLoading = _d[1];
     var _e = (0, react_1.useState)(null), apiError = _e[0], setApiError = _e[1];
-    // API configuration
     var API_URL = process.env.NEXT_PUBLIC_API_URL_ENDPOINT;
     var fetchTables = function () { return __awaiter(_this, void 0, void 0, function () {
-        var response, errorData, data, formattedTables, error_1;
+        var response, errorData, data, uniqueTables_1, sortedTables, error_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -148,14 +159,19 @@ function TablesList(_a) {
                         setTables([]);
                         return [2 /*return*/];
                     }
-                    // Format the data as before
+                    // Process the data to remove duplicates and ensure proper formatting
                     if (data.success && Array.isArray(data.success.data)) {
-                        formattedTables = data.success.data.map(function (table) { return ({
-                            id: table.name.split('').reduce(function (acc, char) { return acc + char.charCodeAt(0); }, 0),
-                            name: table.name,
-                            numberofcolumn: table.numberofcolumn
-                        }); });
-                        setTables(formattedTables);
+                        uniqueTables_1 = new Map();
+                        data.success.data.forEach(function (table) {
+                            // Only add if we haven't seen this table name before
+                            if (!uniqueTables_1.has(table.name)) {
+                                uniqueTables_1.set(table.name, __assign(__assign({}, table), { id: table.name // Use table name as unique ID
+                                 }));
+                            }
+                        });
+                        sortedTables = Array.from(uniqueTables_1.values())
+                            .sort(function (a, b) { return a.name.localeCompare(b.name); });
+                        setTables(sortedTables);
                     }
                     return [3 /*break*/, 7];
                 case 5:
@@ -174,19 +190,18 @@ function TablesList(_a) {
     (0, react_1.useEffect)(function () {
         fetchTables();
     }, [API_URL]);
-    // Add refresh function
     var refreshData = function () { return __awaiter(_this, void 0, void 0, function () {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, fetchTables()];
                 case 1:
                     _a.sent();
-                    router.refresh(); // Refresh the current route
+                    router.refresh();
                     return [2 /*return*/];
             }
         });
     }); };
-    return ((0, jsx_runtime_1.jsxs)("div", { className: "space-y-6", children: [(0, jsx_runtime_1.jsxs)("div", { className: "flex justify-between items-center mb-6", children: [(0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsx)("h2", { className: "text-2xl font-bold text-gray-800", children: "Available Tables" }), (0, jsx_runtime_1.jsx)("p", { className: "mt-2 text-sm text-gray-600", children: "Manage your database tables and their configurations" })] }), (0, jsx_runtime_1.jsx)("button", { onClick: function () { return router.push('/entities/create'); }, className: "px-4 py-2 bg-blue-500 text-white rounded", children: "Add New" })] }), (0, jsx_runtime_1.jsx)(material_1.Paper, { elevation: 2, className: "p-4", children: (0, jsx_runtime_1.jsx)(material_1.Box, { sx: {
+    return ((0, jsx_runtime_1.jsxs)("div", { className: "space-y-6", children: [(0, jsx_runtime_1.jsxs)("div", { className: "flex justify-between items-center mb-6", children: [(0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsx)("h2", { className: "text-2xl font-bold text-gray-800", children: "Available Tables" }), (0, jsx_runtime_1.jsx)("p", { className: "mt-2 text-sm text-gray-600", children: "Manage your database tables and their configurations" })] }), (0, jsx_runtime_1.jsx)("button", { onClick: function () { return router.push('/entities/create'); }, className: "px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors", children: "Add New" })] }), (0, jsx_runtime_1.jsx)(material_1.Paper, { elevation: 2, className: "p-4", children: (0, jsx_runtime_1.jsx)(material_1.Box, { sx: {
                         width: '100%',
                         minHeight: '400px',
                         display: 'flex',
@@ -202,14 +217,13 @@ function TablesList(_a) {
                             },
                         }, initialState: {
                             pagination: {
-                                paginationModel: { pageSize: 5, page: 0 },
+                                paginationModel: { pageSize: 10, page: 0 },
                             },
                             sorting: {
-                                sortModel: [{ field: 'id', sort: 'asc' }],
+                                sortModel: [{ field: 'name', sort: 'asc' }],
                             },
                         }, sortingOrder: ['asc', 'desc'], disableColumnMenu: true, sx: {
                             '& .MuiDataGrid-row': {
-                                cursor: 'pointer',
                                 '&:hover': {
                                     backgroundColor: 'rgba(0, 0, 0, 0.04)',
                                 },

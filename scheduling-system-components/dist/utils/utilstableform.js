@@ -53,6 +53,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.initialAttributeState = exports.formatArrayToString = void 0;
 exports.fetchEntityConfig = fetchEntityConfig;
+exports.stopPolling = stopPolling;
 exports.saveEntity = saveEntity;
 var routeGenerator_1 = require("./routeGenerator");
 // API endpoint from environment variables
@@ -88,6 +89,8 @@ exports.initialAttributeState = {
     isIndexed: false,
     indexLength: null
 };
+var isRunning = false;
+var isCheckingMigration = false;
 /**
  * Fetches entity configuration from JSON file
  * Contains input types, data types, and other configuration options
@@ -125,6 +128,9 @@ function fetchEntityConfig() {
         });
     });
 }
+// Track entities being processed
+var processingEntities = new Set();
+var completedEntities = new Set();
 /**
  * Updates the sidebar routes through the API
  * @param entityName - Name of the entity to add to routes
@@ -138,31 +144,116 @@ function updateSidebarRoutes(entityName) {
                     _a.trys.push([0, 3, , 4]);
                     return [4 /*yield*/, fetch('/api/sidebar-routes', {
                             method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
+                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ entityName: entityName }),
                         })];
                 case 1:
                     response = _a.sent();
-                    if (!response.ok) {
+                    if (!response.ok)
                         throw new Error('Failed to update sidebar routes');
-                    }
                     return [4 /*yield*/, response.json()];
                 case 2:
                     data = _a.sent();
-                    if (!data.success) {
+                    if (!data.success)
                         throw new Error(data.error || 'Failed to update sidebar routes');
-                    }
                     return [3 /*break*/, 4];
                 case 3:
                     error_1 = _a.sent();
                     console.error('Error updating sidebar routes:', error_1);
-                    throw new Error('Failed to update sidebar routes');
+                    throw error_1;
                 case 4: return [2 /*return*/];
             }
         });
     });
+}
+/**
+ * Checks webhook and updates routes if needed
+ */
+function checkWebhookAndUpdateRoutes() {
+    return __awaiter(this, void 0, void 0, function () {
+        var response, result, entities, _i, entities_1, entity, entityName, migrationStatus, error_2, error_3;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    // If already running or checking migration, skip
+                    if (isRunning || isCheckingMigration)
+                        return [2 /*return*/];
+                    isRunning = true;
+                    isCheckingMigration = true;
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 13, 14, 15]);
+                    return [4 /*yield*/, fetch("".concat(API_URL, "/api/v1/entity/check-migration-status"))];
+                case 2:
+                    response = _a.sent();
+                    if (!response.ok)
+                        throw new Error('Failed to call webhook');
+                    return [4 /*yield*/, response.json()];
+                case 3:
+                    result = _a.sent();
+                    entities = result.success.data;
+                    _i = 0, entities_1 = entities;
+                    _a.label = 4;
+                case 4:
+                    if (!(_i < entities_1.length)) return [3 /*break*/, 12];
+                    entity = entities_1[_i];
+                    entityName = entity.name || entity.table_name;
+                    migrationStatus = entity.status || entity.migrations;
+                    if (!entityName)
+                        return [3 /*break*/, 11];
+                    // Skip if already processing or completed
+                    if (processingEntities.has(entityName) || completedEntities.has(entityName)) {
+                        return [3 /*break*/, 11];
+                    }
+                    if (!migrationStatus) return [3 /*break*/, 10];
+                    _a.label = 5;
+                case 5:
+                    _a.trys.push([5, 7, 8, 9]);
+                    processingEntities.add(entityName);
+                    return [4 /*yield*/, updateSidebarRoutes(entityName)];
+                case 6:
+                    _a.sent();
+                    completedEntities.add(entityName);
+                    console.log("Sidebar routes updated for: ".concat(entityName));
+                    return [3 /*break*/, 9];
+                case 7:
+                    error_2 = _a.sent();
+                    console.error("Error updating sidebar routes for ".concat(entityName, ":"), error_2);
+                    return [3 /*break*/, 9];
+                case 8:
+                    processingEntities.delete(entityName);
+                    return [7 /*endfinally*/];
+                case 9: return [3 /*break*/, 11];
+                case 10:
+                    console.log("Migration still in progress for: ".concat(entityName));
+                    _a.label = 11;
+                case 11:
+                    _i++;
+                    return [3 /*break*/, 4];
+                case 12: return [3 /*break*/, 15];
+                case 13:
+                    error_3 = _a.sent();
+                    console.error('Error checking webhook:', error_3);
+                    return [3 /*break*/, 15];
+                case 14:
+                    isRunning = false;
+                    isCheckingMigration = false; // Reset the flag when done
+                    return [7 /*endfinally*/];
+                case 15: return [2 /*return*/];
+            }
+        });
+    });
+}
+// Start polling when module loads
+var pollInterval = setInterval(checkWebhookAndUpdateRoutes, 10000);
+// Clear completed entities every hour
+var cleanupInterval = setInterval(function () {
+    completedEntities.clear();
+}, 3600000);
+// Export function to stop polling if needed
+function stopPolling() {
+    clearInterval(pollInterval);
+    clearInterval(cleanupInterval);
 }
 /**
  * Saves entity configuration to backend API and generates corresponding routes
@@ -181,7 +272,7 @@ function updateSidebarRoutes(entityName) {
  */
 function saveEntity(entity, token) {
     return __awaiter(this, void 0, void 0, function () {
-        var configData, transformedEntity, response, responseData, config, error_2;
+        var configData, transformedEntity, response, responseData, config, error_4;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, fetchEntityConfig()];
@@ -226,7 +317,8 @@ function saveEntity(entity, token) {
                                 displayInList: attr.displayInList !== false,
                                 references: attr.references,
                                 isIndexed: attr.isIndexed || false,
-                                indexLength: attr.indexLength || null
+                                indexLength: attr.indexLength || null,
+                                indexType: attr.indexType || undefined
                             };
                         })
                     };
@@ -251,7 +343,7 @@ function saveEntity(entity, token) {
                     }
                     _a.label = 4;
                 case 4:
-                    _a.trys.push([4, 7, , 8]);
+                    _a.trys.push([4, 6, , 7]);
                     config = {
                         entityName: entity.entityName,
                         attributes: entity.attributes
@@ -259,16 +351,13 @@ function saveEntity(entity, token) {
                     return [4 /*yield*/, (0, routeGenerator_1.generateTableRoutes)(config)];
                 case 5:
                     _a.sent();
-                    return [4 /*yield*/, updateSidebarRoutes(entity.entityName)];
-                case 6:
-                    _a.sent();
                     console.log('Routes generated successfully for:', entity.entityName);
-                    return [3 /*break*/, 8];
-                case 7:
-                    error_2 = _a.sent();
-                    console.error('Error generating routes:', error_2);
-                    throw new Error(error_2 instanceof Error ? error_2.message : 'Unknown error');
-                case 8: return [2 /*return*/, {
+                    return [3 /*break*/, 7];
+                case 6:
+                    error_4 = _a.sent();
+                    console.error('Error generating routes:', error_4);
+                    throw new Error(error_4 instanceof Error ? error_4.message : 'Unknown error');
+                case 7: return [2 /*return*/, {
                         message: responseData.success.message,
                         success: true
                     }];

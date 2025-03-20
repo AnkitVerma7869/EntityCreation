@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Pencil, Trash2 } from 'lucide-react';
-import { Attribute, ConfigData } from "../../interfaces/types";
+import { Attribute, ConfigData, Entity } from "../../interfaces/types";
 import * as yup from "yup";
 import { entityNameSchema, attributeNameSchema, dataTypeSchema, sizeSchema, precisionSchema, enumValuesSchema } from '../../schemas/validationSchemas';
 import { dataTypeProperties, maxSizes, precisionLimits, disabledOptionClass } from '../../constants/dataTypeProperties';
@@ -13,6 +13,7 @@ import {
 } from '../../helpers/helpers';
 import { useEntitySetup } from '../../hooks/useEntitySetup';
 import ForeignKeyModal from '../Modals/ForeignKeyModal';
+import { indexConfigurations, DataTypeIndexConfig } from '../../constants/indexConfig';
 
 // Props interface for EntitySetup component
 interface EntitySetupProps {
@@ -44,10 +45,15 @@ interface EntitySetupProps {
   setSelectedEntity: (entity: string) => void;
   editingIndex: number | null;
   setEditingIndex: React.Dispatch<React.SetStateAction<number | null>>;
-  handleSaveEntity: () => void;
+  handleSaveEntity: (entity: Entity) => Promise<void>;
   resetForm: () => void;
   showToast: (message: string, type: 'success' | 'error') => void;
 }
+
+// Add this function before the EntitySetup component
+const getIndexConfigForDataType = (dataType: string): DataTypeIndexConfig | undefined => {
+  return indexConfigurations.find(config => config.dataType.toLowerCase() === dataType.toLowerCase());
+};
 
 export default function EntitySetup({
   configData,
@@ -1164,77 +1170,123 @@ export default function EntitySetup({
 
             {/* Index Checkbox and Length */}
             <div className="space-y-4">
-              <div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="isIndexed"
-                    checked={currentAttribute.isIndexed || false}
-                    onChange={(e) => {
-                      const dataType = currentAttribute.dataType.toLowerCase();
-                      const showLengthInput = ['varchar', 'char', 'text', 'json', 'jsonb', 'uuid'].includes(dataType);
-                      setCurrentAttribute({
-                        ...currentAttribute,
-                        isIndexed: e.target.checked,
-                        // Set default index length to 10 for supported types when checkbox is checked
-                        indexLength: e.target.checked && showLengthInput ? 10 : null
-                      });
-                    }}
-                    className="form-checkbox h-4 w-4 text-primary rounded border-stroke"
-                  />
-                  <label htmlFor="isIndexed" className="text-sm font-medium text-black dark:text-white">
-                    Create Index
-                  </label>
-                </div>
-              </div>
-              
-              {currentAttribute.isIndexed && 
-               ['varchar', 'char', 'text', 'json', 'jsonb', 'uuid'].includes(currentAttribute.dataType.toLowerCase()) && (
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-black dark:text-white">
-                    Index Length 
-                  </label>
-                  <input
-                    type="number"
-                    value={currentAttribute.indexLength === null ? '' : currentAttribute.indexLength}
-                    onChange={(e) => {
-                      const value = e.target.value === '' ? null : parseInt(e.target.value);
-                      const dataType = currentAttribute.dataType.toLowerCase();
-                      
-                      // Only check size constraint for varchar and char
-                      if (['varchar', 'char'].includes(dataType) && currentAttribute.size) {
-                        if (value && value > currentAttribute.size) {
-                          showToast(`Index length cannot be greater than field size (${currentAttribute.size})`, 'error');
-                          return;
-                        }
-                      }
+              {(() => {
+                const indexConfig = getIndexConfigForDataType(currentAttribute.dataType);
+                if (!indexConfig || indexConfig.notIndexable) {
+                  return null; // Don't show anything for non-indexable types
+                }
 
-                      setCurrentAttribute({
-                        ...currentAttribute,
-                        indexLength: value // Allow null values
-                      });
-                    }}
-                    onBlur={(e) => {
-                      // If the field is empty or invalid when losing focus, set to default 10
-                      if (!currentAttribute.indexLength) {
-                        setCurrentAttribute({
-                          ...currentAttribute,
-                          indexLength: 10
-                        });
-                      }
-                    }}
-                    min="1"
-                    max={['varchar', 'char'].includes(currentAttribute.dataType.toLowerCase()) ? currentAttribute.size || undefined : undefined}
-                    className="w-full rounded border-[1.5px] border-stroke bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-                    placeholder="Enter index length"
-                  />
-                  {['varchar', 'char'].includes(currentAttribute.dataType.toLowerCase()) && currentAttribute.size && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      Maximum allowed length: {currentAttribute.size}
-                    </p>
-                  )}
-                </div>
-              )}
+                return (
+                  <>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id="isIndexed"
+                          checked={currentAttribute.isIndexed || false}
+                          onChange={(e) => {
+                            const dataType = currentAttribute.dataType.toLowerCase();
+                            const showLengthInput = ['varchar', 'char', 'text', 'json', 'jsonb', 'uuid'].includes(dataType);
+                            setCurrentAttribute({
+                              ...currentAttribute,
+                              isIndexed: e.target.checked,
+                              // Set default index type and length when enabling index
+                              indexType: e.target.checked ? (indexConfig?.defaultIndexType || 'btree') : undefined,
+                              indexLength: e.target.checked && showLengthInput ? 10 : null
+                            });
+                          }}
+                          className="form-checkbox h-4 w-4 text-primary rounded border-stroke"
+                        />
+                        <label htmlFor="isIndexed" className="text-sm font-medium text-black dark:text-white">
+                          Create Index
+                        </label>
+                      </div>
+                    </div>
+                    
+                    {currentAttribute.isIndexed && (
+                      <>
+                        {/* Index Type Selection */}
+                        <div>
+                          <label className="mb-1 block text-sm font-medium text-black dark:text-white">
+                            Index Type
+                          </label>
+                          <select
+                            value={currentAttribute.indexType || indexConfig.defaultIndexType}
+                            onChange={(e) => {
+                              setCurrentAttribute({
+                                ...currentAttribute,
+                                indexType: e.target.value
+                              });
+                            }}
+                            className="w-full rounded border-[1.5px] border-stroke bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                          >
+                            {indexConfig.indexTypes.map((type) => (
+                              <option 
+                                key={type.type} 
+                                value={type.type}
+                                title={type.description}
+                              >
+                                {type.type.toUpperCase()} {type.recommended ? '(Recommended)' : ''}
+                              </option>
+                            ))}
+                          </select>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {indexConfig.indexTypes.find(t => t.type === currentAttribute.indexType)?.description}
+                          </p>
+                        </div>
+
+                        {/* Index Length Input */}
+                        {['varchar', 'char', 'text', 'json', 'jsonb', 'uuid'].includes(currentAttribute.dataType.toLowerCase()) && (
+                          <div>
+                            <label className="mb-1 block text-sm font-medium text-black dark:text-white">
+                              Index Length 
+                            </label>
+                            <input
+                              type="number"
+                              value={currentAttribute.indexLength === null ? '' : currentAttribute.indexLength}
+                              onChange={(e) => {
+                                const value = e.target.value === '' ? null : parseInt(e.target.value);
+                                const dataType = currentAttribute.dataType.toLowerCase();
+                                
+                                // Only check size constraint for varchar and char
+                                if (['varchar', 'char'].includes(dataType) && currentAttribute.size) {
+                                  if (value && value > currentAttribute.size) {
+                                    showToast(`Index length cannot be greater than field size (${currentAttribute.size})`, 'error');
+                                    return;
+                                  }
+                                }
+
+                                setCurrentAttribute({
+                                  ...currentAttribute,
+                                  indexLength: value
+                                });
+                              }}
+                              onBlur={(e) => {
+                                // If the field is empty or invalid when losing focus, set to default 10
+                                if (!currentAttribute.indexLength) {
+                                  setCurrentAttribute({
+                                    ...currentAttribute,
+                                    indexLength: 10
+                                  });
+                                }
+                              }}
+                              min="1"
+                              max={['varchar', 'char'].includes(currentAttribute.dataType.toLowerCase()) ? currentAttribute.size || undefined : undefined}
+                              className="w-full rounded border-[1.5px] border-stroke bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                              placeholder="Enter index length"
+                            />
+                            {['varchar', 'char'].includes(currentAttribute.dataType.toLowerCase()) && currentAttribute.size && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                Maximum allowed length: {currentAttribute.size}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </>
+                );
+              })()}
             </div>
 
             {/* Default Value */}
