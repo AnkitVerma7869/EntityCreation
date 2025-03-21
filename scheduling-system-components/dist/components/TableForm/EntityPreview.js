@@ -82,36 +82,34 @@ function EntityPreview(_a) {
     };
     // Add validation before saving
     var handleSave = function () { return __awaiter(_this, void 0, void 0, function () {
-        var duplicates, error_1;
+        var error_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    _a.trys.push([0, 2, , 3]);
+                    _a.trys.push([0, 3, , 4]);
                     return [4 /*yield*/, validationSchemas_1.entityNameSchema.validate(entityName)];
                 case 1:
                     _a.sent();
-                    duplicates = attributes
-                        .map(function (attr) { return attr.name.toLowerCase(); })
-                        .filter(function (name, index, arr) { return arr.indexOf(name) !== index; });
-                    if (duplicates.length > 0) {
-                        showToast("Duplicate attribute names found: ".concat(duplicates.join(', ')), 'error');
-                        return [2 /*return*/];
-                    }
-                    // Check if there are any attributes
                     if (attributes.length === 0) {
                         showToast("Please add at least one attribute", 'error');
                         return [2 /*return*/];
                     }
-                    // If validation passes, proceed with save
-                    handleSaveEntity();
-                    return [3 /*break*/, 3];
+                    // Properly construct the Entity object
+                    return [4 /*yield*/, handleSaveEntity({
+                            entityName: entityName,
+                            attributes: attributes
+                        })];
                 case 2:
+                    // Properly construct the Entity object
+                    _a.sent();
+                    return [3 /*break*/, 4];
+                case 3:
                     error_1 = _a.sent();
                     if (error_1 instanceof Error) {
                         showToast(error_1.message, 'error');
                     }
-                    return [3 /*break*/, 3];
-                case 3: return [2 /*return*/];
+                    return [3 /*break*/, 4];
+                case 4: return [2 /*return*/];
             }
         });
     }); };

@@ -11,6 +11,39 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -63,6 +96,7 @@ var x_data_grid_1 = require("@mui/x-data-grid");
 var material_1 = require("@mui/material");
 var navigation_1 = require("next/navigation");
 var lucide_react_1 = require("lucide-react");
+var react_hot_toast_1 = __importStar(require("react-hot-toast"));
 /**
  * Custom loading overlay component for the data grid
  * Displays a spinning loader with loading message
@@ -98,6 +132,7 @@ function TablesList(_a) {
     var _this = this;
     var initialData = _a.initialData, onCreateNew = _a.onCreateNew, token = _a.token;
     var router = (0, navigation_1.useRouter)();
+    var searchParams = (0, navigation_1.useSearchParams)();
     var _b = (0, react_1.useState)([]), tables = _b[0], setTables = _b[1];
     var columns = (0, react_1.useState)([
         {
@@ -190,6 +225,14 @@ function TablesList(_a) {
     (0, react_1.useEffect)(function () {
         fetchTables();
     }, [API_URL]);
+    (0, react_1.useEffect)(function () {
+        // Get query params from URL
+        var isNewEntity = searchParams.get('newEntity');
+        var entityName = searchParams.get('name');
+        if (isNewEntity === 'true' && entityName) {
+            react_hot_toast_1.default.loading("Table \"".concat(entityName, "\" is being created. Migration is in progress..."), { duration: 5000 });
+        }
+    }, [searchParams]);
     var refreshData = function () { return __awaiter(_this, void 0, void 0, function () {
         return __generator(this, function (_a) {
             switch (_a.label) {
@@ -201,7 +244,7 @@ function TablesList(_a) {
             }
         });
     }); };
-    return ((0, jsx_runtime_1.jsxs)("div", { className: "space-y-6", children: [(0, jsx_runtime_1.jsxs)("div", { className: "flex justify-between items-center mb-6", children: [(0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsx)("h2", { className: "text-2xl font-bold text-gray-800", children: "Available Tables" }), (0, jsx_runtime_1.jsx)("p", { className: "mt-2 text-sm text-gray-600", children: "Manage your database tables and their configurations" })] }), (0, jsx_runtime_1.jsx)("button", { onClick: function () { return router.push('/entities/create'); }, className: "px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors", children: "Add New" })] }), (0, jsx_runtime_1.jsx)(material_1.Paper, { elevation: 2, className: "p-4", children: (0, jsx_runtime_1.jsx)(material_1.Box, { sx: {
+    return ((0, jsx_runtime_1.jsxs)("div", { className: "space-y-6", children: [(0, jsx_runtime_1.jsx)(react_hot_toast_1.Toaster, {}), (0, jsx_runtime_1.jsxs)("div", { className: "flex justify-between items-center mb-6", children: [(0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsx)("h2", { className: "text-2xl font-bold text-gray-800", children: "Available Tables" }), (0, jsx_runtime_1.jsx)("p", { className: "mt-2 text-sm text-gray-600", children: "Manage your database tables and their configurations" })] }), (0, jsx_runtime_1.jsx)("button", { onClick: function () { return router.push('/entities/create'); }, className: "px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors", children: "Add New" })] }), (0, jsx_runtime_1.jsx)(material_1.Paper, { elevation: 2, className: "p-4", children: (0, jsx_runtime_1.jsx)(material_1.Box, { sx: {
                         width: '100%',
                         minHeight: '400px',
                         display: 'flex',
