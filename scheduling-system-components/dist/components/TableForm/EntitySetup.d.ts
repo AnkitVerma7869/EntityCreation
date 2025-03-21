@@ -1,4 +1,4 @@
-import { Attribute, ConfigData } from "../../interfaces/types";
+import { Attribute, ConfigData, Entity } from "../../interfaces/types";
 interface EntitySetupProps {
     configData: ConfigData & {
         inputTypes: {
@@ -31,7 +31,7 @@ interface EntitySetupProps {
     setSelectedEntity: (entity: string) => void;
     editingIndex: number | null;
     setEditingIndex: React.Dispatch<React.SetStateAction<number | null>>;
-    handleSaveEntity: () => void;
+    handleSaveEntity: (entity: Entity) => Promise<void>;
     resetForm: () => void;
     showToast: (message: string, type: 'success' | 'error') => void;
 }

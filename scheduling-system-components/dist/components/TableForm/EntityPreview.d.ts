@@ -1,9 +1,10 @@
 import { Attribute } from "../../interfaces/types";
+import { Entity } from "../../interfaces/types";
 interface EntityPreviewProps {
     attributes: Attribute[];
     setAttributes: React.Dispatch<React.SetStateAction<Attribute[]>>;
     setCurrentAttribute: (attribute: Attribute) => void;
-    handleSaveEntity: () => void;
+    handleSaveEntity: (entity: Entity) => Promise<void>;
     resetForm: () => void;
     setEditingIndex: React.Dispatch<React.SetStateAction<number | null>>;
     entityName: string;
