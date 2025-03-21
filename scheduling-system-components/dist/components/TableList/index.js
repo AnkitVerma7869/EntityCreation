@@ -226,13 +226,23 @@ function TablesList(_a) {
         fetchTables();
     }, [API_URL]);
     (0, react_1.useEffect)(function () {
-        // Get query params from URL
-        var isNewEntity = searchParams.get('newEntity');
-        var entityName = searchParams.get('name');
-        if (isNewEntity === 'true' && entityName) {
-            react_hot_toast_1.default.loading("Table \"".concat(entityName, "\" is being created. Migration is in progress..."), { duration: 5000 });
+        react_hot_toast_1.default.dismiss();
+        // Check localStorage instead of query params
+        var storedEntity = localStorage.getItem('newEntity');
+        if (storedEntity) {
+            var _a = JSON.parse(storedEntity), name_1 = _a.name, message = _a.message;
+            // Show migration in progress toast
+            react_hot_toast_1.default.success("Migration is in progress,You can see your table in few seconds in the table list...", { position: 'top-right', duration: 5000 });
+            // Show success message after delay
+            // if (message) {
+            //   setTimeout(() => {
+            //     toast.success(message);
+            //   }, 5500);
+            // }
+            // Clear the stored data
+            localStorage.removeItem('newEntity');
         }
-    }, [searchParams]);
+    }, []); // Run once on component mount
     var refreshData = function () { return __awaiter(_this, void 0, void 0, function () {
         return __generator(this, function (_a) {
             switch (_a.label) {

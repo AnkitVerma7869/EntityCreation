@@ -37,8 +37,13 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateTableRoutes = generateTableRoutes;
-var pages_1 = require("./pages");
-var storeGenerator_1 = require("./utils/storeGenerator");
+exports.generateRoutes = generateRoutes;
+var createPageComp_1 = require("./pages/pageComponents/createPageComp");
+var editPageComp_1 = require("./pages/pageComponents/editPageComp");
+var listPageComp_1 = require("./pages/pageComponents/listPageComp");
+var viewPageComp_1 = require("./pages/pageComponents/viewPageComp");
+var storeGenerator_1 = require("./store/storeGenerator");
+var schemaGenerator_1 = require("./utils/schemaGenerator");
 /**
  * Generates and saves all necessary routes for a table
  * @param config - Configuration for the table including name and attributes
@@ -47,16 +52,24 @@ var storeGenerator_1 = require("./utils/storeGenerator");
 function generateTableRoutes(config) {
     return __awaiter(this, void 0, void 0, function () {
         var routes, response, result, error_1;
-        var _a;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
+        var _a, _b;
+        return __generator(this, function (_c) {
+            switch (_c.label) {
                 case 0:
-                    _b.trys.push([0, 3, , 4]);
+                    _c.trys.push([0, 3, , 4]);
                     routes = {
-                        pages: (0, pages_1.generatePages)(config),
+                        pages: {
+                            list: (0, listPageComp_1.generateListPage)(config),
+                            create: (0, createPageComp_1.generateCreatePage)(config),
+                            edit: (0, editPageComp_1.generateEditPage)(config),
+                            view: (0, viewPageComp_1.generateViewPage)(config)
+                        },
                         store: (_a = {},
                             _a["".concat(config.entityName.toLowerCase(), "Store.ts")] = (0, storeGenerator_1.generateEntityStore)(config),
-                            _a)
+                            _a),
+                        schemas: (_b = {},
+                            _b["".concat(config.entityName.toLowerCase(), "Schema.ts")] = (0, schemaGenerator_1.generateSchemaFile)(config),
+                            _b)
                     };
                     return [4 /*yield*/, fetch('/api/generate-routes', {
                             method: 'POST',
@@ -68,20 +81,37 @@ function generateTableRoutes(config) {
                             }),
                         })];
                 case 1:
-                    response = _b.sent();
+                    response = _c.sent();
                     return [4 /*yield*/, response.json()];
                 case 2:
-                    result = _b.sent();
+                    result = _c.sent();
                     if (!result.success) {
                         throw new Error(result.error || 'Failed to generate routes');
                     }
                     return [2 /*return*/, result];
                 case 3:
-                    error_1 = _b.sent();
+                    error_1 = _c.sent();
                     console.error('Error generating routes:', error_1);
                     throw error_1;
                 case 4: return [2 /*return*/];
             }
         });
     });
+}
+function generateRoutes(config) {
+    var _a, _b;
+    return {
+        pages: {
+            list: (0, listPageComp_1.generateListPage)(config),
+            create: (0, createPageComp_1.generateCreatePage)(config),
+            edit: (0, editPageComp_1.generateEditPage)(config),
+            view: (0, viewPageComp_1.generateViewPage)(config)
+        },
+        store: (_a = {},
+            _a["".concat(config.entityName.toLowerCase(), "Store.ts")] = (0, storeGenerator_1.generateEntityStore)(config),
+            _a),
+        schemas: (_b = {},
+            _b["".concat(config.entityName.toLowerCase(), "Schema.ts")] = (0, schemaGenerator_1.generateSchemaFile)(config),
+            _b)
+    };
 }
