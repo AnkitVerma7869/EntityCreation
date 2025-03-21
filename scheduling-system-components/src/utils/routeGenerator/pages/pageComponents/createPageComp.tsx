@@ -70,19 +70,31 @@ function getPrimaryKeyField(config: Entity): string {
  * @returns {string} Generated React component code
  */
 export function generateCreatePage(config: Entity): string {
-  const { packages } = generatePackageImports(config);
+  const { packages } = generatePackageImports(config, { create: true });
   const formattedEntityName = formatEntityName(config.entityName);
   
+  // Filter out packages we need for imports
+  const needsDatePicker = config.attributes.some(attr => 
+    ['date', 'datetime', 'timestamp'].includes(attr.dataType.toLowerCase())
+  );
+  const needsPhoneInput = config.attributes.some(attr => 
+    attr.inputType.toLowerCase() === 'tel'
+  );
+  const needsSelect = config.attributes.some(attr => 
+    attr.inputType.toLowerCase() === 'select'
+  );
+
   const dynamicImports = `import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import DatePickerOneRequired from '@/components/FormElements/DatePickerOneRequired';
-import PhoneNumberInput from '@/components/PhoneNumberInput/index';
-import Select from 'react-select';
 import { use${formattedEntityName}Store } from '@/store/${config.entityName.toLowerCase()}Store';
-import { toast, Toaster } from 'react-hot-toast';`;
+import { toast, Toaster } from 'react-hot-toast';
+${needsDatePicker ? "import DatePickerOneRequired from '@/components/FormElements/DatePickerOneRequired';" : ''}
+${needsPhoneInput ? "import PhoneNumberInput from '@/components/PhoneNumberInput/index';" : ''}
+${needsSelect ? "import Select from 'react-select';" : ''}
+`;
     
   const dateColumns = config.attributes.filter(attr => ['date', 'datetime', 'timestamp', 'time', 'datetime-local'].some(type => attr.dataType.toLowerCase().includes(type))).map(attr => `'${attr.name}'`);
     

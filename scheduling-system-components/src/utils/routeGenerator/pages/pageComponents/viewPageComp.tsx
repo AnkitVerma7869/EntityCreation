@@ -4,6 +4,7 @@
  */
 
 import { Entity } from '../../../../interfaces/types';
+import { generatePackageImports } from '../../utils/packageManager';
 
 /**
  * Formats an entity name to follow camelCase convention
@@ -56,6 +57,7 @@ function getPrimaryKeyField(config: Entity): string {
  * @returns {string} Generated React component code
  */
 export function generateViewPage(config: Entity) {
+  const { packages } = generatePackageImports(config, { view: true });
   const formattedEntityName = formatEntityName(config.entityName);
 
   // Extract date columns for special formatting
@@ -72,7 +74,7 @@ export function generateViewPage(config: Entity) {
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { use${formattedEntityName}Store } from '@/store/${config.entityName.toLowerCase()}Store';
-import { ArrowLeft } from 'lucide-react';
+
 
 /**
  * Formats a field name for display

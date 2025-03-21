@@ -21,7 +21,6 @@ export function generateTelField(attr: Attribute, fieldName: string, defaultValu
       <PhoneNumberInput
         name="${fieldName}"
         control={control}
-        defaultValue="${defaultValue || ''}"
         onValueChange={(value) => {
           // Simple concatenation with + prefix
           const phoneWithCode = \`+\${value.countryCode}\${value.phone}\`;
