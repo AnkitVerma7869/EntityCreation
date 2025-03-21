@@ -13,10 +13,14 @@ import { Entity } from '../../../../interfaces/types';
  * @returns {string} Formatted camelCase name
  */
 function formatEntityName(name: string): string {
-  return name.replace(/[-\s]+/g, '_').split('_').map((word, index) => {
-    const capitalized = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-    return index === 0 ? capitalized.toLowerCase() : capitalized;
-  }).join('');
+  return name
+    .replace(/[-\s]+/g, '_')
+    .split('_')
+    .map((word, index) => {
+      const capitalized = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      return index === 0 ? capitalized.toLowerCase() : capitalized;
+    })
+    .join('');
 }
 
 /**
@@ -68,119 +72,126 @@ export function generateViewPage(config: Entity) {
   const hasCustomPK = hasCustomPrimaryKey(config);
   const primaryKeyField = getPrimaryKeyField(config);
 
-  return `'use client';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { use${formattedEntityName}Store } from '@/store/${config.entityName.toLowerCase()}Store';
-import { ArrowLeft } from 'lucide-react';
+  return `
+    'use client';
+    import { useEffect, useState } from 'react';
+    import { useRouter } from 'next/navigation';
+    import DefaultLayout from "@/components/Layouts/DefaultLayout";
+    import { use${formattedEntityName}Store } from '@/store/${config.entityName.toLowerCase()}Store';
+    import { ArrowLeft } from 'lucide-react';
 
-/**
- * Formats a field name for display
- * Example: "user_name" -> "User Name"
- * 
- * @param {string} name - Raw field name
- * @returns {string} Formatted display name
- */
-function formatFieldLabel(name: string): string {
-  return name.split(/[_\\s]+/).map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
-}
-
-/**
- * View Page Component for ${formattedEntityName}
- * Displays detailed information for a single ${formattedEntityName} record
- * 
- * @param {Object} props - Component props
- * @param {Object} props.params - Route parameters
- * @param {string} props.params.id - Record ID to view
- */
-export default function ${formattedEntityName}ViewPage({ params }: { params: { id: string } }) {
-  const router = useRouter();
-  const { loading, error, fetchRecord } = use${formattedEntityName}Store();
-  const [currentRecord, setCurrentRecord] = useState<any>(null);
-  
-  // Define the primary key field to use for record identification
-  const primaryKeyField = '${primaryKeyField}';
-  
-  // List of columns that need date formatting
-  const DateFormatColumns = [${dateColumns.join(', ')}];
-   
-  /**
-   * Formats date and time for display
-   * @param {string} inputDate - Raw date string
-   * @returns {string} Formatted date string
-   */
-  const formatDateTime = (inputDate) => {
-    if (!inputDate) return "";
-    const date = new Date(inputDate.replace(" ", "T")); 
-    return date.toLocaleString("en-US", {
-      month: "2-digit",
-      day: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true
-    });
-  };
-
-  /**
-   * Fetches and formats record data
-   * Handles date formatting for date fields
-   */
-  useEffect(() => {
-    const fetchData = async () => {
-      const record = await fetchRecord(params.id);
-      const formattedRecord = { ...record };
-      DateFormatColumns.forEach(columnName => {
-        if (formattedRecord[columnName]) {
-          formattedRecord[columnName] = formatDateTime(formattedRecord[columnName]);
-        }
-      });
-      setCurrentRecord(formattedRecord);
+    /**
+     * Formats a field name for display
+     * Example: "user_name" -> "User Name"
+     * 
+     * @param {string} name - Raw field name
+     * @returns {string} Formatted display name
+     */
+    function formatFieldLabel(name: string): string {
+      return name
+        .split(/[_\\s]+/)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
     }
-    fetchData();
-  }, [params.id]);
 
-  // Loading and error states
-  if (loading) return <div>Loading...</div>;
-  if (!currentRecord) return <div>Record not found</div>;
+    /**
+     * View Page Component for ${formattedEntityName}
+     * Displays detailed information for a single ${formattedEntityName} record
+     * 
+     * @param {Object} props - Component props
+     * @param {Object} props.params - Route parameters
+     * @param {string} props.params.id - Record ID to view
+     */
+    export default function ${formattedEntityName}ViewPage({ params }: { params: { id: string } }) {
+      const router = useRouter();
+      const { loading, error, fetchRecord } = use${formattedEntityName}Store();
+      const [currentRecord, setCurrentRecord] = useState<any>(null);
+      
+      // Define the primary key field to use for record identification
+      const primaryKeyField = '${primaryKeyField}';
+      
+      // List of columns that need date formatting
+      const DateFormatColumns = [${dateColumns.join(', ')}];
+       
+      /**
+       * Formats date and time for display
+       * @param {string} inputDate - Raw date string
+       * @returns {string} Formatted date string
+       */
+      const formatDateTime = (inputDate) => {
+        if (!inputDate) return "";
+        const date = new Date(inputDate.replace(" ", "T")); 
+        return date.toLocaleString("en-US", {
+          month: "2-digit",
+          day: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true
+        });
+      };
 
-  return (
-    <>
-      <div className="p-2">
-        <div className="flex flex-col gap-9">
-          <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
-            <div className="border-b border-stroke px-6.5 py-4 dark:border-strokedark">
-              <div className="flex justify-between items-center">
-                <h3 className="text-xl font-bold text-black dark:text-white">
-                  ${formattedEntityName} Details
-                </h3>
-                <button
-                  onClick={() => router.push(\`/${config.entityName.toLowerCase()}/edit/\${params.id}\`)}
-                  className="inline-flex items-center justify-center gap-2.5 rounded-md bg-primary px-6 py-2.5 text-center font-medium text-white hover:bg-opacity-90"
-                >
-                  Edit
-                </button>
-              </div>
-            </div>
+      /**
+       * Fetches and formats record data
+       * Handles date formatting for date fields
+       */
+      useEffect(() => {
+        const fetchData = async () => {
+          const record = await fetchRecord(params.id);
+          const formattedRecord = { ...record };
+          DateFormatColumns.forEach(columnName => {
+            if (formattedRecord[columnName]) {
+              formattedRecord[columnName] = formatDateTime(formattedRecord[columnName]);
+            }
+          });
+          setCurrentRecord(formattedRecord);
+        }
+        fetchData();
+      }, [params.id]);
 
-            <div className="p-6.5">
-              <div className="grid grid-cols-2 gap-6">
-                ${config.attributes.map(attr => `
-                  <div className="col-span-1">
-                    <h4 className="text-sm font-bold text-black dark:text-white mb-2">
-                       ${attr.name.split(/[_\s]+/).map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')}
-                    </h4>
-                    <p className="text-base text-gray-600 dark:text-gray-400">
-                       {currentRecord['${attr.name.replace(/\s+/g, '-')}']}
-                    </p>
+      // Loading and error states
+      if (loading) return <div>Loading...</div>;
+      if (!currentRecord) return <div>Record not found</div>;
+
+      return (
+        <DefaultLayout>
+          <div className="p-2">
+            <div className="flex flex-col gap-9">
+              <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
+                <div className="border-b border-stroke px-6.5 py-4 dark:border-strokedark">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-xl font-bold text-black dark:text-white">
+                      ${formattedEntityName} Details
+                    </h3>
+                    <button
+                      onClick={() => router.push(\`/${config.entityName.toLowerCase()}/edit/\${params.id}\`)}
+
+                      className="inline-flex items-center justify-center gap-2.5 rounded-md bg-primary px-6 py-2.5 text-center font-medium text-white hover:bg-opacity-90"
+                    >
+                      Edit
+                    </button>
                   </div>
-                `).join('')}
+                </div>
+
+                <div className="p-6.5">
+                  <div className="grid grid-cols-2 gap-6">
+                    ${config.attributes.map(attr => `
+                      <div className="col-span-1">
+                        <h4 className="text-sm font-bold text-black dark:text-white mb-2">
+                           ${attr.name.split(/[_\s]+/).map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')}
+                        </h4>
+                        <p className="text-base text-gray-600 dark:text-gray-400">
+                           {currentRecord['${attr.name.replace(/\s+/g, '-')}']}
+                        </p>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-    </>
-  );
-}`;
-                }
+        </DefaultLayout>
+      );
+    }
+  `;
+} 

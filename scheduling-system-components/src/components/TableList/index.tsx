@@ -186,19 +186,31 @@ export default function TablesList({ initialData, onCreateNew, token }: TableLis
     fetchTables();
   }, [API_URL]);
 
-
   useEffect(() => {
-    // Get query params from URL
-    const isNewEntity = searchParams.get('newEntity');
-    const entityName = searchParams.get('name');
+    toast.dismiss();
+
+    // Check localStorage instead of query params
+    const storedEntity = localStorage.getItem('newEntity');
     
-    if (isNewEntity === 'true' && entityName) {
-      toast.loading(
-        `Table "${entityName}" is being created. Migration is in progress...`,
-        { duration: 5000 }
+    if (storedEntity) {
+      const { name, message } = JSON.parse(storedEntity);
+      // Show migration in progress toast
+      toast.success(
+        `Migration is in progress,You can see your table in few seconds in the table list...`,
+        { position: 'top-right', duration: 5000 }
       );
+      
+      // Show success message after delay
+      // if (message) {
+      //   setTimeout(() => {
+      //     toast.success(message);
+      //   }, 5500);
+      // }
+
+      // Clear the stored data
+      localStorage.removeItem('newEntity');
     }
-  }, [searchParams]);
+  }, []); // Run once on component mount
 
   const refreshData = async () => {
     await fetchTables();
