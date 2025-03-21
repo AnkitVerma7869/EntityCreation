@@ -181,18 +181,20 @@ function updateSidebarRoutes(entityName) {
  */
 function saveEntity(entity, token) {
     return __awaiter(this, void 0, void 0, function () {
-        var configData, transformedEntity, response, responseData, config, error_2;
+        var configData_1, transformedEntity, response, responseData, routes, routeResponse, error_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, fetchEntityConfig()];
+                case 0:
+                    _a.trys.push([0, 6, , 7]);
+                    return [4 /*yield*/, fetchEntityConfig()];
                 case 1:
-                    configData = _a.sent();
+                    configData_1 = _a.sent();
                     transformedEntity = {
                         entityName: entity.entityName,
                         attributes: entity.attributes.map(function (attr) {
                             var _a, _b, _c;
                             // Get input type configuration
-                            var inputTypeConfig = configData === null || configData === void 0 ? void 0 : configData.inputTypes[attr.inputType];
+                            var inputTypeConfig = configData_1 === null || configData_1 === void 0 ? void 0 : configData_1.inputTypes[attr.inputType];
                             // Handle special input types
                             var inputType = attr.inputType === 'gender' ? 'radio' : attr.inputType;
                             var isRadioType = inputType === 'radio';
@@ -226,8 +228,7 @@ function saveEntity(entity, token) {
                                 displayInList: attr.displayInList !== false,
                                 references: attr.references,
                                 isIndexed: attr.isIndexed || false,
-                                indexLength: attr.indexLength || null,
-                                indexType: attr.indexType || undefined
+                                indexLength: attr.indexLength || null
                             };
                         })
                     };
@@ -250,29 +251,35 @@ function saveEntity(entity, token) {
                     if ('error' in responseData) {
                         throw new Error(responseData.error.message);
                     }
-                    _a.label = 4;
+                    routes = (0, routeGenerator_1.generateRoutes)(entity);
+                    return [4 /*yield*/, fetch('/api/generate-routes', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                entityName: entity.entityName,
+                                attributes: entity.attributes,
+                                routes: routes
+                            })
+                        })];
                 case 4:
-                    _a.trys.push([4, 7, , 8]);
-                    config = {
-                        entityName: entity.entityName,
-                        attributes: entity.attributes
-                    };
-                    return [4 /*yield*/, (0, routeGenerator_1.generateTableRoutes)(config)];
+                    routeResponse = _a.sent();
+                    if (!routeResponse.ok) {
+                        throw new Error('Failed to generate routes');
+                    }
+                    return [4 /*yield*/, updateSidebarRoutes(entity.entityName)];
                 case 5:
                     _a.sent();
-                    return [4 /*yield*/, updateSidebarRoutes(entity.entityName)];
-                case 6:
-                    _a.sent();
                     console.log('Routes generated successfully for:', entity.entityName);
-                    return [3 /*break*/, 8];
-                case 7:
+                    return [2 /*return*/, {
+                            message: responseData.success.message,
+                            success: true
+                        }];
+                case 6:
                     error_2 = _a.sent();
-                    console.error('Error generating routes:', error_2);
-                    throw new Error(error_2 instanceof Error ? error_2.message : 'Unknown error');
-                case 8: return [2 /*return*/, {
-                        message: responseData.success.message,
-                        success: true
-                    }];
+                    throw error_2;
+                case 7: return [2 /*return*/];
             }
         });
     });

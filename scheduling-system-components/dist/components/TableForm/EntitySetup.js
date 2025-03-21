@@ -382,6 +382,11 @@ function EntitySetup(_a) {
                         showToast("Cannot change data type for foreign key fields", 'error');
                         return [2 /*return*/];
                     }
+                    // Prevent changing data type for select, radio, and checkbox
+                    if (['select', 'radio', 'checkbox'].includes(currentAttribute.inputType)) {
+                        showToast("Cannot change data type for select, radio, and checkbox fields", 'error');
+                        return [2 /*return*/];
+                    }
                     setErrors({});
                     newDataType = e.target.value.toLowerCase();
                     if (selectedInputType === 'gender') {

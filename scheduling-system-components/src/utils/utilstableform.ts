@@ -4,7 +4,7 @@
  */
 
 import { Attribute, ConfigData, Entity } from '../interfaces/types';
-import { generateTableRoutes } from './routeGenerator';
+import { generateTableRoutes, generateRoutes } from './routeGenerator';
 
 // API endpoint from environment variables
 const API_URL = process.env.NEXT_PUBLIC_API_URL_ENDPOINT;
@@ -142,96 +142,109 @@ async function updateSidebarRoutes(entityName: string) {
  * @throws {Error} If API call or route generation fails
  */
 export async function saveEntity(entity: Entity, token: string): Promise<{message: string, success: boolean}> {
-  // Fetch configuration data
-  const configData = await fetchEntityConfig();
-  
-  // Transform entity data for API
-  const transformedEntity = {
-    entityName: entity.entityName,
-    attributes: entity.attributes.map(attr => {
-      // Get input type configuration
-      const inputTypeConfig = configData?.inputTypes[attr.inputType];
-      
-      // Handle special input types
-      const inputType = attr.inputType === 'gender' ? 'radio' : attr.inputType;
-      const isRadioType = inputType === 'radio';
-      
-      return {
-        attributeName: attr.name,
-        inputType: inputType,
-        dataType: attr.dataType.toLowerCase(),
-        size: attr.size,
-        precision: attr.precision,
-        constraints: attr.constraints,
-        defaultValue: attr.defaultValue || "",
-        options: attr.inputType === 'gender' ? [
-          { value: "male", label: "male" },
-          { value: "female", label: "female" },
-          { value: "others", label: "others" }
-        ] : attr.options,
-        isMultiSelect: isRadioType ? false : attr.isMultiSelect,
-        isEditable: attr.isEditable !== undefined ? attr.isEditable : true,
-        sortable: attr.sortable !== undefined ? attr.sortable : true,
-        // Add enumType to the transformed data
-        enumType: attr.inputType.endsWith('_enum') ? attr.inputType : undefined,
-        enumValues: attr.dataType.toLowerCase() === 'enum' ? 
-          (attr.inputType === 'gender' ? ['male', 'female', 'others'] : 
-            attr.options?.map(opt => typeof opt === 'string' ? opt : opt.value)) : 
-          undefined,
-        validations: {
-          ...attr.validations,
-          required: attr.validations.required || 
-                   attr.constraints?.includes('not null') || 
-                   attr.constraints?.includes('primary key') || 
-                   false
-        },
-        isReadOnly: attr.isReadOnly || false,
-        displayInList: attr.displayInList !== false,
-        references: attr.references,
-        isIndexed: attr.isIndexed || false,
-        indexLength: attr.indexLength || null
-      };
-    })
-  };
-
-  // Log transformed entity for debugging
-  console.log('Saving Entity:', transformedEntity);
- 
-  // Send API request with token
-  const response = await fetch(`${API_URL}/api/v1/entity/create`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify(transformedEntity),
-  });
-
-  const responseData: ApiResponse = await response.json();
-
-  // Handle API errors
-  if ('error' in responseData) {
-    throw new Error(responseData.error.message);
-  }
- 
-  // Generate frontend routes
   try {
-    const config = {
+    // Fetch configuration data
+    const configData = await fetchEntityConfig();
+    
+    // Transform entity data for API
+    const transformedEntity = {
       entityName: entity.entityName,
-      attributes: entity.attributes
+      attributes: entity.attributes.map(attr => {
+        // Get input type configuration
+        const inputTypeConfig = configData?.inputTypes[attr.inputType];
+        
+        // Handle special input types
+        const inputType = attr.inputType === 'gender' ? 'radio' : attr.inputType;
+        const isRadioType = inputType === 'radio';
+        
+        return {
+          attributeName: attr.name,
+          inputType: inputType,
+          dataType: attr.dataType.toLowerCase(),
+          size: attr.size,
+          precision: attr.precision,
+          constraints: attr.constraints,
+          defaultValue: attr.defaultValue || "",
+          options: attr.inputType === 'gender' ? [
+            { value: "male", label: "male" },
+            { value: "female", label: "female" },
+            { value: "others", label: "others" }
+          ] : attr.options,
+          isMultiSelect: isRadioType ? false : attr.isMultiSelect,
+          isEditable: attr.isEditable !== undefined ? attr.isEditable : true,
+          sortable: attr.sortable !== undefined ? attr.sortable : true,
+          // Add enumType to the transformed data
+          enumType: attr.inputType.endsWith('_enum') ? attr.inputType : undefined,
+          enumValues: attr.dataType.toLowerCase() === 'enum' ? 
+            (attr.inputType === 'gender' ? ['male', 'female', 'others'] : 
+              attr.options?.map(opt => typeof opt === 'string' ? opt : opt.value)) : 
+            undefined,
+          validations: {
+            ...attr.validations,
+            required: attr.validations.required || 
+                     attr.constraints?.includes('not null') || 
+                     attr.constraints?.includes('primary key') || 
+                     false
+          },
+          isReadOnly: attr.isReadOnly || false,
+          displayInList: attr.displayInList !== false,
+          references: attr.references,
+          isIndexed: attr.isIndexed || false,
+          indexLength: attr.indexLength || null
+        };
+      })
     };
-    await generateTableRoutes(config);
+
+    // Log transformed entity for debugging
+    console.log('Saving Entity:', transformedEntity);
+   
+    // Send API request with token
+    const response = await fetch(`${API_URL}/api/v1/entity/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(transformedEntity),
+    });
+
+    const responseData: ApiResponse = await response.json();
+
+    // Handle API errors
+    if ('error' in responseData) {
+      throw new Error(responseData.error.message);
+    }
+   
+    // Generate routes including schema
+    const routes = generateRoutes(entity);
+    
+    // Send to route generation API
+    const routeResponse = await fetch('/api/generate-routes', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        entityName: entity.entityName,
+        attributes: entity.attributes,
+        routes
+      })
+    });
+
+    if (!routeResponse.ok) {
+      throw new Error('Failed to generate routes');
+    }
+
     await updateSidebarRoutes(entity.entityName);
     console.log('Routes generated successfully for:', entity.entityName);
-  } catch (error) {
-    console.error('Error generating routes:', error);
-    throw new Error(error instanceof Error ? error.message : 'Unknown error');
-  }
 
-  return {
-    message: responseData.success.message,
-    success: true
-  };
+    return {
+      message: responseData.success.message,
+      success: true
+    };
+  } catch (error) {
+    throw error;
+  }
 } 
 
 

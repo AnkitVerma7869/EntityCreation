@@ -6,7 +6,7 @@
 import { Entity } from '../../../../interfaces/types';
 import { generatePackageImports } from '../../utils/packageManager';
 import { generateField } from '../../components/fields';
-import { generateValidationSchema } from '../../utils/validationSchemaGenerator';
+import { getFormValidationSchema } from '../../schemas/entityValidationSchema';
 import { toast } from 'react-hot-toast';
 
 /**
@@ -88,7 +88,7 @@ export function generateCreatePage(config: Entity): string {
 import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
+import { validationSchema } from '@/validationschemas/${config.entityName.toLowerCase()}Schema';
 import { use${formattedEntityName}Store } from '@/store/${config.entityName.toLowerCase()}Store';
 import { toast, Toaster } from 'react-hot-toast';
 ${needsDatePicker ? "import DatePickerOneRequired from '@/components/FormElements/DatePickerOneRequired';" : ''}
@@ -103,9 +103,6 @@ ${needsSelect ? "import Select from 'react-select';" : ''}
 
   return `'use client';
 ${dynamicImports}
-const validationSchema = yup.object({
-  ${generateValidationSchema(config.attributes)}
-});
 
 export default function ${formattedEntityName}CreatePage() {
   const router = useRouter();
