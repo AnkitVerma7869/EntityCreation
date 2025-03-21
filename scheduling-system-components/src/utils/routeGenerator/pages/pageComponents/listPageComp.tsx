@@ -4,6 +4,7 @@
  */
 
 import { Entity } from '../../../../interfaces/types';
+import { generatePackageImports } from '../../utils/packageManager';
 
 /**
  * Formats an entity name to follow camelCase convention
@@ -61,6 +62,7 @@ function getPrimaryKeyField(config: Entity): string {
  * @returns {string} Generated React component code
  */
 export function generateListPage(config: Entity): string {
+  const { packages } = generatePackageImports(config, { list: true });
   const formattedEntityName = formatEntityName(config.entityName);
   
   // Filter out sensitive and non-displayable fields
