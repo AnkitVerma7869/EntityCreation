@@ -166,43 +166,30 @@ function TableForm(_a) {
         setSelectedEntity("");
     };
     // Handle entity save operation
-    var handleSaveEntity = function () { return __awaiter(_this, void 0, void 0, function () {
-        var trimmedEntityName, entity, response, error_2;
+    var handleSaveEntity = function (entity) { return __awaiter(_this, void 0, void 0, function () {
+        var result, error_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    trimmedEntityName = entityName.trim();
-                    // Validate required fields
-                    if (!trimmedEntityName) {
-                        showToast("Entity Name is required!", 'error');
-                        return [2 /*return*/];
-                    }
-                    if (attributes.length === 0) {
-                        showToast("At least one attribute is required!", 'error');
-                        return [2 /*return*/];
-                    }
-                    entity = {
-                        entityName: trimmedEntityName,
-                        attributes: attributes
-                    };
+                    _a.trys.push([0, 2, 3, 4]);
                     setIsSaving(true);
-                    _a.label = 1;
-                case 1:
-                    _a.trys.push([1, 3, 4, 5]);
                     return [4 /*yield*/, (0, utilstableform_1.saveEntity)(entity, token)];
+                case 1:
+                    result = _a.sent();
+                    if (result.success) {
+                        showToast(result.message, 'success');
+                        // Navigate after successful save
+                        router.push("/entities?newEntity=true&name=".concat(entity.entityName));
+                    }
+                    return [3 /*break*/, 4];
                 case 2:
-                    response = _a.sent();
-                    showToast(response.message, 'success');
-                    router.push('/entities');
-                    return [3 /*break*/, 5];
-                case 3:
                     error_2 = _a.sent();
-                    showToast(error_2.message || "Failed to save entity. Please try again.", 'error');
-                    return [3 /*break*/, 5];
-                case 4:
+                    showToast(error_2 instanceof Error ? error_2.message : 'Failed to save entity', 'error');
+                    return [3 /*break*/, 4];
+                case 3:
                     setIsSaving(false);
                     return [7 /*endfinally*/];
-                case 5: return [2 /*return*/];
+                case 4: return [2 /*return*/];
             }
         });
     }); };
