@@ -179,7 +179,7 @@ export default function ${formattedEntityName}EditPage({ params }: { params: { i
         <div className="flex flex-col gap-9">
           <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
             <div className="border-b border-stroke px-6.5 py-4 dark:border-strokedark">
-              <h3 className="font-medium text-black dark:text-white">Edit ${formattedEntityName}</h3>
+              <h3 className="text-xl font-bold text-black dark:text-white">Edit ${formattedEntityName.charAt(0).toUpperCase() + formattedEntityName.slice(1)}</h3>
             </div>
             <form onSubmit={handleSubmit(onSubmit)} noValidate>
               <div className="p-6.5">

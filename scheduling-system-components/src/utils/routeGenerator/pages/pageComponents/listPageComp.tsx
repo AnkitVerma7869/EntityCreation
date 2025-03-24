@@ -465,8 +465,8 @@ export default function ${formattedEntityName}ListPage() {
               <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
                 <div className="border-b border-stroke px-6.5 py-4 dark:border-strokedark">
                   <div className="flex justify-between items-center">
-                    <h3 className="font-medium text-black dark:text-white">
-                      ${formattedEntityName} List
+                    <h3 className="text-xl font-bold text-black dark:text-white">
+                      ${formattedEntityName.charAt(0).toUpperCase() + formattedEntityName.slice(1)} List
                     </h3>
                     <div className="flex gap-4">
                       <button
