@@ -229,7 +229,7 @@ export default function TablesList({ initialData, onCreateNew, token }: TableLis
         </div>
         <button
           onClick={() => router.push('/entities/create')}
-          className="px-4 py-2 color-btn text-white rounded  transition-colors"
+          className="px-4 py-2 bg-primary text-white rounded  transition-colors"
         >
           Add New 
         </button>
