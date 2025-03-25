@@ -154,7 +154,7 @@ export default function ${formattedEntityName}ViewPage({ params }: { params: { i
             <div className="border-b border-stroke px-6.5 py-4 dark:border-strokedark">
               <div className="flex justify-between items-center">
                 <h3 className="text-xl font-bold text-black dark:text-white">
-                  ${formattedEntityName} Details
+                  ${formattedEntityName.charAt(0).toUpperCase() + formattedEntityName.slice(1)} Details
                 </h3>
                 <button
                   onClick={() => router.push(\`/${config.entityName.toLowerCase()}/edit/\${params.id}\`)}
