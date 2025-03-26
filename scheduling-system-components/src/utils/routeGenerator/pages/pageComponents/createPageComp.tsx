@@ -143,7 +143,6 @@ export default function ${formattedEntityName}CreatePage() {
       const { success, error, recordId } = response;
       toast.dismiss(); 
       if (success) {
-        console.log('Create record success:', success, 'Record ID:', recordId);
         toast.success(success, { duration: 2000, position: 'top-right' });
         setTimeout(() => {
           router.push('/${config.entityName.toLowerCase()}');
