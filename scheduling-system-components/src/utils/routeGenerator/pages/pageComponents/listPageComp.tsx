@@ -229,7 +229,6 @@ export default function ${formattedEntityName}ListPage() {
       if (!recordToDelete) return;
 
       try {
-        console.log('Deleting record with ID:', recordToDelete, 'using primary key field:', primaryKeyField);
         const result = await deleteRecord(recordToDelete);
         
         if (result.success) {
@@ -240,7 +239,6 @@ export default function ${formattedEntityName}ListPage() {
           
           // Remove the deleted record from the current records
           setRecords(prevRecords => {
-            console.log('Filtering records by', primaryKeyField, '!=', recordToDelete);
             return prevRecords.filter(record => record[primaryKeyField] !== recordToDelete);
           });
           
