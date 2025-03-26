@@ -57,7 +57,6 @@ exports.saveEntity = saveEntity;
 var routeGenerator_1 = require("./routeGenerator");
 // API endpoint from environment variables
 var API_URL = process.env.NEXT_PUBLIC_API_URL_ENDPOINT;
-var DATABASE_TYPE = process.env.NEXT_PUBLIC_DATABASE_TYPE;
 /**
  * Converts an array to a comma-separated string
  * Used for displaying array values in table cells
@@ -100,25 +99,14 @@ function fetchEntityConfig() {
         var response, data;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0:
-                    if (!(DATABASE_TYPE === 'mongodb')) return [3 /*break*/, 2];
-                    return [4 /*yield*/, fetch('/data/mongoEntityConfig.json')];
+                case 0: return [4 /*yield*/, fetch('/data/entityConfig.json')];
                 case 1:
                     response = _a.sent();
-                    return [3 /*break*/, 5];
-                case 2:
-                    if (!(DATABASE_TYPE === 'postgresql')) return [3 /*break*/, 4];
-                    return [4 /*yield*/, fetch('/data/entityConfig.json')];
-                case 3:
-                    response = _a.sent();
-                    return [3 /*break*/, 5];
-                case 4: throw new Error('Unsupported database type');
-                case 5:
                     if (!response.ok) {
                         throw new Error('Failed to fetch config');
                     }
                     return [4 /*yield*/, response.json()];
-                case 6:
+                case 2:
                     data = _a.sent();
                     return [2 /*return*/, data];
             }
