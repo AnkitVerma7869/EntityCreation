@@ -47,7 +47,7 @@ export const initialAttributeState: Attribute = {
  * @throws {Error} If fetch fails
  */
 export async function fetchEntityConfig(): Promise<ConfigData> {
-  let response= await fetch('/data/mongoEntityConfig.json');
+  const response= await fetch('/data/entityConfig.json');
   if (!response.ok) {
     throw new Error('Failed to fetch config');
   }
