@@ -525,25 +525,36 @@ export default function EntitySetup({
     setErrors({});
     let hasErrors = false;
 
-    // 1. Validate attribute name
+    // 1. Validate entity name first and trim it
+    const trimmedEntityName = entityName.trim();
+    if (!trimmedEntityName) {
+      setErrors(prev => ({ ...prev, entityName: "Entity name is required" }));
+      hasErrors = true;
+      return;
+    }
+
+    // Update entity name with trimmed value
+    setEntityName(trimmedEntityName);
+
+    // 2. Validate attribute name
     if (!currentAttribute.name) {
       setErrors(prev => ({ ...prev, attributeName: "Attribute name is required" }));
       hasErrors = true;
     }
 
-    // 2. Validate input type
+    // 3. Validate input type
     if (!selectedInputType) {
       setErrors(prev => ({ ...prev, inputType: "Input type is required" }));
       hasErrors = true;
     }
 
-    // 3. Validate data type
+    // 4. Validate data type
     if (!currentAttribute.dataType) {
       setErrors(prev => ({ ...prev, dataType: "Data type is required" }));
       hasErrors = true;
     }
 
-    // 4. Validate options for enum/select/radio/checkbox
+    // 5. Validate options for enum/select/radio/checkbox
     if ((currentAttribute.dataType.toLowerCase() === 'enum' || 
         ['radio', 'checkbox'].includes(selectedInputType)) && 
         (!inputOptions || inputOptions.length === 0)) {
