@@ -73,7 +73,7 @@ function generateFieldState(attr: Attribute): string {
     case 'date':
       return 'null';
     case 'file':
-      return '[]';
+      return '""';
     case 'select':
     case 'multiselect':
       return attr.config?.multiple ? '[]' : '""';
@@ -153,7 +153,7 @@ export function generateEntityStore(config: Entity) {
         ${config.attributes
           .map(attr => `${formatFieldName(attr.name.replace(/\s+/g, '_'))}: ${
             attr.inputType.toLowerCase() === 'date' ? 'Date | null' :
-            attr.inputType.toLowerCase() === 'file' ? 'File[]' :
+            attr.inputType.toLowerCase() === 'file' ? 'string' :
             attr.inputType.toLowerCase() === 'select' && attr.config?.multiple ? 'string[]' :
             attr.inputType.toLowerCase() === 'number' ? 'number' : 'string'
           }`)

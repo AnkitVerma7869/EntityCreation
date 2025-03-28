@@ -160,6 +160,23 @@ export default function ${formattedEntityName}EditPage({ params }: { params: { i
       }
     });
 
+    // Handle file fields
+    if (formattedData.file) {
+      // If it's a FileList object, we need to get the path from the form value
+      if (typeof formattedData.file === 'string' && formattedData.file.startsWith('/uploads/')) {
+        // The path is already set correctly
+      } else {
+        // Get the file path from the form value
+        const fileInput = document.querySelector('input[name="file"]') as HTMLInputElement;
+        if (fileInput) {
+          const filePath = fileInput.getAttribute('data-file-path');
+          if (filePath) {
+            formattedData.file = filePath;
+          }
+        }
+      }
+    }
+
     const { success, error } = await updateRecord(params.id, formattedData);
     toast.dismiss(); 
     if (success) {

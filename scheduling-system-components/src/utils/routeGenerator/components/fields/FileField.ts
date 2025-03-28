@@ -14,15 +14,85 @@ export function generateFileField(attr: Attribute, fieldName: string, defaultVal
           type="file"
           {...register("${fieldName}")}
           defaultValue="${defaultValue || ''}"
+          data-file-path=""
           className="${className}"
           accept="${attr.config?.acceptedFileTypes || '*'}"
           ${attr.config?.multiple ? 'multiple' : ''}
           ${isDisabled ? 'disabled' : ''}
+          onChange={(e) => {
+            const files = e.target.files;
+            if (files && files.length > 0) {
+              const formData = new FormData();
+              Array.from(files).forEach((file) => {
+                formData.append('files', file);
+              });
+              
+              // Update the input display text with the file name
+              const fileName = files[0].name;
+              e.target.setAttribute('data-file-name', fileName);
+              
+              // Update the display area with the file name
+              const displayArea = document.getElementById('${fieldName}-display');
+              if (displayArea) {
+                displayArea.textContent = \`Selected file: \${fileName}\`;
+                displayArea.style.display = 'block';
+              }
+              
+              // Upload files to server
+              fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+              })
+              .then(response => response.json())
+              .then(data => {
+                if (data.success) {
+                  // Update form field with file path
+                  const cleanPath = data.filePath.replace('/uploads/', '');
+                  setValue("${fieldName}", \`/public/uploads/\${cleanPath}\`);
+                  // Store file path in data attribute
+                  e.target.setAttribute('data-file-path', \`/public/uploads/\${cleanPath}\`);
+                  // Update the label with the file path
+                  const labelElement = document.querySelector(\`label[for="${fieldName}"]\`);
+                  if (labelElement) {
+                    const originalFileName = files[0].name;
+                    labelElement.innerHTML = \`${attr.name} <span class="text-sm text-gray-500">(\${originalFileName})</span>\`;
+                  }
+                  // Update display area with the file path
+                  if (displayArea) {
+                    const originalFileName = files[0].name;
+                    displayArea.textContent = \`Uploaded file: \${originalFileName}\`;
+                  }
+                } else {
+                  console.error('File upload failed:', data.error);
+                }
+              })
+              .catch(error => {
+                console.error('Error uploading file:', error);
+              });
+            }
+          }}
+          onFocus={(e) => {
+            // Show the file name when input is focused
+            const fileName = e.target.getAttribute('data-file-name');
+            if (fileName) {
+              e.target.setAttribute('title', fileName);
+            }
+          }}
+          onBlur={(e) => {
+            // Clear the title when input loses focus
+            e.target.removeAttribute('title');
+          }}
         />
+        <div id="${fieldName}-display" className="mt-2 text-sm text-gray-600" style={{ display: 'none' }}></div>
       </div>
-       {errors['${fieldName}'] && (
+      {errors['${fieldName}'] && (
         <p className="mt-1 text-sm text-meta-1">{errors['${fieldName}']?.message}</p>
       )}
+      ${defaultValue ? `
+      <div className="mt-2">
+        <p className="text-sm text-gray-600">Current file: ${defaultValue}</p>
+      </div>
+      ` : ''}
     </div>
   `;
 } 
