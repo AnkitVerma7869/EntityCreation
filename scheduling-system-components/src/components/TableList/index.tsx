@@ -199,14 +199,6 @@ export default function TablesList({ initialData, onCreateNew, token }: TableLis
         `Migration is in progress,You can see your table in few seconds in the table list...`,
         { position: 'top-right', duration: 5000 }
       );
-      
-      // Show success message after delay
-      // if (message) {
-      //   setTimeout(() => {
-      //     toast.success(message);
-      //   }, 5500);
-      // }
-
       // Clear the stored data
       localStorage.removeItem('newEntity');
     }

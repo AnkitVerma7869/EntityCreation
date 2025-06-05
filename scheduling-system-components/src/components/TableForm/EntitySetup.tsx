@@ -234,7 +234,7 @@ export default function EntitySetup({
         });
         setIsMultiSelect(false);
         setIsDataTypeDisabled(true);
-      } else {
+      } else {   
         setCurrentAttribute({
           ...currentAttribute,
           inputType,
@@ -870,7 +870,7 @@ export default function EntitySetup({
                         checked={!isMultiSelect}
                         onChange={() => handleSelectTypeChange(false)}
                         className="form-radio h-4 w-4 text-primary"
-                      />
+                      />  
                       <span className="ml-2 text-sm">Single Select</span>
                     </label>
                     <label className="flex items-center">

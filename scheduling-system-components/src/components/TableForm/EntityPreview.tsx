@@ -41,7 +41,7 @@ export default function EntityPreview({
   const handleDeleteAttribute = (index: number) => {
     const attributeToDelete = attributes[index];
     
-    // Check if deleting a primary key
+    // Check if deleting a primary key  
     if (attributeToDelete.constraints.includes('PRIMARY KEY')) {
       showToast("Warning: Deleting the primary key attribute!", 'error');
     }
